@@ -1,9 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layout>
-    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                  android:orientation="vertical"
-                  android:layout_width="match_parent"
-                  android:layout_height="match_parent">
-
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <data>
+        <variable
+            name="adpater"
+            type="androidx.recyclerview.widget.RecyclerView.Adapter"/>
+    </data>
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <TextView
+            android:gravity="center"
+            android:text="文件"
+            android:textSize="25dp"
+            android:background="@color/whitesmoke"
+            android:textColor="@color/colorBlackAlpha54"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize" />
+        <androidx.recyclerview.widget.RecyclerView
+            android:adapter="@{adpater}"
+            android:layout_weight="1"
+            app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
+            android:layout_width="match_parent"
+            android:layout_height="0dp">
+        </androidx.recyclerview.widget.RecyclerView>
     </LinearLayout>
 </layout>

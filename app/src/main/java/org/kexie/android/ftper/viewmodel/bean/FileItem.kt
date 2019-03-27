@@ -1,8 +1,11 @@
 package org.kexie.android.ftper.viewmodel.bean
 
-data class RemoteFile(
+import android.graphics.drawable.Drawable
+
+data class FileItem(
     val name: String,
     val size: Long,
+    val icon: Drawable,
     private val type: Int
 ) {
     val isFile

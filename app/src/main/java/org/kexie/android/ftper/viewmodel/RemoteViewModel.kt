@@ -3,7 +3,6 @@ package org.kexie.android.ftper.viewmodel
 import android.app.Application
 import android.os.Handler
 import android.os.HandlerThread
-import android.preference.PreferenceManager
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -12,26 +11,14 @@ import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.subjects.PublishSubject
 import org.apache.commons.net.ftp.FTPClient
-import org.kexie.android.ftper.viewmodel.bean.RemoteFile
+import org.kexie.android.ftper.viewmodel.bean.FileItem
 import java.io.File
 import java.io.IOException
 import java.net.MalformedURLException
 
-class MainViewModel(application: Application)
+class RemoteViewModel(application: Application)
     : AndroidViewModel(application) {
 
-    companion object {
-        const val portKey = "port"
-        const val hostKey = "host"
-        const val usernameKey = "username"
-        const val passwordKey = "password"
-    }
-
-    /**
-     * 用来保存用户基本数据
-     */
-    private val sharedPreference = PreferenceManager
-        .getDefaultSharedPreferences(application)
     /**
      * 使用[WorkManager]执行上传下载任务
      */
@@ -59,7 +46,7 @@ class MainViewModel(application: Application)
     /**
      * 使用[LiveData]列出文件列表
      */
-    private val mFiles = MutableLiveData<List<RemoteFile>>()
+    private val mFiles = MutableLiveData<List<FileItem>>()
     /**
      *[AndroidViewModel]是否在处理加载任务
      */
@@ -80,7 +67,7 @@ class MainViewModel(application: Application)
     val currentDir: LiveData<String>
         get() = mCurrentDir
 
-    val files: LiveData<List<RemoteFile>>
+    val files: LiveData<List<FileItem>>
         get() = mFiles
 
     val isLoading: LiveData<Boolean>
@@ -92,11 +79,15 @@ class MainViewModel(application: Application)
 
     val onInfo: Observable<String> = mOnInfo.observeOn(AndroidSchedulers.mainThread())
 
+    fun changeDir(path: String) {
+
+    }
+
     fun connect(
-        host: String,
-        port: Int,
-        username: String,
-        password: String
+            host: String,
+            port: Int,
+            username: String,
+            password: String
     ) {
         if (mClient.isConnected) {
             mClient.disconnect()
@@ -122,18 +113,19 @@ class MainViewModel(application: Application)
 
     }
 
-    fun download(file: RemoteFile) {
+    fun download(fileItem: FileItem) {
+
     }
 
     fun mkdir() {
 
     }
 
-    fun delete(file: RemoteFile) {
+    fun delete(fileItem: FileItem) {
         mIsLoading.value = true
         mHandler.post {
             try {
-                mClient.dele(file.name)
+                mClient.dele(fileItem.name)
             } catch (e: Exception) {
                 e.printStackTrace()
                 mOnError.onNext("删除失败")

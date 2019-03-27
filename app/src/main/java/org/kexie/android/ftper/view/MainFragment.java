@@ -6,29 +6,26 @@ import android.view.View;
 import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.math.MathUtils;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentPagerAdapter;
-import androidx.lifecycle.ViewModelProviders;
 import androidx.viewpager.widget.PagerAdapter;
-import es.dmoral.toasty.Toasty;
+import androidx.viewpager.widget.ViewPager;
+import com.flyco.tablayout.listener.OnTabSelectListener;
 import org.kexie.android.ftper.R;
 import org.kexie.android.ftper.databinding.FragmentMainBinding;
-import org.kexie.android.ftper.viewmodel.MainViewModel;
-import org.kexie.android.ftper.viewmodel.bean.RemoteFile;
-import org.kexie.android.ftper.widget.FastUtils;
-import org.kexie.android.ftper.widget.GenericQuickAdapter;
+import org.kexie.android.ftper.viewmodel.bean.TabEntity;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class MainFragment extends Fragment {
-
-
-    private MainViewModel mViewModel;
 
     private FragmentMainBinding mBinding;
 
     private PagerAdapter mPagerAdapter;
-
-    private GenericQuickAdapter<RemoteFile> mItemAdapter;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -41,8 +38,6 @@ public class MainFragment extends Fragment {
                     new ConfigFragment()
             };
 
-
-
             @NonNull
             @Override
             public Fragment getItem(int position) {
@@ -54,7 +49,7 @@ public class MainFragment extends Fragment {
                 return fragments.length;
             }
         };
-        mItemAdapter = new GenericQuickAdapter<>(0, 0);
+
     }
 
     @Nullable
@@ -72,27 +67,49 @@ public class MainFragment extends Fragment {
 
     @Override
     public void onViewCreated(@NonNull View view,
-                              @Nullable Bundle savedInstanceState) {
+                              @Nullable Bundle savedInstanceState)
+    {
         super.onViewCreated(view, savedInstanceState);
-        mViewModel = ViewModelProviders.of(this)
-                .get(MainViewModel.class);
+
+        mBinding.pages.setAdapter(mPagerAdapter);
+
+        mBinding.pages.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener()
+        {
+            @Override
+            public void onPageSelected(int position)
+            {
+                mBinding.tabs.setCurrentTab(position);
+            }
+        });
+
+        mBinding.tabs.setOnTabSelectListener(new OnTabSelectListener()
+        {
+            @Override
+            public void onTabSelect(int position)
+            {
+                mBinding.pages.setCurrentItem(MathUtils.clamp(
+                        position,
+                        0,
+                        mPagerAdapter.getCount()));
+            }
+
+            @Override
+            public void onTabReselect(int position)
+            {
+
+            }
+        });
+
+        List<TabEntity> tabEntities = Arrays.asList(
+                new TabEntity("文件", R.drawable.files_s, R.drawable.files),
+                new TabEntity("工具", R.drawable.tools_s, R.drawable.tool),
+                new TabEntity("配置", R.drawable.config_s, R.drawable.config)
+        );
+
+        mBinding.tabs.setTabData(new ArrayList<>(tabEntities));
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        FastUtils.subscribeToast(this,
-                mViewModel.getOnError(),
-                Toasty::error);
 
-        FastUtils.subscribeToast(this,
-                mViewModel.getOnSuccess(),
-                Toasty::success);
-
-        FastUtils.subscribeToast(this,
-                mViewModel.getOnInfo(),
-                Toasty::info);
-    }
 
     @Override
     public void onDestroyView() {
@@ -105,6 +122,5 @@ public class MainFragment extends Fragment {
     public void onDestroy() {
         super.onDestroy();
         mPagerAdapter = null;
-        mItemAdapter = null;
     }
 }

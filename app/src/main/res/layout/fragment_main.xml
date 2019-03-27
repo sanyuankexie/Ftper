@@ -6,9 +6,29 @@
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-        <androidx.recyclerview.widget.RecyclerView
+        <androidx.viewpager.widget.ViewPager
+            android:id="@+id/pages"
+            android:layout_weight="1"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
-        </androidx.recyclerview.widget.RecyclerView>
+            android:layout_height="0dp">
+        </androidx.viewpager.widget.ViewPager>
+        <View
+            android:background="@color/colorBlackAlpha12"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"/>
+        <com.flyco.tablayout.CommonTabLayout
+            app:tl_indicator_color="#2C97DE"
+            app:tl_textSelectColor="#2C97DE"
+            app:tl_textUnselectColor="#66000000"
+            app:tl_underline_color="#DDDDDD"
+            app:tl_iconWidth="30dp"
+            app:tl_iconHeight="30dp"
+            app:tl_textsize="12dp"
+            app:tl_underline_height="1dp"
+            android:id="@+id/tabs"
+            android:paddingTop="5dp"
+            android:background="#ffffff"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"/>
     </LinearLayout>
 </layout>
