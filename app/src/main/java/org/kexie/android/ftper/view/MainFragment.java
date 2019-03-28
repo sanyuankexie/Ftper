@@ -9,7 +9,7 @@ import com.flyco.tablayout.listener.OnTabSelectListener;
 
 import org.kexie.android.ftper.R;
 import org.kexie.android.ftper.databinding.FragmentMainBinding;
-import org.kexie.android.ftper.viewmodel.bean.TabEntity;
+import org.kexie.android.ftper.viewmodel.bean.Tab;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -101,9 +101,9 @@ public class MainFragment extends Fragment {
             }
         });
 
-        List<TabEntity> tabEntities = Arrays.asList(
-                new TabEntity("文件", R.drawable.files_s, R.drawable.files),
-                new TabEntity("配置", R.drawable.config_s, R.drawable.config)
+        List<Tab> tabEntities = Arrays.asList(
+                new Tab("文件", R.drawable.files_s, R.drawable.files),
+                new Tab("配置", R.drawable.config_s, R.drawable.config)
         );
 
         mBinding.tabs.setTabData(new ArrayList<>(tabEntities));

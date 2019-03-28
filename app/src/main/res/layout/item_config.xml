@@ -2,63 +2,82 @@
 <layout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <data>
+        <variable
+            name="config"
+            type="org.kexie.android.ftper.viewmodel.bean.Config"/>
+    </data>
+
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
+
         <androidx.cardview.widget.CardView
-            app:cardUseCompatPadding="true"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             app:cardCornerRadius="20dp"
             app:cardElevation="10dp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            app:cardUseCompatPadding="true">
+
             <LinearLayout
-                android:layout_marginLeft="20dp"
-                android:layout_marginRight="20dp"
-                android:layout_marginTop="10dp"
-                android:layout_marginBottom="10dp"
-                android:orientation="vertical"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="20dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginRight="20dp"
+                android:layout_marginBottom="10dp"
+                android:orientation="vertical">
+
                 <TextView
-                    android:textSize="25dp"
-                    android:hint="@string/app_name"
-                    android:textColor="@color/colorBlackAlpha54"
-                    android:textColorHint="@color/colorBlackAlpha54"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
                     android:gravity="left|center"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
-                <TextView
-                    android:layout_margin="5dp"
-                    android:textSize="15dp"
                     android:hint="@string/app_name"
+                    android:text='@{config.name}'
                     android:textColor="@color/colorBlackAlpha54"
                     android:textColorHint="@color/colorBlackAlpha54"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
+                    android:textSize="25dp"/>
+
                 <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
                     android:layout_margin="5dp"
-                    android:textSize="15dp"
                     android:hint="@string/app_name"
+                    android:text='@{"Host："}'
                     android:textColor="@color/colorBlackAlpha54"
                     android:textColorHint="@color/colorBlackAlpha54"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
+                    android:textSize="15dp"/>
+
                 <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
                     android:layout_margin="5dp"
-                    android:textSize="15dp"
                     android:hint="@string/app_name"
+                    android:text='@{"Port："+config.username}'
                     android:textColor="@color/colorBlackAlpha54"
                     android:textColorHint="@color/colorBlackAlpha54"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
+                    android:textSize="15dp"/>
+
                 <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
                     android:layout_margin="5dp"
-                    android:textSize="15dp"
                     android:hint="@string/app_name"
+                    android:text='@{"用户名："+config.username==null?"":config.username}'
                     android:textColor="@color/colorBlackAlpha54"
                     android:textColorHint="@color/colorBlackAlpha54"
+                    android:textSize="15dp"/>
+
+                <TextView
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
+                    android:layout_height="wrap_content"
+                    android:layout_margin="5dp"
+                    android:hint="@string/app_name"
+                    android:text='@{"最后更新："+config.date}'
+                    android:textColor="@color/colorBlackAlpha54"
+                    android:textColorHint="@color/colorBlackAlpha54"
+                    android:textSize="15dp"/>
             </LinearLayout>
         </androidx.cardview.widget.CardView>
     </FrameLayout>

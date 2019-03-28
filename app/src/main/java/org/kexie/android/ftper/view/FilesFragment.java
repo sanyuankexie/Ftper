@@ -64,6 +64,10 @@ public class FilesFragment extends Fragment
         mViewModel = ViewModelProviders.of(this)
                 .get(ClientViewModel.class);
 
+        mBinding.refresh.setOnRefreshListener(() ->
+        {
+
+        });
         mBinding.setAdpater(mItemAdapter);
 
         mItemAdapter.setOnItemClickListener(RxWrapper
@@ -85,6 +89,7 @@ public class FilesFragment extends Fragment
                     }
                 })
                 .build());
+
 
         mViewModel.getFiles().observe(this, mItemAdapter::setNewData);
     }
@@ -109,7 +114,7 @@ public class FilesFragment extends Fragment
                         case R.drawable.delete:
                         {
                             new QMUIDialog.MessageDialogBuilder(requireContext())
-                                    .setTitle("标题")
+                                    .setTitle("提示")
                                     .setMessage("确定要删除吗？")
                                     .addAction("取消",
                                             (dialog1, index) -> dialog1.dismiss())

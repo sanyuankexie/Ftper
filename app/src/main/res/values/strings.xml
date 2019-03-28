@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Ftper</string>
+    <string name="username">用户名：</string>
 </resources>
