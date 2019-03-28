@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layout xmlns:android="http://schemas.android.com/apk/res/android"
+<layout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <data>
         <variable
-            name="adpater"
+            name="adapter"
             type="androidx.recyclerview.widget.RecyclerView.Adapter"/>
     </data>
     <LinearLayout
@@ -12,28 +13,16 @@
         android:layout_height="match_parent">
         <TextView
             android:gravity="center"
-            android:text="文件"
+            android:text="配置"
             android:textSize="25dp"
             android:background="@color/white"
             android:textColor="@color/colorBlackAlpha54"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize" />
-        <View
-            android:background="@color/colorBlackAlpha12"
-            android:layout_width="match_parent"
-            android:layout_height="1dp"/>
-        <TextView
-            android:textSize="15dp"
-            android:gravity="left"
-            android:hint="xxxx/xxxx/xxxx"
-            android:singleLine="true"
-            android:background="@color/colorBlackAlpha12"
-            android:layout_width="match_parent"
-            android:layout_height="20dp" />
         <androidx.recyclerview.widget.RecyclerView
-            android:adapter="@{adpater}"
             android:layout_weight="1"
             android:orientation="vertical"
+            android:adapter="@{adapter}"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
             android:layout_width="match_parent"
             android:layout_height="0dp">

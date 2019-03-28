@@ -7,55 +7,53 @@
             name="file"
             type="org.kexie.android.ftper.viewmodel.bean.FileItem"/>
     </data>
-    <FrameLayout
+    <LinearLayout
+        android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
-        <androidx.cardview.widget.CardView
-            app:cardPreventCornerOverlap="false"
-            app:cardElevation="5dp"
-            app:cardCornerRadius="15dp"
-            app:cardUseCompatPadding="true"
+        <LinearLayout
+            android:layout_margin="10dp"
+            android:gravity="center"
+            android:orientation="horizontal"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="match_parent">
+            <ImageView
+                android:src="@{file.icon}"
+                android:scaleType="centerInside"
+                android:layout_height="40dp"
+                android:layout_width="40dp"/>
             <LinearLayout
-                android:gravity="center"
-                android:layout_margin="10dp"
-                android:orientation="horizontal"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-                <ImageView
-                    android:src="@{file.icon}"
-                    android:scaleType="centerInside"
-                    android:layout_height="60dp"
-                    android:layout_width="60dp"/>
-                <LinearLayout
-                    android:orientation="vertical"
-                    android:layout_marginLeft="10dp"
-                    android:layout_weight="1"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content">
-                    <TextView
-                        android:textSize="20dp"
-                        android:text="@{file.name}"
-                        android:singleLine="true"
-                        android:gravity="left|center"
-                        android:hint="@string/app_name"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"/>
-                    <TextView
-                        android:textSize="15dp"
-                        android:singleLine="true"
-                        android:hint="@string/app_name"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content" />
-                </LinearLayout>
-                <ImageView
-                    android:layout_marginRight="5dp"
-                    android:scaleType="centerInside"
-                    android:src="@drawable/next"
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"/>
+                android:orientation="vertical"
+                android:layout_marginLeft="10dp"
+                android:layout_weight="1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content">
+                <TextView
+                    android:textSize="15dp"
+                    android:text="@{file.name}"
+                    android:singleLine="true"
+                    android:gravity="left|center"
+                    android:hint="@string/app_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"/>
+                <TextView
+                    android:textSize="10dp"
+                    android:singleLine="true"
+                    android:hint="@string/app_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
             </LinearLayout>
-        </androidx.cardview.widget.CardView>
-    </FrameLayout>
+            <ImageView
+                android:scaleType="centerInside"
+                android:src="@drawable/next"
+                android:layout_width="15dp"
+                android:layout_height="15dp"/>
+        </LinearLayout>
+        <View
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:background="@color/colorBlackAlpha12"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"/>
+    </LinearLayout>
 </layout>

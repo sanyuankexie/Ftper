@@ -11,7 +11,7 @@
             android:roundIcon="@mipmap/ic_launcher_round"
             android:supportsRtl="true"
             android:name=".app.AppGlobal"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar"
+            android:theme="@style/QMUI.Compat.NoActionBar"
             tools:ignore="GoogleAppIndexingWarning">
 
         <meta-data

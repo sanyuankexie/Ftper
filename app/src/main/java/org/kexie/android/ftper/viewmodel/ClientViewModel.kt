@@ -3,6 +3,7 @@ package org.kexie.android.ftper.viewmodel
 import android.app.Application
 import android.os.Handler
 import android.os.HandlerThread
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -11,12 +12,13 @@ import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.subjects.PublishSubject
 import org.apache.commons.net.ftp.FTPClient
+import org.kexie.android.ftper.R
 import org.kexie.android.ftper.viewmodel.bean.FileItem
 import java.io.File
 import java.io.IOException
 import java.net.MalformedURLException
 
-class RemoteViewModel(application: Application)
+class ClientViewModel(application: Application)
     : AndroidViewModel(application) {
 
     /**
@@ -47,6 +49,18 @@ class RemoteViewModel(application: Application)
      * 使用[LiveData]列出文件列表
      */
     private val mFiles = MutableLiveData<List<FileItem>>()
+            .apply {
+                val arr = ArrayList<FileItem>()
+                val item = FileItem(
+                        name = "xxx",
+                        size = 1,
+                        type = 0,
+                        icon = ContextCompat.getDrawable(getApplication(), R.drawable.delete)!!)
+                for (i in 1..10) {
+                    arr.add(item)
+                }
+                value = arr
+            }
     /**
      *[AndroidViewModel]是否在处理加载任务
      */

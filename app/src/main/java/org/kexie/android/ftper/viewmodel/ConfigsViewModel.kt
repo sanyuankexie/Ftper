@@ -6,7 +6,7 @@ import android.preference.PreferenceManager
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 
-class ConfigViewModel(application: Application)
+class ConfigsViewModel(application: Application)
     : AndroidViewModel(application) {
 
     companion object {
@@ -16,18 +16,31 @@ class ConfigViewModel(application: Application)
         private const val sPasswordKey = "password"
     }
 
-    val host = MutableLiveData<String>()
-
-    val port = MutableLiveData<String>()
-
-    val username = MutableLiveData<String>()
-
-    val password = MutableLiveData<String>()
-
     /**
      * 用[SharedPreferences]来保存用户基本数据
      */
     private val mSharedPreference = PreferenceManager
-        .getDefaultSharedPreferences(application)
+            .getDefaultSharedPreferences(application)
+
+    val host = MutableLiveData<String>()
+            .loadPreferences(sHostKey)
+
+    val port = MutableLiveData<String>()
+            .loadPreferences(sPortKey)
+
+    val username = MutableLiveData<String>()
+            .loadPreferences(sUsernameKey)
+
+    val password = MutableLiveData<String>()
+            .loadPreferences(sPasswordKey)
+
+    private fun MutableLiveData<String>.loadPreferences(key: String)
+            : MutableLiveData<String> {
+        val value = mSharedPreference.getString(key, null);
+        if (!value.isNullOrEmpty()) {
+            this.value = value
+        }
+        return this
+    }
 
 }

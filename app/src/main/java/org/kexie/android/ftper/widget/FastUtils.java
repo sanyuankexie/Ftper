@@ -2,10 +2,8 @@ package org.kexie.android.ftper.widget;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Toast;
 
-import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.uber.autodispose.AutoDispose;
 import com.uber.autodispose.android.lifecycle.AndroidLifecycleScopeProvider;
 
@@ -18,11 +16,9 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.functions.BiFunction;
 import io.reactivex.functions.Consumer;
 
-public final class FastUtils
-{
+public final class FastUtils {
 
-    private FastUtils()
-    {
+    private FastUtils() {
         throw new AssertionError();
     }
 
@@ -30,8 +26,7 @@ public final class FastUtils
     public static <T> void subscribe(LifecycleOwner lifecycleOwner,
                                      Observable<T> observable,
                                      Lifecycle.Event event,
-                                     Consumer<T> consumer)
-    {
+                                     Consumer<T> consumer) {
         observable.observeOn(AndroidSchedulers.mainThread())
                 .as(AutoDispose.autoDisposable(AndroidLifecycleScopeProvider
                         .from(lifecycleOwner, event)))
@@ -40,8 +35,7 @@ public final class FastUtils
 
     public static void subscribeToast(Fragment fragment,
                                       Observable<String> observable,
-                                      BiFunction<Context, String, Toast> function)
-    {
+                                      BiFunction<Context, String, Toast> function) {
         subscribe(fragment,
                 observable,
                 Lifecycle.Event.ON_PAUSE,
@@ -49,8 +43,7 @@ public final class FastUtils
     }
 
     @SuppressWarnings("WeakerAccess")
-    public static FragmentTransaction openBaseTransaction(Fragment root)
-    {
+    public static FragmentTransaction openBaseTransaction(Fragment root) {
         return root.requireFragmentManager()
                 .beginTransaction()
                 .addToBackStack(null)
@@ -61,16 +54,13 @@ public final class FastUtils
     public static FragmentTransaction
     openTransactionWithBundle(Fragment root,
                               Class<? extends Fragment> type,
-                              Bundle bundle)
-    {
-        try
-        {
+                              Bundle bundle) {
+        try {
             Fragment fragment = type.newInstance();
             fragment.setArguments(bundle);
             return openBaseTransaction(root)
                     .add(root.getId(), type.newInstance());
-        } catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
@@ -80,50 +70,24 @@ public final class FastUtils
     @SuppressWarnings("WeakerAccess")
     public static FragmentTransaction
     openTransactionNoBundle(Fragment root,
-                            Class<? extends Fragment> type)
-    {
+                            Class<? extends Fragment> type) {
         return openTransactionWithBundle(root, type, Bundle.EMPTY);
     }
 
     public static void startFragment(Fragment root,
                                      Class<? extends Fragment> type,
-                                     Bundle bundle)
-    {
+                                     Bundle bundle) {
         FragmentTransaction transaction = openTransactionWithBundle(root, type, bundle);
-        if (transaction != null)
-        {
+        if (transaction != null) {
             transaction.commit();
         }
     }
 
     public static void startFragment(Fragment root,
-                                     Class<? extends Fragment> type)
-    {
+                                     Class<? extends Fragment> type) {
         FragmentTransaction transaction = openTransactionNoBundle(root, type);
-        if (transaction != null)
-        {
+        if (transaction != null) {
             transaction.commit();
         }
     }
-
-    public static View.OnClickListener toRxListener(
-            LifecycleOwner lifecycleOwner,
-            View.OnClickListener listener)
-    {
-        return new RxOnClickWrapper(
-                lifecycleOwner,
-                listener,
-                Lifecycle.Event.ON_DESTROY);
-    }
-
-    public static <X> BaseQuickAdapter.OnItemClickListener
-    toRxListener(LifecycleOwner lifecycleOwner,
-                 GenericQuickAdapter.OnItemClickListener<X> listener)
-    {
-        return new RxOnItemClickWrapper<>(
-                lifecycleOwner,
-                listener,
-                Lifecycle.Event.ON_DESTROY);
-    }
-
 }

@@ -4,27 +4,32 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
+import com.chad.library.adapter.base.BaseQuickAdapter;
+import com.qmuiteam.qmui.widget.dialog.QMUIBottomSheet;
+
+import org.kexie.android.ftper.BR;
+import org.kexie.android.ftper.R;
+import org.kexie.android.ftper.databinding.FragmentFilesBinding;
+import org.kexie.android.ftper.viewmodel.ClientViewModel;
+import org.kexie.android.ftper.viewmodel.bean.FileItem;
+import org.kexie.android.ftper.widget.FastUtils;
+import org.kexie.android.ftper.widget.GenericQuickAdapter;
+import org.kexie.android.ftper.widget.RxWrapper;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
-import com.qmuiteam.qmui.widget.dialog.QMUIBottomSheet;
 import es.dmoral.toasty.Toasty;
-import org.kexie.android.ftper.BR;
-import org.kexie.android.ftper.R;
-import org.kexie.android.ftper.databinding.FragmentFilesBinding;
-import org.kexie.android.ftper.viewmodel.RemoteViewModel;
-import org.kexie.android.ftper.viewmodel.bean.FileItem;
-import org.kexie.android.ftper.widget.FastUtils;
-import org.kexie.android.ftper.widget.GenericQuickAdapter;
 
 public class FilesFragment extends Fragment
 {
 
     private FragmentFilesBinding mBinding;
 
-    private RemoteViewModel mViewModel;
+    private ClientViewModel mViewModel;
 
     private GenericQuickAdapter<FileItem> mItemAdapter;
 
@@ -50,33 +55,40 @@ public class FilesFragment extends Fragment
 
     @Override
     public void onViewCreated(@NonNull View view,
-                              @Nullable Bundle savedInstanceState) {
+                              @Nullable Bundle savedInstanceState)
+    {
         super.onViewCreated(view, savedInstanceState);
 
         mViewModel = ViewModelProviders.of(this)
-                .get(RemoteViewModel.class);
+                .get(ClientViewModel.class);
 
         mBinding.setAdpater(mItemAdapter);
 
-        mItemAdapter.setOnItemClickListener(FastUtils.toRxListener(this,
-                (GenericQuickAdapter.OnItemClickListener<FileItem>)
-                        (adapter, view1, position) ->
-                        {
-                            FileItem fileItem = adapter.getItem(position);
-                            if (fileItem == null) {
-                                return;
-                            }
-                            if (fileItem.isDirectory()) {
-                                mViewModel.changeDir(fileItem.getName());
-                            } else if (fileItem.isFile()) {
-                                openFileBottomSheet(fileItem);
-                            }
-                        }));
+        mItemAdapter.setOnItemClickListener(RxWrapper
+                .create(BaseQuickAdapter.OnItemClickListener.class)
+                .owner(this)
+                .inner((adapter, view1, position) ->
+                {
+                    FileItem fileItem = (FileItem) adapter.getItem(position);
+                    if (fileItem == null)
+                    {
+                        return;
+                    }
+                    if (fileItem.isDirectory())
+                    {
+                        mViewModel.changeDir(fileItem.getName());
+                    } else if (fileItem.isFile())
+                    {
+                        openFileBottomSheet(fileItem);
+                    }
+                })
+                .build());
 
         mViewModel.getFiles().observe(this, mItemAdapter::setNewData);
     }
 
-    private void openFileBottomSheet(FileItem fileItem) {
+    private void openFileBottomSheet(FileItem fileItem)
+    {
         new QMUIBottomSheet.BottomGridSheetBuilder(requireContext())
                 .addItem(R.drawable.delete,
                         "删除",
@@ -89,12 +101,15 @@ public class FilesFragment extends Fragment
                 .setOnSheetItemClickListener((dialog, itemView) -> {
                     dialog.dismiss();
                     int tag = (int) itemView.getTag();
-                    switch (tag) {
-                        case R.drawable.delete: {
+                    switch (tag)
+                    {
+                        case R.drawable.delete:
+                        {
                             mViewModel.delete(fileItem);
                         }
                         break;
-                        case R.drawable.download: {
+                        case R.drawable.download:
+                        {
                             mViewModel.download(fileItem);
                         }
                         break;
@@ -103,7 +118,8 @@ public class FilesFragment extends Fragment
     }
 
     @Override
-    public void onResume() {
+    public void onResume()
+    {
         super.onResume();
         FastUtils.subscribeToast(this,
                 mViewModel.getOnError(),
