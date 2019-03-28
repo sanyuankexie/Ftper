@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <data>
+        <variable
+            name="addAction"
+            type="android.view.View.OnClickListener"/>
+    </data>
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <androidx.cardview.widget.CardView
+            android:onClick="@{addAction}"
+            app:cardUseCompatPadding="true"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="10dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <LinearLayout
+                android:orientation="vertical"
+                android:layout_margin="10dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+                <ImageView
+                    load_async='@{"config_add"}'
+                    android:layout_margin="25dp"
+                    android:scaleType="centerInside"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"/>
+                <TextView
+                    android:layout_marginBottom="10dp"
+                    android:textColor="@color/colorBlackAlpha54"
+                    android:text="添加新服务器"
+                    android:gravity="center"
+                    android:textSize="20dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"/>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+    </FrameLayout>
+</layout>

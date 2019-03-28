@@ -1,42 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
+
     <data>
         <variable
             name="adpater"
-            type="androidx.recyclerview.widget.RecyclerView.Adapter"/>
+            type="androidx.recyclerview.widget.RecyclerView.Adapter" />
     </data>
+
     <LinearLayout
-        android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
         <TextView
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@color/white"
             android:gravity="center"
             android:text="文件"
-            android:textSize="25dp"
-            android:background="@color/white"
             android:textColor="@color/colorBlackAlpha54"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize" />
+            android:textSize="25dp" />
+
         <View
-            android:background="@color/colorBlackAlpha12"
             android:layout_width="match_parent"
-            android:layout_height="1dp"/>
+            android:layout_height="1dp"
+            android:background="@color/colorBlackAlpha26" />
+
         <TextView
-            android:textSize="15dp"
-            android:gravity="left"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/colorBlackAlpha12"
+            android:gravity="left|center"
             android:hint="xxxx/xxxx/xxxx"
             android:singleLine="true"
-            android:background="@color/colorBlackAlpha12"
-            android:layout_width="match_parent"
-            android:layout_height="20dp" />
+            android:textSize="15dp" />
+
         <androidx.recyclerview.widget.RecyclerView
-            android:adapter="@{adpater}"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
             android:layout_width="match_parent"
-            android:layout_height="0dp">
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:adapter="@{adpater}"
+            android:orientation="vertical"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager">
         </androidx.recyclerview.widget.RecyclerView>
     </LinearLayout>
 </layout>

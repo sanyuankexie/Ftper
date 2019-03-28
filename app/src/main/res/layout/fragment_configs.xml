@@ -19,7 +19,12 @@
             android:textColor="@color/colorBlackAlpha54"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize" />
+        <View
+                android:background="@color/colorBlackAlpha26"
+                android:layout_width="match_parent"
+                android:layout_height="1dp"/>
         <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/configs"
             android:layout_weight="1"
             android:orientation="vertical"
             android:adapter="@{adapter}"

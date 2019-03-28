@@ -25,16 +25,12 @@ public final class RxWrapper<X>
 
     private LifecycleOwner mOwner;
 
-    private int mTime = MINI_TIME;
+    private int mTime;
 
     private Lifecycle.Event mEvent;
 
     private RxWrapper(Class<X> type)
     {
-        if (type == null || !type.isInterface())
-        {
-            throw new IllegalArgumentException();
-        }
         mInterface = type;
     }
 
@@ -70,6 +66,10 @@ public final class RxWrapper<X>
     @SuppressWarnings("unchecked")
     public X build()
     {
+        if (mInterface == null || !mInterface.isInterface())
+        {
+            throw new IllegalArgumentException();
+        }
         if (mTime < MINI_TIME)
         {
             mTime = MINI_TIME;

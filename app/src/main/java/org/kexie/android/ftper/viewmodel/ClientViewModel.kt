@@ -55,7 +55,7 @@ class ClientViewModel(application: Application)
                         name = "xxx",
                         size = 1,
                         type = 0,
-                        icon = ContextCompat.getDrawable(getApplication(), R.drawable.delete)!!)
+                        icon = ContextCompat.getDrawable(getApplication(), R.drawable.file_dir)!!)
                 for (i in 1..10) {
                     arr.add(item)
                 }

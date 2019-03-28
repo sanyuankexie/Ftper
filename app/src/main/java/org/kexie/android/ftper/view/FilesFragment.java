@@ -7,6 +7,8 @@ import android.view.ViewGroup;
 
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.qmuiteam.qmui.widget.dialog.QMUIBottomSheet;
+import com.qmuiteam.qmui.widget.dialog.QMUIDialog;
+import com.qmuiteam.qmui.widget.dialog.QMUIDialogAction;
 
 import org.kexie.android.ftper.BR;
 import org.kexie.android.ftper.R;
@@ -98,14 +100,28 @@ public class FilesFragment extends Fragment
                         "下载",
                         R.drawable.download,
                         QMUIBottomSheet.BottomGridSheetBuilder.FIRST_LINE)
-                .setOnSheetItemClickListener((dialog, itemView) -> {
+                .setOnSheetItemClickListener((dialog, itemView) ->
+                {
                     dialog.dismiss();
                     int tag = (int) itemView.getTag();
                     switch (tag)
                     {
                         case R.drawable.delete:
                         {
-                            mViewModel.delete(fileItem);
+                            new QMUIDialog.MessageDialogBuilder(requireContext())
+                                    .setTitle("标题")
+                                    .setMessage("确定要删除吗？")
+                                    .addAction("取消",
+                                            (dialog1, index) -> dialog1.dismiss())
+                                    .addAction(0, "删除",
+                                            QMUIDialogAction.ACTION_PROP_NEGATIVE,
+                                            (dialog12, index) ->
+                                            {
+                                                dialog12.dismiss();
+                                                mViewModel.delete(fileItem);
+                                            })
+                                    .create(com.qmuiteam.qmui.R.style.QMUI_Dialog)
+                                    .show();
                         }
                         break;
                         case R.drawable.download:
@@ -114,7 +130,9 @@ public class FilesFragment extends Fragment
                         }
                         break;
                     }
-                }).build().show();
+                })
+                .build()
+                .show();
     }
 
     @Override

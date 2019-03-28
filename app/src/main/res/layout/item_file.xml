@@ -8,6 +8,7 @@
             type="org.kexie.android.ftper.viewmodel.bean.FileItem"/>
     </data>
     <LinearLayout
+        android:background="@color/white"
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
@@ -45,7 +46,7 @@
             </LinearLayout>
             <ImageView
                 android:scaleType="centerInside"
-                android:src="@drawable/next"
+                load_async='@{"next"}'
                 android:layout_width="15dp"
                 android:layout_height="15dp"/>
         </LinearLayout>
