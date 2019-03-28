@@ -4,25 +4,29 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.databinding.DataBindingUtil;
-import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProviders;
+
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.qmuiteam.qmui.util.QMUIKeyboardHelper;
-import es.dmoral.toasty.Toasty;
+
 import org.kexie.android.ftper.BR;
 import org.kexie.android.ftper.R;
 import org.kexie.android.ftper.databinding.FragmentConfigsBinding;
 import org.kexie.android.ftper.databinding.ViewFooterConfigAddBinding;
 import org.kexie.android.ftper.databinding.ViewHeadConfigBinding;
 import org.kexie.android.ftper.viewmodel.ConfigsViewModel;
+import org.kexie.android.ftper.viewmodel.MainViewModel;
 import org.kexie.android.ftper.viewmodel.bean.ConfigItem;
 import org.kexie.android.ftper.widget.ConfigDialogBuilder;
 import org.kexie.android.ftper.widget.FastUtils;
 import org.kexie.android.ftper.widget.GenericQuickAdapter;
 import org.kexie.android.ftper.widget.RxWrapper;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.databinding.DataBindingUtil;
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProviders;
+import es.dmoral.toasty.Toasty;
 
 public class ConfigsFragment extends Fragment {
 
@@ -34,8 +38,9 @@ public class ConfigsFragment extends Fragment {
 
     private ConfigsViewModel mViewModel;
 
-    private GenericQuickAdapter<ConfigItem> mConfigAdapter;
+    private MainViewModel mMainViewModel;
 
+    private GenericQuickAdapter<ConfigItem> mConfigAdapter;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -71,6 +76,8 @@ public class ConfigsFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         mViewModel = ViewModelProviders.of(this)
                 .get(ConfigsViewModel.class);
+        mMainViewModel = ViewModelProviders.of(requireParentFragment())
+                .get(MainViewModel.class);
 
         mViewModel.getConfigs().observe(this, mConfigAdapter::setNewData);
 
@@ -81,6 +88,9 @@ public class ConfigsFragment extends Fragment {
                 .owner(this)
                 .inner(v -> openConfigDialog(null))
                 .build());
+
+        mViewModel.getSelect().observe(this,
+                mMainViewModel.getCurrent()::setValue);
 
         mConfigAdapter.setOnItemClickListener(RxWrapper
                 .create(BaseQuickAdapter.OnItemClickListener.class)
@@ -106,6 +116,7 @@ public class ConfigsFragment extends Fragment {
                     }
                 })
                 .build());
+
         mConfigAdapter.setOnItemLongClickListener((adapter, view1, position) ->
         {
             ConfigItem configItem = (ConfigItem) adapter.getItem(position);

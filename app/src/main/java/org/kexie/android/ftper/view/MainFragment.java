@@ -4,6 +4,19 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
+import com.flyco.tablayout.listener.OnTabSelectListener;
+
+import org.kexie.android.ftper.R;
+import org.kexie.android.ftper.databinding.FragmentMainBinding;
+import org.kexie.android.ftper.viewmodel.MainViewModel;
+import org.kexie.android.ftper.viewmodel.bean.TabItem;
+import org.kexie.android.ftper.widget.RxWrapper;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.math.MathUtils;
@@ -13,15 +26,7 @@ import androidx.fragment.app.FragmentPagerAdapter;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.viewpager.widget.PagerAdapter;
 import androidx.viewpager.widget.ViewPager;
-import com.flyco.tablayout.listener.OnTabSelectListener;
-import org.kexie.android.ftper.R;
-import org.kexie.android.ftper.databinding.FragmentMainBinding;
-import org.kexie.android.ftper.viewmodel.MainViewModel;
-import org.kexie.android.ftper.viewmodel.bean.TabItem;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import es.dmoral.toasty.Toasty;
 
 public class MainFragment extends Fragment {
 
@@ -37,8 +42,8 @@ public class MainFragment extends Fragment {
         mPagerAdapter = new FragmentPagerAdapter(getChildFragmentManager()) {
 
             private Fragment[] fragments = new Fragment[]{
+                    new ConfigsFragment(),
                     new FilesFragment(),
-                    new ConfigsFragment()
             };
 
             @NonNull
@@ -69,8 +74,7 @@ public class MainFragment extends Fragment {
 
     @Override
     public void onViewCreated(@NonNull View view,
-                              @Nullable Bundle savedInstanceState)
-    {
+                              @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
         mViewModel = ViewModelProviders.of(this)
@@ -78,36 +82,40 @@ public class MainFragment extends Fragment {
 
         mBinding.pages.setAdapter(mPagerAdapter);
 
-        mBinding.pages.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener()
-        {
+        mBinding.pages.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
             @Override
-            public void onPageSelected(int position)
-            {
+            public void onPageSelected(int position) {
                 mBinding.tabs.setCurrentTab(position);
             }
         });
 
-        mBinding.tabs.setOnTabSelectListener(new OnTabSelectListener()
-        {
-            @Override
-            public void onTabSelect(int position)
-            {
-                mBinding.pages.setCurrentItem(MathUtils.clamp(
-                        position,
-                        0,
-                        mPagerAdapter.getCount()));
-            }
 
-            @Override
-            public void onTabReselect(int position)
-            {
+        mBinding.tabs.setOnTabSelectListener(RxWrapper
+                .create(OnTabSelectListener.class)
+                .owner(this)
+                .inner(new OnTabSelectListener() {
+                    @Override
+                    public void onTabSelect(int position) {
+                        if (mViewModel.getCurrent().getValue() == null) {
+                            mBinding.tabs.setCurrentTab(0);
+                            Toasty.warning(requireContext(), "未选中服务器").show();
+                            return;
+                        }
+                        mBinding.pages.setCurrentItem(MathUtils.clamp(
+                                position,
+                                0,
+                                mPagerAdapter.getCount()));
+                    }
 
-            }
-        });
+                    @Override
+                    public void onTabReselect(int position) {
+
+                    }
+                }).build());
 
         List<TabItem> tabItemEntities = Arrays.asList(
-                new TabItem("文件", R.drawable.files_s, R.drawable.files),
-                new TabItem("配置", R.drawable.config_s, R.drawable.config)
+                new TabItem("配置", R.drawable.config_s, R.drawable.config),
+                new TabItem("文件", R.drawable.files_s, R.drawable.files)
         );
 
         mBinding.tabs.setTabData(new ArrayList<>(tabItemEntities));

@@ -4,24 +4,28 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
+import com.chad.library.adapter.base.BaseQuickAdapter;
+import com.qmuiteam.qmui.widget.dialog.QMUIBottomSheet;
+import com.qmuiteam.qmui.widget.dialog.QMUIDialog;
+import com.qmuiteam.qmui.widget.dialog.QMUIDialogAction;
+
+import org.kexie.android.ftper.BR;
+import org.kexie.android.ftper.R;
+import org.kexie.android.ftper.databinding.FragmentFilesBinding;
+import org.kexie.android.ftper.viewmodel.ClientViewModel;
+import org.kexie.android.ftper.viewmodel.MainViewModel;
+import org.kexie.android.ftper.viewmodel.bean.FileItem;
+import org.kexie.android.ftper.widget.FastUtils;
+import org.kexie.android.ftper.widget.GenericQuickAdapter;
+import org.kexie.android.ftper.widget.RxWrapper;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
-import com.chad.library.adapter.base.BaseQuickAdapter;
-import com.qmuiteam.qmui.widget.dialog.QMUIBottomSheet;
-import com.qmuiteam.qmui.widget.dialog.QMUIDialog;
-import com.qmuiteam.qmui.widget.dialog.QMUIDialogAction;
 import es.dmoral.toasty.Toasty;
-import org.kexie.android.ftper.BR;
-import org.kexie.android.ftper.R;
-import org.kexie.android.ftper.databinding.FragmentFilesBinding;
-import org.kexie.android.ftper.viewmodel.ClientViewModel;
-import org.kexie.android.ftper.viewmodel.bean.FileItem;
-import org.kexie.android.ftper.widget.FastUtils;
-import org.kexie.android.ftper.widget.GenericQuickAdapter;
-import org.kexie.android.ftper.widget.RxWrapper;
 
 public class FilesFragment extends Fragment
 {
@@ -31,6 +35,8 @@ public class FilesFragment extends Fragment
     private ClientViewModel mViewModel;
 
     private GenericQuickAdapter<FileItem> mItemAdapter;
+
+    private MainViewModel mMainViewModel;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState)
@@ -43,23 +49,29 @@ public class FilesFragment extends Fragment
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState)
-    {
+                             @Nullable Bundle savedInstanceState) {
         mBinding = DataBindingUtil.inflate(inflater,
                 R.layout.fragment_files,
                 container,
                 false);
+        mItemAdapter.setEmptyView(inflater.inflate(
+                R.layout.view_empty,
+                mBinding.files,
+                false));
         return mBinding.getRoot();
     }
 
     @Override
     public void onViewCreated(@NonNull View view,
-                              @Nullable Bundle savedInstanceState)
-    {
+                              @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
         mViewModel = ViewModelProviders.of(this)
                 .get(ClientViewModel.class);
+        mMainViewModel = ViewModelProviders.of(requireParentFragment())
+                .get(MainViewModel.class);
+
+        mMainViewModel.getCurrent().observe(this, mViewModel::connect);
 
         mBinding.refresh.setOnRefreshListener(() ->
         {
@@ -73,15 +85,12 @@ public class FilesFragment extends Fragment
                 .inner((adapter, view1, position) ->
                 {
                     FileItem fileItem = (FileItem) adapter.getItem(position);
-                    if (fileItem == null)
-                    {
+                    if (fileItem == null) {
                         return;
                     }
-                    if (fileItem.isDirectory())
-                    {
+                    if (fileItem.isDirectory()) {
                         mViewModel.changeDir(fileItem.getName());
-                    } else if (fileItem.isFile())
-                    {
+                    } else if (fileItem.isFile()) {
                         openFileBottomSheet(fileItem);
                     }
                 })

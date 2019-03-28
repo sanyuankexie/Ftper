@@ -32,7 +32,6 @@
             android:layout_height="wrap_content"
             android:background="@color/colorBlackAlpha12"
             android:gravity="left|center"
-            android:hint="xxxx/xxxx/xxxx"
             android:singleLine="true"
             android:textSize="15dp" />
         <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
@@ -41,6 +40,7 @@
             android:layout_height="0dp"
             android:layout_weight="1">
             <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/files"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:adapter="@{adpater}"

@@ -31,9 +31,10 @@
                     android:layout_width="match_parent"
                     android:layout_height="50dp"/>
                 <TextView
+                    android:singleLine="true"
                     android:layout_marginBottom="10dp"
                     android:textColor="@color/colorBlackAlpha54"
-                    android:text="添加新服务器"
+                    android:text="添加FTP服务器"
                     android:gravity="center"
                     android:textSize="20dp"
                     android:layout_width="match_parent"

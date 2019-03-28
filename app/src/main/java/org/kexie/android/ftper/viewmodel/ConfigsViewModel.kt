@@ -25,19 +25,13 @@ class ConfigsViewModel(application: Application)
 
     private val mPreferences = PreferenceManager
             .getDefaultSharedPreferences(getApplication())
-            .apply {
-                if (contains(sSelectKey)) {
-                    edit().putInt(sSelectKey, Int.MIN_VALUE)
-                        .apply()
-                }
-            }
 
     private val mWorkerThread = HandlerThread(toString())
             .apply {
                 start()
             }
 
-    private val mSelect = MutableLiveData<Int>(mPreferences.getInt(sSelectKey, Int.MIN_VALUE))
+    private val mSelect = MutableLiveData<ConfigItem>()
 
     private val mHandler = Handler(mWorkerThread.looper)
 
@@ -69,7 +63,7 @@ class ConfigsViewModel(application: Application)
     val configs: LiveData<List<ConfigItem>>
         get() = mConfigs
 
-    val select: LiveData<Int>
+    val select: LiveData<ConfigItem>
         get() = mSelect
 
     private val mDao = getApplication<AppGlobal>().appDatabase.configDao
@@ -81,12 +75,15 @@ class ConfigsViewModel(application: Application)
     fun remove(configItem: ConfigItem) {
         mHandler.post {
             try {
-                if (mSelect.value == configItem.id) {
-                    mPreferences.edit()
-                            .putInt(sSelectKey, Int.MIN_VALUE)
-                            .apply()
+                if (mSelect.value?.id == configItem.id) {
+                    synchronized(mPreferences)
+                    {
+                        mPreferences.edit()
+                                .putInt(sSelectKey, Int.MIN_VALUE)
+                                .apply()
+                    }
                 }
-                mDao.remove(configItem.toEntity())
+                mDao.remove(configItem.toDataEntity())
                 reload()
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -99,7 +96,7 @@ class ConfigsViewModel(application: Application)
         mIsLoading.value = true
         mHandler.post {
             try {
-                mDao.update(configItem.toEntity())
+                mDao.update(configItem.toDataEntity())
                 reload()
                 mOnSuccess.onNext("数据已更新")
             } catch (e: Exception) {
@@ -114,14 +111,12 @@ class ConfigsViewModel(application: Application)
         mIsLoading.value = true
         mHandler.post {
             try {
-                mDao.add(configItem.toEntity())
+                mDao.add(configItem.toDataEntity())
                 reload()
                 mOnSuccess.onNext("数据已更新")
             } catch (e: Exception) {
                 e.printStackTrace()
-                mOnError.onNext(
-                        "输入的信息有错误，Host 或 Port 有误"
-                )
+                mOnError.onNext("Host或Port有误")
             }
             mIsLoading.postValue(false)
         }
@@ -134,19 +129,25 @@ class ConfigsViewModel(application: Application)
             }
         }
         configItem.isSelect = true
-        mSelect.value = configItem.id
-        mPreferences.edit()
-            .putInt(sSelectKey, configItem.id)
-            .apply()
+        mSelect.value = configItem
+        synchronized(mPreferences)
+        {
+            mPreferences.edit()
+                    .putInt(sSelectKey, configItem.id)
+                    .apply()
+        }
     }
 
     @WorkerThread
     private fun reload() {
-        mConfigs.postValue(mDao.loadAll().map { it.toViewData() })
+        val list = mDao.loadAll()
+                .map { it.toViewData() }
+        mSelect.postValue(list.firstOrNull { it.isSelect })
+        mConfigs.postValue(list)
     }
 
     @Throws(Exception::class)
-    private fun ConfigItem.toEntity(): ConfigEntity {
+    private fun ConfigItem.toDataEntity(): ConfigEntity {
         val thiz = this
         return ConfigEntity()
                 .apply {
@@ -170,14 +171,17 @@ class ConfigsViewModel(application: Application)
 
     private fun ConfigEntity.toViewData(): ConfigItem {
         return ConfigItem(
-            name = this.name,
-            id = this.id,
-            host = this.host,
-            port = this.port.toString(),
-            username = this.username,
-            password = this.password,
-            date = TimeUtils.millis2String(this.date),
-            isSelect = this.id == mSelect.value
+                name = this.name,
+                id = this.id,
+                host = this.host,
+                port = this.port.toString(),
+                username = this.username,
+                password = this.password,
+                date = TimeUtils.millis2String(this.date),
+                isSelect = this.id == synchronized(mPreferences)
+                {
+                    mPreferences.getInt(sSelectKey, Int.MIN_VALUE)
+                }
         )
     }
 

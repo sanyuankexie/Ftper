@@ -36,6 +36,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content">
                     <TextView
+                        android:singleLine="true"
                         android:layout_weight="1"
                         android:text='@{configItem.name==null?("未命名服务器-"+configItem.id):configItem.name}'
                         android:layout_width="0dp"
@@ -45,13 +46,17 @@
                         android:textColor="@color/colorBlackAlpha54"
                         android:textColorHint="@color/colorBlackAlpha54"
                         android:textSize="25dp"/>
-                    <CheckBox
+                    <androidx.appcompat.widget.AppCompatCheckBox
+                        android:theme="@style/TheCheckBox"
+                        android:clickable="false"
+                        android:id="@+id/check"
                         android:checked="@{configItem.select}"
                         android:layout_width="30dp"
                         android:layout_height="match_parent"/>
                 </LinearLayout>
 
                 <TextView
+                    android:singleLine="true"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_margin="5dp"
@@ -62,6 +67,7 @@
                     android:textSize="15dp"/>
 
                 <TextView
+                    android:singleLine="true"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_margin="5dp"
@@ -72,6 +78,7 @@
                     android:textSize="15dp"/>
 
                 <TextView
+                    android:singleLine="true"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_margin="5dp"
@@ -82,6 +89,7 @@
                     android:textSize="15dp"/>
 
                 <TextView
+                    android:singleLine="true"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_margin="5dp"

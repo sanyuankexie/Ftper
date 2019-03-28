@@ -13,6 +13,7 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.subjects.PublishSubject
 import org.apache.commons.net.ftp.FTPClient
 import org.kexie.android.ftper.R
+import org.kexie.android.ftper.viewmodel.bean.ConfigItem
 import org.kexie.android.ftper.viewmodel.bean.FileItem
 import java.io.File
 import java.io.IOException
@@ -49,18 +50,6 @@ class ClientViewModel(application: Application)
      * 使用[LiveData]列出文件列表
      */
     private val mFiles = MutableLiveData<List<FileItem>>()
-            .apply {
-                val arr = ArrayList<FileItem>()
-                val item = FileItem(
-                        name = "xxx",
-                        size = 1,
-                        type = 0,
-                        icon = ContextCompat.getDrawable(getApplication(), R.drawable.file_dir)!!)
-                for (i in 1..10) {
-                    arr.add(item)
-                }
-                value = arr
-            }
     /**
      *[AndroidViewModel]是否在处理加载任务
      */
@@ -97,28 +86,36 @@ class ClientViewModel(application: Application)
 
     }
 
-    fun connect(
-            host: String,
-            port: Int,
-            username: String,
-            password: String
-    ) {
-        if (mClient.isConnected) {
-            mClient.disconnect()
+    fun connect(configItem: ConfigItem?) {
+        if (configItem == null) {
+            mFiles.value = emptyList()
+            return
         }
-        try {
-            mClient.connect(host, port)
-            mClient.login(username, password)
-            mOnSuccess.onNext("FTP服务器连接成功")
-        } catch (e: MalformedURLException) {
-            e.printStackTrace()
-            mOnError.onNext("host格式有误,请不要包含port")
-        } catch (e: IOException) {
-            e.printStackTrace()
-            mOnError.onNext("连接失败,清检查网络连接")
-        } catch (e: Exception) {
-            e.printStackTrace()
-            mOnError.onNext("未知错误")
+        mHandler.post {
+            if (mClient.isConnected) {
+                mClient.disconnect()
+            }
+            try {
+                mClient.connect(configItem.host, configItem.port!!.toInt())
+                mClient.login(configItem.username, configItem.password)
+                mFiles.value = mClient.listFiles()
+                        .map {
+                            FileItem(name = it.name,
+                                    size = it.size,
+                                    icon = ContextCompat.getDrawable(getApplication(), R.drawable.file)!!,
+                                    type = it.type)
+                        }
+                mOnSuccess.onNext("FTP服务器连接成功")
+            } catch (e: MalformedURLException) {
+                e.printStackTrace()
+                mOnError.onNext("host格式有误,请不要包含port")
+            } catch (e: IOException) {
+                e.printStackTrace()
+                mOnError.onNext("连接失败,清检查网络连接")
+            } catch (e: Exception) {
+                e.printStackTrace()
+                mOnError.onNext("连接失败")
+            }
         }
     }
 
