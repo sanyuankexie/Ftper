@@ -18,7 +18,7 @@ import org.kexie.android.ftper.databinding.FragmentConfigsBinding;
 import org.kexie.android.ftper.databinding.ViewFooterConfigAddBinding;
 import org.kexie.android.ftper.databinding.ViewHeadConfigBinding;
 import org.kexie.android.ftper.viewmodel.ConfigsViewModel;
-import org.kexie.android.ftper.viewmodel.bean.Config;
+import org.kexie.android.ftper.viewmodel.bean.ConfigItem;
 import org.kexie.android.ftper.widget.ConfigDialogBuilder;
 import org.kexie.android.ftper.widget.FastUtils;
 import org.kexie.android.ftper.widget.GenericQuickAdapter;
@@ -34,13 +34,13 @@ public class ConfigsFragment extends Fragment {
 
     private ConfigsViewModel mViewModel;
 
-    private GenericQuickAdapter<Config> mConfigAdapter;
+    private GenericQuickAdapter<ConfigItem> mConfigAdapter;
 
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mConfigAdapter = new GenericQuickAdapter<>(R.layout.item_config, BR.config);
+        mConfigAdapter = new GenericQuickAdapter<>(R.layout.item_config, BR.configItem);
     }
 
     @Nullable
@@ -87,13 +87,30 @@ public class ConfigsFragment extends Fragment {
                 .owner(this)
                 .inner((adapter, view12, position) ->
                 {
+                    ConfigItem configItem = (ConfigItem) adapter.getItem(position);
+                    if (configItem != null) {
+                        int last = -1;
+                        for (int i = 0; i < adapter.getData().size(); i++) {
+                            ConfigItem item = (ConfigItem) adapter.getItem(i);
+                            if (item != null && item.isSelect()) {
+                                last = i;
+                            }
+                        }
+                        mViewModel.select(configItem);
+                        if (last != -1) {
+                            adapter.notifyItemChanged(
+                                    adapter.getHeaderLayoutCount() + last);
+                        }
+                        adapter.notifyItemChanged(
+                                adapter.getHeaderLayoutCount() + position);
+                    }
                 })
                 .build());
         mConfigAdapter.setOnItemLongClickListener((adapter, view1, position) ->
         {
-            Config config = (Config) adapter.getItem(position);
-            if (config != null) {
-                openConfigDialog(config);
+            ConfigItem configItem = (ConfigItem) adapter.getItem(position);
+            if (configItem != null) {
+                openConfigDialog(configItem);
                 return true;
             }
             return false;
@@ -103,6 +120,7 @@ public class ConfigsFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+
         FastUtils.subscribeToast(this,
                 mViewModel.getOnError(),
                 Toasty::error);
@@ -116,29 +134,43 @@ public class ConfigsFragment extends Fragment {
                 Toasty::info);
     }
 
-    private void openConfigDialog(Config config) {
-        boolean isAdd = config == null;
-        ConfigDialogBuilder builder
-                = new ConfigDialogBuilder(requireContext());
-        builder.setTitle("添加新服务器")
-                .addAction("保存", (dialog, index) ->
-                {
-                    Config config2 = builder
-                            .getBinding()
-                            .getConfig();
-                    if (isAdd) {
-                        mViewModel.add(config2);
-                    } else {
-                        mViewModel.update(config2);
-                    }
-                    dialog.dismiss();
-                }).addAction("取消", (dialog, index) -> dialog.dismiss())
+    private void openConfigDialog(ConfigItem configItem)
+    {
+        boolean isAdd = configItem == null;
+        ConfigDialogBuilder builder = new ConfigDialogBuilder(requireContext());
+        builder.addAction("保存", (dialog, index) ->
+        {
+            ConfigItem configItem2 = builder
+                    .getBinding()
+                    .getConfigItem();
+            if (isAdd)
+            {
+                mViewModel.add(configItem2);
+            } else
+            {
+                mViewModel.update(configItem2);
+            }
+            dialog.dismiss();
+        });
+        if (!isAdd)
+        {
+            builder.addAction("删除",
+                    (dialog, index) -> {
+                        ConfigItem configItem2 = builder
+                                .getBinding()
+                                .getConfigItem();
+                        mViewModel.remove(configItem2);
+                        dialog.dismiss();
+                    }).setTitle("修改服务器信息");
+        } else
+        {
+            builder.setTitle("添加服务器");
+        }
+        builder.addAction("取消", (dialog, index) -> dialog.dismiss())
                 .create(com.qmuiteam.qmui.R.style.QMUI_Dialog)
                 .show();
         QMUIKeyboardHelper.showKeyboard(builder.getBinding().host, true);
-        if (isAdd) {
-            builder.getBinding().setConfig(new Config());
-        }
+        builder.getBinding().setConfigItem(isAdd ? new ConfigItem() : configItem);
     }
 
     @Override

@@ -2,9 +2,9 @@ package org.kexie.android.ftper.viewmodel.bean
 
 import com.flyco.tablayout.listener.CustomTabEntity
 
-class Tab(private val title: String,
-          private val selectedIcon: Int,
-          private val unSelectedIcon: Int)
+class TabItem(private val title: String,
+              private val selectedIcon: Int,
+              private val unSelectedIcon: Int)
     : CustomTabEntity {
     override fun getTabTitle(): String {
         return title

@@ -5,14 +5,16 @@
 
     <data>
         <variable
-            name="config"
-            type="org.kexie.android.ftper.viewmodel.bean.Config"/>
+            name="configItem"
+            type="org.kexie.android.ftper.viewmodel.bean.ConfigItem"/>
     </data>
 
     <FrameLayout
+        android:layout_marginTop="-15dp"
+        android:layout_marginBottom="-15dp"
+        android:clipChildren="false"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
-
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -29,42 +31,32 @@
                 android:layout_marginBottom="10dp"
                 android:orientation="vertical">
 
-                <TextView
+                <LinearLayout
+                    android:orientation="horizontal"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="left|center"
-                    android:hint="@string/app_name"
-                    android:text='@{config.name}'
-                    android:textColor="@color/colorBlackAlpha54"
-                    android:textColorHint="@color/colorBlackAlpha54"
-                    android:textSize="25dp"/>
+                    android:layout_height="wrap_content">
+                    <TextView
+                        android:layout_weight="1"
+                        android:text='@{configItem.name==null?("未命名服务器-"+configItem.id):configItem.name}'
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:gravity="left|center"
+                        android:hint="@string/app_name"
+                        android:textColor="@color/colorBlackAlpha54"
+                        android:textColorHint="@color/colorBlackAlpha54"
+                        android:textSize="25dp"/>
+                    <CheckBox
+                        android:checked="@{configItem.select}"
+                        android:layout_width="30dp"
+                        android:layout_height="match_parent"/>
+                </LinearLayout>
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_margin="5dp"
                     android:hint="@string/app_name"
-                    android:text='@{"Host："}'
-                    android:textColor="@color/colorBlackAlpha54"
-                    android:textColorHint="@color/colorBlackAlpha54"
-                    android:textSize="15dp"/>
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="5dp"
-                    android:hint="@string/app_name"
-                    android:text='@{"Port："+config.username}'
-                    android:textColor="@color/colorBlackAlpha54"
-                    android:textColorHint="@color/colorBlackAlpha54"
-                    android:textSize="15dp"/>
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="5dp"
-                    android:hint="@string/app_name"
-                    android:text='@{"用户名："+config.username==null?"":config.username}'
+                    android:text='@{"Host："+configItem.host}'
                     android:textColor="@color/colorBlackAlpha54"
                     android:textColorHint="@color/colorBlackAlpha54"
                     android:textSize="15dp"/>
@@ -74,7 +66,27 @@
                     android:layout_height="wrap_content"
                     android:layout_margin="5dp"
                     android:hint="@string/app_name"
-                    android:text='@{"最后更新："+config.date}'
+                    android:text='@{"Port："+configItem.port}'
+                    android:textColor="@color/colorBlackAlpha54"
+                    android:textColorHint="@color/colorBlackAlpha54"
+                    android:textSize="15dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="5dp"
+                    android:hint="@string/app_name"
+                    android:text='@{"用户名："+configItem.username}'
+                    android:textColor="@color/colorBlackAlpha54"
+                    android:textColorHint="@color/colorBlackAlpha54"
+                    android:textSize="15dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="5dp"
+                    android:hint="@string/app_name"
+                    android:text='@{"最后更新："+configItem.date}'
                     android:textColor="@color/colorBlackAlpha54"
                     android:textColorHint="@color/colorBlackAlpha54"
                     android:textSize="15dp"/>

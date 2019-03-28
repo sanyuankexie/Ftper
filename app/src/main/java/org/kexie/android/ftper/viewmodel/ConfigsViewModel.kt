@@ -14,23 +14,35 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.subjects.PublishSubject
 import org.kexie.android.ftper.app.AppGlobal
 import org.kexie.android.ftper.model.bean.ConfigEntity
-import org.kexie.android.ftper.viewmodel.bean.Config
+import org.kexie.android.ftper.viewmodel.bean.ConfigItem
 
 class ConfigsViewModel(application: Application)
     : AndroidViewModel(application) {
 
+    companion object {
+        private const val sSelectKey = "select";
+    }
+
     private val mPreferences = PreferenceManager
-        .getDefaultSharedPreferences(getApplication())
+            .getDefaultSharedPreferences(getApplication())
+            .apply {
+                if (contains(sSelectKey)) {
+                    edit().putInt(sSelectKey, Int.MIN_VALUE)
+                        .apply()
+                }
+            }
 
     private val mWorkerThread = HandlerThread(toString())
-        .apply {
-            start()
-        }
+            .apply {
+                start()
+            }
+
+    private val mSelect = MutableLiveData<Int>(mPreferences.getInt(sSelectKey, Int.MIN_VALUE))
 
     private val mHandler = Handler(mWorkerThread.looper)
 
     /**
-     *[AndroidViewModel]是否在处理加载任务
+     *[ConfigsViewModel]是否在处理加载任务
      */
     private val mIsLoading = MutableLiveData<Boolean>(false)
     /**
@@ -52,10 +64,13 @@ class ConfigsViewModel(application: Application)
 
     val onInfo: Observable<String> = mOnInfo.observeOn(AndroidSchedulers.mainThread())
 
-    private val mConfigs = MutableLiveData<List<Config>>()
+    private val mConfigs = MutableLiveData<List<ConfigItem>>()
 
-    val configs: LiveData<List<Config>>
+    val configs: LiveData<List<ConfigItem>>
         get() = mConfigs
+
+    val select: LiveData<Int>
+        get() = mSelect
 
     private val mDao = getApplication<AppGlobal>().appDatabase.configDao
 
@@ -63,38 +78,66 @@ class ConfigsViewModel(application: Application)
         mHandler.post { reload() }
     }
 
-    fun update(config: Config) {
+    fun remove(configItem: ConfigItem) {
+        mHandler.post {
+            try {
+                if (mSelect.value == configItem.id) {
+                    mPreferences.edit()
+                            .putInt(sSelectKey, Int.MIN_VALUE)
+                            .apply()
+                }
+                mDao.remove(configItem.toEntity())
+                reload()
+            } catch (e: Exception) {
+                e.printStackTrace()
+                mOnError.onNext("删除数据时出错")
+            }
+        }
+    }
+
+    fun update(configItem: ConfigItem) {
         mIsLoading.value = true
         mHandler.post {
             try {
-                mDao.update(config.toEntity())
+                mDao.update(configItem.toEntity())
+                reload()
+                mOnSuccess.onNext("数据已更新")
+            } catch (e: Exception) {
+                e.printStackTrace()
+                mOnError.onNext("更新数据时出错")
+            }
+            mIsLoading.postValue(false)
+        }
+    }
+
+    fun add(configItem: ConfigItem) {
+        mIsLoading.value = true
+        mHandler.post {
+            try {
+                mDao.add(configItem.toEntity())
                 reload()
                 mOnSuccess.onNext("数据已更新")
             } catch (e: Exception) {
                 e.printStackTrace()
                 mOnError.onNext(
-                    "更新数据时出错"
+                        "输入的信息有错误，Host 或 Port 有误"
                 )
             }
             mIsLoading.postValue(false)
         }
     }
 
-    fun add(config: Config) {
-        mIsLoading.value = true
-        mHandler.post {
-            try {
-                mDao.add(config.toEntity())
-                reload()
-                mOnSuccess.onNext("数据已更新")
-            } catch (e: Exception) {
-                e.printStackTrace()
-                mOnError.onNext(
-                    "输入的信息有错误，Host 或 Port 有误"
-                )
+    fun select(configItem: ConfigItem) {
+        mConfigs.value?.let {
+            it.forEach {
+                it.isSelect = false
             }
-            mIsLoading.postValue(false)
         }
+        configItem.isSelect = true
+        mSelect.value = configItem.id
+        mPreferences.edit()
+            .putInt(sSelectKey, configItem.id)
+            .apply()
     }
 
     @WorkerThread
@@ -103,37 +146,38 @@ class ConfigsViewModel(application: Application)
     }
 
     @Throws(Exception::class)
-    private fun Config.toEntity(): ConfigEntity {
+    private fun ConfigItem.toEntity(): ConfigEntity {
         val thiz = this
         return ConfigEntity()
-            .apply {
-                id = thiz.id
-                name = if (thiz.name.isNullOrBlank()) {
-                    "未命名服务器"
-                } else {
-                    this.name
+                .apply {
+                    id = thiz.id
+                    name = if (thiz.name.isNullOrBlank()) {
+                        null
+                    } else {
+                        thiz.name
+                    }
+                    host = if (thiz.host.isNullOrBlank()) {
+                        throw Exception()
+                    } else {
+                        thiz.host
+                    }
+                    port = thiz.port!!.toInt()
+                    username = thiz.username
+                    password = thiz.password
+                    date = TimeUtils.getNowMills()
                 }
-                host = if (thiz.host.isNullOrBlank()) {
-                    throw Exception()
-                } else {
-                    thiz.host
-
-                }
-                port = thiz.port!!.toInt()
-                username = thiz.username
-                password = thiz.password
-                date = TimeUtils.getNowMills()
-            }
     }
 
-    private fun ConfigEntity.toViewData(): Config {
-        return Config(
+    private fun ConfigEntity.toViewData(): ConfigItem {
+        return ConfigItem(
+            name = this.name,
             id = this.id,
-            name = name,
+            host = this.host,
             port = this.port.toString(),
             username = this.username,
             password = this.password,
-            date = TimeUtils.millis2String(this.date)
+            date = TimeUtils.millis2String(this.date),
+            isSelect = this.id == mSelect.value
         )
     }
 

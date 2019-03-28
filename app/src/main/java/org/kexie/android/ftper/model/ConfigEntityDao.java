@@ -1,9 +1,6 @@
 package org.kexie.android.ftper.model;
 
-import androidx.room.Dao;
-import androidx.room.Insert;
-import androidx.room.Query;
-import androidx.room.Update;
+import androidx.room.*;
 import org.kexie.android.ftper.model.bean.ConfigEntity;
 
 import java.util.List;
@@ -16,6 +13,9 @@ public interface ConfigEntityDao {
 
     @Insert
     void add(ConfigEntity configEntity);
+
+    @Delete
+    void remove(ConfigEntity configEntity);
 
     @Query("select * from configs")
     List<ConfigEntity> loadAll();
