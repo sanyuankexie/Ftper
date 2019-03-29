@@ -8,10 +8,12 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.work.WorkManager
+import com.orhanobut.logger.Logger
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.subjects.PublishSubject
 import org.apache.commons.net.ftp.FTPClient
+import org.apache.commons.net.ftp.FTPReply
 import org.kexie.android.ftper.R
 import org.kexie.android.ftper.viewmodel.bean.ConfigItem
 import org.kexie.android.ftper.viewmodel.bean.FileItem
@@ -29,9 +31,14 @@ class ClientViewModel(application: Application)
     /**
      * 轻量级的[HandlerThread]执行简单的删除和加载列表任务
      */
-    private val mWorkerThread = HandlerThread(toString()).apply {
-        start()
-    }
+    private val mWorkerThread = HandlerThread(toString())
+        .apply{
+            start()
+            setUncaughtExceptionHandler { t, e ->
+                e.printStackTrace()
+                Logger.d(e)
+            }
+        }
     /**
      * [mWorkerThread]的[Handler]
      */
@@ -40,7 +47,8 @@ class ClientViewModel(application: Application)
      * FTP协议的[FTPClient]
      */
     private val mClient = FTPClient().apply {
-        controlEncoding = "utf-8"
+        controlEncoding = "gbk"
+        connectTimeout = 5
     }
     /**
      * 当前目录使用[LiveData]同步到View层
@@ -82,6 +90,7 @@ class ClientViewModel(application: Application)
 
     val onInfo: Observable<String> = mOnInfo.observeOn(AndroidSchedulers.mainThread())
 
+
     fun changeDir(path: String) {
 
     }
@@ -98,13 +107,22 @@ class ClientViewModel(application: Application)
             try {
                 mClient.connect(configItem.host, configItem.port!!.toInt())
                 mClient.login(configItem.username, configItem.password)
-                mFiles.value = mClient.listFiles()
-                        .map {
-                            FileItem(name = it.name,
-                                    size = it.size,
-                                    icon = ContextCompat.getDrawable(getApplication(), R.drawable.file)!!,
-                                    type = it.type)
-                        }
+                if (!FTPReply.isPositiveCompletion(mClient.replyCode)) {
+                    throw Exception()
+                }
+                mClient.enterLocalPassiveMode()
+                mFiles.postValue(mClient.listFiles()
+                    .map {
+                        FileItem(
+                            name = it.name,
+                            size = it.size,
+                            icon = ContextCompat.getDrawable(
+                                getApplication(),
+                                R.drawable.file
+                            )!!,
+                            type = it.type
+                        )
+                    })
                 mOnSuccess.onNext("FTP服务器连接成功")
             } catch (e: MalformedURLException) {
                 e.printStackTrace()
@@ -112,9 +130,9 @@ class ClientViewModel(application: Application)
             } catch (e: IOException) {
                 e.printStackTrace()
                 mOnError.onNext("连接失败,清检查网络连接")
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 e.printStackTrace()
-                mOnError.onNext("连接失败")
+                mOnError.onNext("连接失败,参数有误")
             }
         }
     }

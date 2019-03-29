@@ -4,19 +4,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-
-import com.flyco.tablayout.listener.OnTabSelectListener;
-
-import org.kexie.android.ftper.R;
-import org.kexie.android.ftper.databinding.FragmentMainBinding;
-import org.kexie.android.ftper.viewmodel.MainViewModel;
-import org.kexie.android.ftper.viewmodel.bean.TabItem;
-import org.kexie.android.ftper.widget.RxWrapper;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.math.MathUtils;
@@ -26,7 +13,16 @@ import androidx.fragment.app.FragmentPagerAdapter;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.viewpager.widget.PagerAdapter;
 import androidx.viewpager.widget.ViewPager;
-import es.dmoral.toasty.Toasty;
+import com.flyco.tablayout.listener.OnTabSelectListener;
+import org.kexie.android.ftper.R;
+import org.kexie.android.ftper.databinding.FragmentMainBinding;
+import org.kexie.android.ftper.viewmodel.MainViewModel;
+import org.kexie.android.ftper.viewmodel.bean.TabItem;
+import org.kexie.android.ftper.widget.RxWrapper;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class MainFragment extends Fragment {
 
@@ -89,18 +85,12 @@ public class MainFragment extends Fragment {
             }
         });
 
-
         mBinding.tabs.setOnTabSelectListener(RxWrapper
                 .create(OnTabSelectListener.class)
                 .owner(this)
                 .inner(new OnTabSelectListener() {
                     @Override
                     public void onTabSelect(int position) {
-                        if (mViewModel.getCurrent().getValue() == null) {
-                            mBinding.tabs.setCurrentTab(0);
-                            Toasty.warning(requireContext(), "未选中服务器").show();
-                            return;
-                        }
                         mBinding.pages.setCurrentItem(MathUtils.clamp(
                                 position,
                                 0,

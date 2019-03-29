@@ -24,12 +24,12 @@ class ConfigsViewModel(application: Application)
     }
 
     private val mPreferences = PreferenceManager
-            .getDefaultSharedPreferences(getApplication())
+        .getDefaultSharedPreferences(getApplication())
 
     private val mWorkerThread = HandlerThread(toString())
-            .apply {
-                start()
-            }
+        .apply {
+            start()
+        }
 
     private val mSelect = MutableLiveData<ConfigItem>()
 
@@ -66,7 +66,9 @@ class ConfigsViewModel(application: Application)
     val select: LiveData<ConfigItem>
         get() = mSelect
 
-    private val mDao = getApplication<AppGlobal>().appDatabase.configDao
+    private val mDao = getApplication<AppGlobal>()
+        .appDatabase
+        .configDao
 
     init {
         mHandler.post { reload() }
@@ -79,8 +81,8 @@ class ConfigsViewModel(application: Application)
                     synchronized(mPreferences)
                     {
                         mPreferences.edit()
-                                .putInt(sSelectKey, Int.MIN_VALUE)
-                                .apply()
+                            .putInt(sSelectKey, Int.MIN_VALUE)
+                            .apply()
                     }
                 }
                 mDao.remove(configItem.toDataEntity())
@@ -133,15 +135,15 @@ class ConfigsViewModel(application: Application)
         synchronized(mPreferences)
         {
             mPreferences.edit()
-                    .putInt(sSelectKey, configItem.id)
-                    .apply()
+                .putInt(sSelectKey, configItem.id)
+                .apply()
         }
     }
 
     @WorkerThread
     private fun reload() {
         val list = mDao.loadAll()
-                .map { it.toViewData() }
+            .map { it.toViewData() }
         mSelect.postValue(list.firstOrNull { it.isSelect })
         mConfigs.postValue(list)
     }
@@ -150,38 +152,38 @@ class ConfigsViewModel(application: Application)
     private fun ConfigItem.toDataEntity(): ConfigEntity {
         val thiz = this
         return ConfigEntity()
-                .apply {
-                    id = thiz.id
-                    name = if (thiz.name.isNullOrBlank()) {
-                        null
-                    } else {
-                        thiz.name
-                    }
-                    host = if (thiz.host.isNullOrBlank()) {
-                        throw Exception()
-                    } else {
-                        thiz.host
-                    }
-                    port = thiz.port!!.toInt()
-                    username = thiz.username
-                    password = thiz.password
-                    date = TimeUtils.getNowMills()
+            .apply {
+                id = thiz.id
+                name = if (thiz.name.isNullOrBlank()) {
+                    null
+                } else {
+                    thiz.name
                 }
+                host = if (thiz.host.isNullOrBlank()) {
+                    throw Exception()
+                } else {
+                    thiz.host
+                }
+                port = thiz.port!!.toInt()
+                username = thiz.username
+                password = thiz.password
+                date = TimeUtils.getNowMills()
+            }
     }
 
     private fun ConfigEntity.toViewData(): ConfigItem {
         return ConfigItem(
-                name = this.name,
-                id = this.id,
-                host = this.host,
-                port = this.port.toString(),
-                username = this.username,
-                password = this.password,
-                date = TimeUtils.millis2String(this.date),
-                isSelect = this.id == synchronized(mPreferences)
-                {
-                    mPreferences.getInt(sSelectKey, Int.MIN_VALUE)
-                }
+            name = this.name,
+            id = this.id,
+            host = this.host,
+            port = this.port.toString(),
+            username = this.username,
+            password = this.password,
+            date = TimeUtils.millis2String(this.date),
+            isSelect = this.id == synchronized(mPreferences)
+            {
+                mPreferences.getInt(sSelectKey, Int.MIN_VALUE)
+            }
         )
     }
 

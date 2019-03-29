@@ -55,7 +55,7 @@ dependencies {
     implementation 'com.flyco.tablayout:FlycoTabLayout_Lib:2.1.2@aar'
     implementation 'com.github.CymChad:BaseRecyclerViewAdapterHelper:2.9.46'
     implementation "com.google.android.material:material:1.0.0"
-    implementation 'com.eightbitlab:blurview:1.5.0'
+    //implementation 'com.eightbitlab:blurview:1.5.0'
     implementation 'com.github.GrenderG:Toasty:1.4.0'
     //model
     implementation 'commons-net:commons-net:3.6'
@@ -67,6 +67,6 @@ dependencies {
     annotationProcessor 'android.arch.persistence.room:compiler:1.1.1'
 
     testImplementation 'junit:junit:4.12'
-    androidTestImplementation 'androidx.test:runner:1.1.0-alpha4'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.0-alpha4'
+    androidTestImplementation 'androidx.test:runner:1.1.2-alpha02'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0-alpha02'
 }
