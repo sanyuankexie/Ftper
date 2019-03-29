@@ -19,4 +19,7 @@ public interface ConfigEntityDao {
 
     @Query("select * from configs")
     List<ConfigEntity> loadAll();
+
+    @Query("select * from configs where id=:id")
+    ConfigEntity findById(int id);
 }

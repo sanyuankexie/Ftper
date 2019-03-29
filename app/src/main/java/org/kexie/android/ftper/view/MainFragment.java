@@ -10,15 +10,12 @@ import androidx.core.math.MathUtils;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentPagerAdapter;
-import androidx.lifecycle.ViewModelProviders;
 import androidx.viewpager.widget.PagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 import com.flyco.tablayout.listener.OnTabSelectListener;
 import org.kexie.android.ftper.R;
 import org.kexie.android.ftper.databinding.FragmentMainBinding;
-import org.kexie.android.ftper.viewmodel.MainViewModel;
 import org.kexie.android.ftper.viewmodel.bean.TabItem;
-import org.kexie.android.ftper.widget.RxWrapper;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,7 +27,6 @@ public class MainFragment extends Fragment {
 
     private PagerAdapter mPagerAdapter;
 
-    private MainViewModel mViewModel;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -73,9 +69,6 @@ public class MainFragment extends Fragment {
                               @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        mViewModel = ViewModelProviders.of(this)
-                .get(MainViewModel.class);
-
         mBinding.pages.setAdapter(mPagerAdapter);
 
         mBinding.pages.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
@@ -85,23 +78,20 @@ public class MainFragment extends Fragment {
             }
         });
 
-        mBinding.tabs.setOnTabSelectListener(RxWrapper
-                .create(OnTabSelectListener.class)
-                .owner(this)
-                .inner(new OnTabSelectListener() {
-                    @Override
-                    public void onTabSelect(int position) {
-                        mBinding.pages.setCurrentItem(MathUtils.clamp(
-                                position,
-                                0,
-                                mPagerAdapter.getCount()));
-                    }
+        mBinding.tabs.setOnTabSelectListener(new OnTabSelectListener() {
+            @Override
+            public void onTabSelect(int position) {
+                mBinding.pages.setCurrentItem(MathUtils.clamp(
+                        position,
+                        0,
+                        mPagerAdapter.getCount()));
+            }
 
-                    @Override
-                    public void onTabReselect(int position) {
+            @Override
+            public void onTabReselect(int position) {
 
-                    }
-                }).build());
+            }
+        });
 
         List<TabItem> tabItemEntities = Arrays.asList(
                 new TabItem("配置", R.drawable.config_s, R.drawable.config),

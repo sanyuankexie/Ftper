@@ -18,7 +18,6 @@ import org.kexie.android.ftper.BR;
 import org.kexie.android.ftper.R;
 import org.kexie.android.ftper.databinding.FragmentFilesBinding;
 import org.kexie.android.ftper.viewmodel.ClientViewModel;
-import org.kexie.android.ftper.viewmodel.MainViewModel;
 import org.kexie.android.ftper.viewmodel.bean.FileItem;
 import org.kexie.android.ftper.widget.GenericQuickAdapter;
 import org.kexie.android.ftper.widget.RxWrapper;
@@ -33,8 +32,6 @@ public class FilesFragment extends Fragment
     private ClientViewModel mViewModel;
 
     private GenericQuickAdapter<FileItem> mItemAdapter;
-
-    private MainViewModel mMainViewModel;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState)
@@ -66,15 +63,13 @@ public class FilesFragment extends Fragment
 
         mViewModel = ViewModelProviders.of(this)
                 .get(ClientViewModel.class);
-        mMainViewModel = ViewModelProviders.of(requireParentFragment())
-                .get(MainViewModel.class);
 
-        mMainViewModel.getCurrent().observe(this, mViewModel::connect);
 
         mBinding.refresh.setOnRefreshListener(() ->
         {
 
         });
+
         mBinding.setAdpater(mItemAdapter);
 
         mItemAdapter.setOnItemClickListener(RxWrapper

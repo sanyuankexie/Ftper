@@ -18,7 +18,6 @@ import org.kexie.android.ftper.databinding.FragmentConfigsBinding;
 import org.kexie.android.ftper.databinding.ViewFooterConfigAddBinding;
 import org.kexie.android.ftper.databinding.ViewHeadConfigBinding;
 import org.kexie.android.ftper.viewmodel.ConfigsViewModel;
-import org.kexie.android.ftper.viewmodel.MainViewModel;
 import org.kexie.android.ftper.viewmodel.bean.ConfigItem;
 import org.kexie.android.ftper.widget.ConfigDialogBuilder;
 import org.kexie.android.ftper.widget.GenericQuickAdapter;
@@ -35,8 +34,6 @@ public class ConfigsFragment extends Fragment {
     private ViewHeadConfigBinding mHeadBinding;
 
     private ConfigsViewModel mViewModel;
-
-    private MainViewModel mMainViewModel;
 
     private GenericQuickAdapter<ConfigItem> mConfigAdapter;
 
@@ -74,8 +71,6 @@ public class ConfigsFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         mViewModel = ViewModelProviders.of(this)
                 .get(ConfigsViewModel.class);
-        mMainViewModel = ViewModelProviders.of(requireParentFragment())
-                .get(MainViewModel.class);
 
         mViewModel.getConfigs().observe(this, mConfigAdapter::setNewData);
 
@@ -86,9 +81,6 @@ public class ConfigsFragment extends Fragment {
                 .owner(this)
                 .inner(v -> openConfigDialog(null))
                 .build());
-
-        mViewModel.getSelect().observe(this,
-                mMainViewModel.getCurrent()::setValue);
 
         mConfigAdapter.setOnItemClickListener(RxWrapper
                 .create(BaseQuickAdapter.OnItemClickListener.class)

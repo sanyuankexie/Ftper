@@ -1,6 +1,7 @@
 package org.kexie.android.ftper.viewmodel
 
 import android.app.Application
+import android.content.SharedPreferences
 import android.os.Handler
 import android.os.HandlerThread
 import android.preference.PreferenceManager
@@ -16,24 +17,24 @@ import org.kexie.android.ftper.app.AppGlobal
 import org.kexie.android.ftper.model.bean.ConfigEntity
 import org.kexie.android.ftper.viewmodel.bean.ConfigItem
 
-class ConfigsViewModel(application: Application)
-    : AndroidViewModel(application) {
+internal const val SELECT_KEY = "select"
 
-    companion object {
-        private const val sSelectKey = "select";
-    }
+class ConfigsViewModel(application: Application)
+    : AndroidViewModel(application),
+    SharedPreferences.OnSharedPreferenceChangeListener {
 
     private val mPreferences = PreferenceManager
         .getDefaultSharedPreferences(getApplication())
+        .apply { registerOnSharedPreferenceChangeListener(this@ConfigsViewModel) }
 
     private val mWorkerThread = HandlerThread(toString())
-        .apply {
-            start()
-        }
-
-    private val mSelect = MutableLiveData<ConfigItem>()
+        .apply { start() }
 
     private val mHandler = Handler(mWorkerThread.looper)
+
+    private val mSelect = MutableLiveData<Int>()
+
+    private val mConfigs = MutableLiveData<List<ConfigItem>>()
 
     /**
      *[ConfigsViewModel]是否在处理加载任务
@@ -52,40 +53,41 @@ class ConfigsViewModel(application: Application)
      */
     private val mOnInfo = PublishSubject.create<String>()
 
+    private val mDao = getApplication<AppGlobal>()
+        .appDatabase
+        .configDao
+
     val onError: Observable<String> = mOnError.observeOn(AndroidSchedulers.mainThread())
 
     val onSuccess: Observable<String> = mOnSuccess.observeOn(AndroidSchedulers.mainThread())
 
     val onInfo: Observable<String> = mOnInfo.observeOn(AndroidSchedulers.mainThread())
 
-    private val mConfigs = MutableLiveData<List<ConfigItem>>()
-
     val configs: LiveData<List<ConfigItem>>
         get() = mConfigs
 
-    val select: LiveData<ConfigItem>
+    val select: LiveData<Int>
         get() = mSelect
-
-    private val mDao = getApplication<AppGlobal>()
-        .appDatabase
-        .configDao
 
     init {
         mHandler.post { reload() }
     }
 
+    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String) {
+        if (SELECT_KEY == key) {
+            mSelect.value = mPreferences.getInt(SELECT_KEY, Int.MIN_VALUE)
+        }
+    }
+
     fun remove(configItem: ConfigItem) {
         mHandler.post {
             try {
-                if (mSelect.value?.id == configItem.id) {
-                    synchronized(mPreferences)
-                    {
-                        mPreferences.edit()
-                            .putInt(sSelectKey, Int.MIN_VALUE)
-                            .apply()
-                    }
+                if (mSelect.value == configItem.id) {
+                    mPreferences.edit()
+                        .putInt(SELECT_KEY, Int.MIN_VALUE)
+                        .apply()
                 }
-                mDao.remove(configItem.toDataEntity())
+                mDao.remove(configItem.toEntity())
                 reload()
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -98,7 +100,7 @@ class ConfigsViewModel(application: Application)
         mIsLoading.value = true
         mHandler.post {
             try {
-                mDao.update(configItem.toDataEntity())
+                mDao.update(configItem.toEntity())
                 reload()
                 mOnSuccess.onNext("数据已更新")
             } catch (e: Exception) {
@@ -113,7 +115,7 @@ class ConfigsViewModel(application: Application)
         mIsLoading.value = true
         mHandler.post {
             try {
-                mDao.add(configItem.toDataEntity())
+                mDao.add(configItem.toEntity())
                 reload()
                 mOnSuccess.onNext("数据已更新")
             } catch (e: Exception) {
@@ -131,25 +133,20 @@ class ConfigsViewModel(application: Application)
             }
         }
         configItem.isSelect = true
-        mSelect.value = configItem
-        synchronized(mPreferences)
-        {
-            mPreferences.edit()
-                .putInt(sSelectKey, configItem.id)
-                .apply()
-        }
+        mPreferences.edit()
+            .putInt(SELECT_KEY, configItem.id)
+            .apply()
     }
 
     @WorkerThread
     private fun reload() {
         val list = mDao.loadAll()
-            .map { it.toViewData() }
-        mSelect.postValue(list.firstOrNull { it.isSelect })
+            .map { it.toReadabilityData() }
         mConfigs.postValue(list)
     }
 
     @Throws(Exception::class)
-    private fun ConfigItem.toDataEntity(): ConfigEntity {
+    private fun ConfigItem.toEntity(): ConfigEntity {
         val thiz = this
         return ConfigEntity()
             .apply {
@@ -171,7 +168,7 @@ class ConfigsViewModel(application: Application)
             }
     }
 
-    private fun ConfigEntity.toViewData(): ConfigItem {
+    private fun ConfigEntity.toReadabilityData(): ConfigItem {
         return ConfigItem(
             name = this.name,
             id = this.id,
@@ -180,14 +177,12 @@ class ConfigsViewModel(application: Application)
             username = this.username,
             password = this.password,
             date = TimeUtils.millis2String(this.date),
-            isSelect = this.id == synchronized(mPreferences)
-            {
-                mPreferences.getInt(sSelectKey, Int.MIN_VALUE)
-            }
+            isSelect = this.id == mPreferences.getInt(SELECT_KEY, Int.MIN_VALUE)
         )
     }
 
     override fun onCleared() {
         mWorkerThread.quit()
+        mPreferences.unregisterOnSharedPreferenceChangeListener(this)
     }
 }
