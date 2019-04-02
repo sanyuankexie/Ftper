@@ -9,13 +9,14 @@ import org.kexie.android.ftper.model.AppDatabase
 
 class AppGlobal : MultiDexApplication() {
 
-    val appDatabase: AppDatabase by lazy {
+    val appDatabase: AppDatabase by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
         Room.databaseBuilder(
                 this,
                 AppDatabase::class.java,
                 packageName)
                 .fallbackToDestructiveMigration()
                 .build()
+
     }
 
     override fun onCreate() {
@@ -23,7 +24,7 @@ class AppGlobal : MultiDexApplication() {
         if (BuildConfig.DEBUG) {
             Logger.addLogAdapter(AndroidLogAdapter())
         }
-        //这看似不安全的操作，实际上却是安全的use by lazy{ }
+        //这看似不安全的操作，实际上却是安全的use by lazy(LazyThreadSafetyMode.SYNCHRONIZED){ }
         Thread {
             appDatabase
         }.apply {

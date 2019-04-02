@@ -7,10 +7,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.qmuiteam.qmui.widget.QMUIEmptyView;
-import com.qmuiteam.qmui.widget.dialog.QMUIBottomSheet;
+import com.qmuiteam.qmui.widget.dialog.QMUIBottomSheet.BottomGridSheetBuilder;
 import com.qmuiteam.qmui.widget.dialog.QMUIDialog;
+import com.qmuiteam.qmui.widget.dialog.QMUIDialog.EditTextDialogBuilder;
 import com.qmuiteam.qmui.widget.dialog.QMUIDialogAction;
 
 import org.kexie.android.ftper.BR;
@@ -29,6 +29,7 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
 import es.dmoral.toasty.Toasty;
 
+import static com.chad.library.adapter.base.BaseQuickAdapter.OnItemClickListener;
 import static org.kexie.android.ftper.widget.FastUtils.subscribeToast;
 
 public class FilesFragment extends Fragment {
@@ -59,7 +60,7 @@ public class FilesFragment extends Fragment {
                 container,
                 false);
         mEmptyView = new QMUIEmptyView(inflater.getContext());
-        mEmptyView.setTitleText("这里什么也没有");
+        mEmptyView.setTitleText(getString(R.string.this_is_empty));
         mItemAdapter.setEmptyView(mEmptyView);
         return mBinding.getRoot();
     }
@@ -84,22 +85,22 @@ public class FilesFragment extends Fragment {
             }
         });
 
-        mEmptyView.setButton("点击刷新", RxWrapper.create(View.OnClickListener.class)
+        mEmptyView.setButton(getString(R.string.refresh), RxWrapper.create(View.OnClickListener.class)
                 .owner(this)
                 .inner(v -> mClientViewModel.refresh())
                 .build());
 
         mBinding.setOptions(RxWrapper.create(View.OnClickListener.class)
                 .owner(this)
-                .inner(v -> new QMUIBottomSheet.BottomGridSheetBuilder(requireContext())
+                .inner(v -> new BottomGridSheetBuilder(requireContext())
                         .addItem(R.drawable.upload,
-                                "上传文件到当前文件夹",
+                                getString(R.string.upload_current_dir),
                                 R.drawable.upload,
-                                QMUIBottomSheet.BottomGridSheetBuilder.FIRST_LINE)
+                                BottomGridSheetBuilder.FIRST_LINE)
                         .addItem(R.drawable.new_dir,
-                                "新建文件夹",
+                                getString(R.string.new_dir),
                                 R.drawable.new_dir,
-                                QMUIBottomSheet.BottomGridSheetBuilder.FIRST_LINE)
+                                BottomGridSheetBuilder.FIRST_LINE)
                         .setOnSheetItemClickListener((dialog, itemView) -> {
                             dialog.dismiss();
                             int tag = (int) itemView.getTag();
@@ -109,14 +110,14 @@ public class FilesFragment extends Fragment {
                                 }
                                 break;
                                 case R.drawable.new_dir: {
-                                    QMUIDialog.EditTextDialogBuilder builder
-                                            = new QMUIDialog.EditTextDialogBuilder(requireContext());
-                                    builder.setTitle("新建文件夹")
-                                            .setPlaceholder("在此输入文件夹名称")
+                                    EditTextDialogBuilder builder
+                                            = new EditTextDialogBuilder(requireContext());
+                                    builder.setTitle(R.string.new_dir)
+                                            .setPlaceholder(R.string.input_dir_name)
                                             .setInputType(InputType.TYPE_CLASS_TEXT)
-                                            .addAction("取消",
+                                            .addAction(R.string.submit,
                                                     (dialog1, index) -> dialog1.dismiss())
-                                            .addAction("确定", (dialog12, index) -> {
+                                            .addAction(R.string.cancel, (dialog12, index) -> {
                                                 @SuppressWarnings("deprecation")
                                                 CharSequence text = builder.getEditText().getText();
                                                 if (!TextUtils.isEmpty(text)) {
@@ -124,7 +125,7 @@ public class FilesFragment extends Fragment {
                                                     dialog12.dismiss();
                                                 } else {
                                                     Toasty.warning(requireContext(),
-                                                            "文件夹名称不能为空")
+                                                            getString(R.string.dir_no_empty))
                                                             .show();
                                                 }
                                             })
@@ -142,7 +143,7 @@ public class FilesFragment extends Fragment {
         mClientViewModel.getCurrentDir().observe(this, mBinding::setPath);
 
         mItemAdapter.setOnItemClickListener(RxWrapper
-                .create(BaseQuickAdapter.OnItemClickListener.class)
+                .create(OnItemClickListener.class)
                 .owner(this)
                 .inner((adapter, view1, position) ->
                 {
@@ -159,7 +160,8 @@ public class FilesFragment extends Fragment {
                 .build());
         mItemAdapter.setOnItemLongClickListener((adapter, view12, position) -> {
             FileItem fileItem = (FileItem) adapter.getItem(position);
-            if (fileItem == null || "..".equals(fileItem.getName())) {
+            if (fileItem == null || getString(R.string.uplayer_dir)
+                    .equals(fileItem.getName())) {
                 return false;
             }
             openFileBottomSheet(fileItem);
@@ -169,21 +171,18 @@ public class FilesFragment extends Fragment {
     }
 
     private void openFileBottomSheet(FileItem fileItem) {
-
-        QMUIBottomSheet.BottomGridSheetBuilder builder
-                = new QMUIBottomSheet.BottomGridSheetBuilder(requireContext())
+        BottomGridSheetBuilder builder
+                = new BottomGridSheetBuilder(requireContext())
                 .addItem(R.drawable.delete,
-                        "删除",
+                        getString(R.string.delete),
                         R.drawable.delete,
-                        QMUIBottomSheet.BottomGridSheetBuilder.FIRST_LINE);
-
+                        BottomGridSheetBuilder.FIRST_LINE);
         if (fileItem.isFile()) {
             builder.addItem(R.drawable.dl,
-                    "下载",
+                    getString(R.string.download),
                     R.drawable.dl,
-                    QMUIBottomSheet.BottomGridSheetBuilder.FIRST_LINE);
+                    BottomGridSheetBuilder.FIRST_LINE);
         }
-
         builder.setOnSheetItemClickListener((dialog, itemView) ->
         {
             dialog.dismiss();
@@ -191,11 +190,11 @@ public class FilesFragment extends Fragment {
             switch (tag) {
                 case R.drawable.delete: {
                     new QMUIDialog.MessageDialogBuilder(requireContext())
-                            .setTitle("提示")
-                            .setMessage("确定要删除吗？")
-                            .addAction("取消",
+                            .setTitle(R.string.tip)
+                            .setMessage(R.string.submit_delete)
+                            .addAction(getString(R.string.cancel),
                                     (dialog1, index) -> dialog1.dismiss())
-                            .addAction(0, "删除",
+                            .addAction(0, getString(R.string.delete),
                                     QMUIDialogAction.ACTION_PROP_NEGATIVE,
                                     (dialog12, index) ->
                                     {

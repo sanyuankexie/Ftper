@@ -1,10 +1,19 @@
 package org.kexie.android.ftper.model;
 
-import androidx.room.*;
 import org.kexie.android.ftper.model.bean.ConfigEntity;
 
 import java.util.List;
 
+import androidx.room.Dao;
+import androidx.room.Delete;
+import androidx.room.Insert;
+import androidx.room.Query;
+import androidx.room.Update;
+
+
+/**
+*像不像hibernate?
+*/
 @Dao
 public interface ConfigEntityDao {
 

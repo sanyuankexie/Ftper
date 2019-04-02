@@ -6,15 +6,19 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.widget.ImageView;
 import android.widget.Toast;
+
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.RequestBuilder;
+import com.bumptech.glide.RequestManager;
+import com.bumptech.glide.request.RequestOptions;
+
+import org.kexie.android.ftper.R;
+
 import androidx.databinding.BindingAdapter;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleOwner;
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.RequestBuilder;
-import com.bumptech.glide.RequestManager;
-import com.bumptech.glide.request.RequestOptions;
 import io.reactivex.Observable;
 import io.reactivex.functions.BiFunction;
 import io.reactivex.functions.Consumer;
@@ -25,11 +29,9 @@ import static com.uber.autodispose.AutoDispose.autoDisposable;
 import static com.uber.autodispose.android.lifecycle.AndroidLifecycleScopeProvider.from;
 import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 
-public final class FastUtils
-{
+public final class FastUtils {
 
-    private FastUtils()
-    {
+    private FastUtils() {
         throw new AssertionError();
     }
 
@@ -37,8 +39,7 @@ public final class FastUtils
     public static <T> void subscribe(LifecycleOwner lifecycleOwner,
                                      Observable<T> observable,
                                      Lifecycle.Event event,
-                                     Consumer<T> consumer)
-    {
+                                     Consumer<T> consumer) {
         observable.observeOn(mainThread())
                 .as(autoDisposable(from(lifecycleOwner, event)))
                 .subscribe(consumer);
@@ -46,8 +47,7 @@ public final class FastUtils
 
     public static void subscribeToast(Fragment fragment,
                                       Observable<String> observable,
-                                      BiFunction<Context, String, Toast> function)
-    {
+                                      BiFunction<Context, String, Toast> function) {
         subscribe(fragment,
                 observable,
                 Lifecycle.Event.ON_PAUSE,
@@ -55,8 +55,7 @@ public final class FastUtils
     }
 
     @SuppressWarnings("WeakerAccess")
-    public static FragmentTransaction openBaseTransaction(Fragment root)
-    {
+    public static FragmentTransaction openBaseTransaction(Fragment root) {
         return root.requireFragmentManager()
                 .beginTransaction()
                 .addToBackStack(null)
@@ -67,16 +66,13 @@ public final class FastUtils
     public static FragmentTransaction
     openTransactionWithBundle(Fragment root,
                               Class<? extends Fragment> type,
-                              Bundle bundle)
-    {
-        try
-        {
+                              Bundle bundle) {
+        try {
             Fragment fragment = type.newInstance();
             fragment.setArguments(bundle);
             return openBaseTransaction(root)
                     .add(root.getId(), type.newInstance());
-        } catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
@@ -86,49 +82,44 @@ public final class FastUtils
     @SuppressWarnings("WeakerAccess")
     public static FragmentTransaction
     openTransactionNoBundle(Fragment root,
-                            Class<? extends Fragment> type)
-    {
+                            Class<? extends Fragment> type) {
         return openTransactionWithBundle(root, type, Bundle.EMPTY);
     }
 
     public static void startFragment(Fragment root,
                                      Class<? extends Fragment> type,
-                                     Bundle bundle)
-    {
+                                     Bundle bundle) {
         FragmentTransaction transaction = openTransactionWithBundle(root, type, bundle);
-        if (transaction != null)
-        {
+        if (transaction != null) {
             transaction.commit();
         }
     }
 
     public static void startFragment(Fragment root,
-                                     Class<? extends Fragment> type)
-    {
+                                     Class<? extends Fragment> type) {
         FragmentTransaction transaction = openTransactionNoBundle(root, type);
-        if (transaction != null)
-        {
+        if (transaction != null) {
             transaction.commit();
         }
     }
 
     @BindingAdapter("load_async")
-    public static void loadAsync(ImageView imageView, String path)
-    {
+    public static void loadAsync(ImageView imageView, String path) {
         String packName = imageView.getContext().getPackageName();
         Resources resources = imageView.getResources();
-        int id = resources.getIdentifier(path, "mipmap", packName);
-        if (id == 0)
-        {
-            id = resources.getIdentifier(path, "drawable", packName);
+        int id = resources.getIdentifier(path, imageView
+                .getContext()
+                .getString(R.string.mipmap), packName);
+        if (id == 0) {
+            id = resources.getIdentifier(path, imageView
+                    .getContext()
+                    .getString(R.string.drawable), packName);
         }
         RequestManager manager = Glide.with(imageView);
         RequestBuilder<Drawable> builder;
-        if (id == 0)
-        {
+        if (id == 0) {
             builder = manager.load(path);
-        } else
-        {
+        } else {
             builder = manager.load(id);
         }
         builder.apply(RequestOptions.priorityOf(IMMEDIATE))

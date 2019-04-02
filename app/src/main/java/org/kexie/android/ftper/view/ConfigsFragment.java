@@ -5,7 +5,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.qmuiteam.qmui.util.QMUIKeyboardHelper;
 
 import org.kexie.android.ftper.BR;
@@ -26,6 +25,8 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
 import es.dmoral.toasty.Toasty;
 
+import static android.view.View.*;
+import static com.chad.library.adapter.base.BaseQuickAdapter.OnItemClickListener;
 import static org.kexie.android.ftper.widget.FastUtils.subscribeToast;
 
 public class ConfigsFragment extends Fragment {
@@ -80,13 +81,13 @@ public class ConfigsFragment extends Fragment {
         mBinding.setAdapter(mConfigAdapter);
 
         mFooterBinding.setAddAction(RxWrapper
-                .create(View.OnClickListener.class)
+                .create(OnClickListener.class)
                 .owner(this)
                 .inner(v -> openConfigDialog(null))
                 .build());
 
         mConfigAdapter.setOnItemClickListener(RxWrapper
-                .create(BaseQuickAdapter.OnItemClickListener.class)
+                .create(OnItemClickListener.class)
                 .owner(this)
                 .inner((adapter, view12, position) ->
                 {

@@ -80,7 +80,8 @@ class ConfigsViewModel(application: Application)
     }
 
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String) {
-        if (getApplication<Application>().getString(R.string.select_key) == key) {
+        if (getApplication<Application>()
+                        .getString(R.string.select_key) == key) {
             mSelect.value = selectValue
         }
     }
@@ -97,10 +98,12 @@ class ConfigsViewModel(application: Application)
                 }
                 mDao.remove(configItem.toDatabaseEntity())
                 reload()
-                mOnInfo.onNext("已删除")
+                mOnInfo.onNext(getApplication<Application>()
+                        .getString(R.string.yi_del))
             } catch (e: Exception) {
                 e.printStackTrace()
-                mOnError.onNext("删除数据时出错")
+                mOnError.onNext(getApplication<Application>()
+                        .getString(R.string.del_error))
             }
         }
     }
@@ -114,10 +117,12 @@ class ConfigsViewModel(application: Application)
                 if (configItem.id == selectValue) {
                     mSelect.postValue(selectValue)
                 }
-                mOnSuccess.onNext("数据已更新")
+                mOnSuccess.onNext(getApplication<Application>()
+                        .getString(R.string.yi_update))
             } catch (e: Exception) {
                 e.printStackTrace()
-                mOnError.onNext("更新数据时出错")
+                mOnError.onNext(getApplication<Application>()
+                        .getString(R.string.update_error))
             }
             mIsLoading.postValue(false)
         }
@@ -129,10 +134,12 @@ class ConfigsViewModel(application: Application)
             try {
                 mDao.add(configItem.toDatabaseEntity())
                 reload()
-                mOnSuccess.onNext("数据已更新")
+                mOnSuccess.onNext(getApplication<Application>()
+                        .getString(R.string.yi_update))
             } catch (e: Exception) {
                 e.printStackTrace()
-                mOnError.onNext("Host或Port有误")
+                mOnError.onNext(getApplication<Application>()
+                        .getString(R.string.host_has_error))
             }
             mIsLoading.postValue(false)
         }

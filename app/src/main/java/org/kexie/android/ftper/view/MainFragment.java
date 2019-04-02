@@ -4,15 +4,9 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.core.math.MathUtils;
-import androidx.databinding.DataBindingUtil;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentPagerAdapter;
-import androidx.viewpager.widget.PagerAdapter;
-import androidx.viewpager.widget.ViewPager;
+
 import com.flyco.tablayout.listener.OnTabSelectListener;
+
 import org.kexie.android.ftper.R;
 import org.kexie.android.ftper.databinding.FragmentMainBinding;
 import org.kexie.android.ftper.viewmodel.bean.TabItem;
@@ -21,12 +15,21 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.math.MathUtils;
+import androidx.databinding.DataBindingUtil;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentPagerAdapter;
+import androidx.viewpager.widget.PagerAdapter;
+
+import static androidx.viewpager.widget.ViewPager.SimpleOnPageChangeListener;
+
 public class MainFragment extends Fragment {
 
     private FragmentMainBinding mBinding;
 
     private PagerAdapter mPagerAdapter;
-
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -71,7 +74,7 @@ public class MainFragment extends Fragment {
 
         mBinding.pages.setAdapter(mPagerAdapter);
 
-        mBinding.pages.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+        mBinding.pages.addOnPageChangeListener(new SimpleOnPageChangeListener() {
             @Override
             public void onPageSelected(int position) {
                 mBinding.tabs.setCurrentTab(position);
@@ -94,8 +97,8 @@ public class MainFragment extends Fragment {
         });
 
         List<TabItem> tabItemEntities = Arrays.asList(
-                new TabItem("配置", R.drawable.config_s, R.drawable.config),
-                new TabItem("文件", R.drawable.files_s, R.drawable.files)
+                new TabItem(getString(R.string.config), R.drawable.config_s, R.drawable.config),
+                new TabItem(getString(R.string.files), R.drawable.files_s, R.drawable.files)
         );
 
         mBinding.tabs.setTabData(new ArrayList<>(tabItemEntities));

@@ -5,16 +5,20 @@ import android.text.method.PasswordTransformationMethod;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ScrollView;
-import androidx.databinding.DataBindingUtil;
+
 import com.qmuiteam.qmui.util.QMUIResHelper;
 import com.qmuiteam.qmui.util.QMUIViewHelper;
 import com.qmuiteam.qmui.widget.dialog.QMUIDialog;
+
 import org.kexie.android.ftper.R;
 import org.kexie.android.ftper.databinding.DialogMultiInputBinding;
 
 import java.util.Arrays;
 
-public class ConfigDialogBuilder extends QMUIDialog.AutoResizeDialogBuilder {
+import androidx.databinding.DataBindingUtil;
+
+public final class ConfigDialogBuilder
+        extends QMUIDialog.AutoResizeDialogBuilder {
 
 
     private DialogMultiInputBinding mBinding;

@@ -54,7 +54,7 @@ class ClientViewModel(application: Application)
      * FTP协议的[FTPClient]
      */
     private val mClient = FTPClient().apply {
-        controlEncoding = "gbk"
+        controlEncoding = getApplication<Application>().getString(R.string.gbk)
         connectTimeout = 5
     }
     /**
@@ -103,7 +103,8 @@ class ClientViewModel(application: Application)
             if (mClient.changeWorkingDirectory(path)) {
                 refreshInternal()
             } else {
-                mOnError.onNext("切换目录失败请检查网络连接")
+                mOnError.onNext(getApplication<Application>()
+                        .getString(R.string.check_network))
             }
             mIsLoading.postValue(false)
         }
@@ -120,7 +121,8 @@ class ClientViewModel(application: Application)
                                 .getInt(getApplication<Application>()
                                         .getString(R.string.select_key),
                                         Int.MIN_VALUE))) {
-                    mOnError.onNext("未选择服务器")
+                    mOnError.onNext(getApplication<Application>()
+                            .getString(R.string.no_select_service))
                 }
             }
             mIsLoading.postValue(false)
@@ -132,15 +134,17 @@ class ClientViewModel(application: Application)
         mCurrentDir.postValue(mClient.printWorkingDirectory())
         mClient.enterLocalPassiveMode()
         mFiles.postValue(mClient.listFiles()
-                .filter { it.name != "." }
+                .filter { it.name != getApplication<Application>().getString(R.string.dot) }
                 .map {
                     FileItem(
                             name = it.name,
                             size = it.size,
                             icon = when {
-                                it.name == ".." -> ContextCompat.getDrawable(
-                                        getApplication(),
-                                        R.drawable.up)!!
+                                it.name == getApplication<Application>()
+                                        .getString(R.string.uplayer_dir) ->
+                                    ContextCompat.getDrawable(
+                                            getApplication(),
+                                            R.drawable.up)!!
                                 it.isDirectory -> ContextCompat.getDrawable(
                                         getApplication(),
                                         R.drawable.dir)!!
@@ -170,19 +174,23 @@ class ClientViewModel(application: Application)
                 throw IOException()
             }
             refreshInternal()
-            mOnSuccess.onNext("FTP服务器连接成功")
+            mOnSuccess.onNext(getApplication<Application>()
+                    .getString(R.string.ftp_connect_sucess))
             return true
         } catch (e: MalformedURLException) {
             e.printStackTrace()
-            mOnError.onNext("host格式有误,请不要包含port")
+            mOnError.onNext(getApplication<Application>()
+                    .getString(R.string.host_error))
             return false
         } catch (e: IOException) {
             e.printStackTrace()
-            mOnError.onNext("连接失败,清检查网络连接")
+            mOnError.onNext(getApplication<Application>()
+                    .getString(R.string.network_error))
             return false
         } catch (e: Throwable) {
             e.printStackTrace()
-            mOnError.onNext("连接失败,参数有误")
+            mOnError.onNext(getApplication<Application>()
+                    .getString(R.string.other_error))
             return false
         }
     }
@@ -207,16 +215,19 @@ class ClientViewModel(application: Application)
     fun mkdir(name: String) {
         mHandler.post {
             if (mClient.makeDirectory(name)) {
-                mOnSuccess.onNext("创建成功")
+                mOnSuccess.onNext(getApplication<Application>()
+                        .getString(R.string.create_sucess))
                 refreshInternal()
             } else {
-                mOnError.onNext("创建失败")
+                mOnError.onNext(getApplication<Application>()
+                        .getString(R.string.create_error))
             }
         }
     }
 
     fun delete(fileItem: FileItem) {
-        if (".." == fileItem.name) {
+        if (getApplication<Application>().getString(R.string.uplayer_dir)
+                == fileItem.name) {
             return
         }
         mIsLoading.value = true
@@ -228,10 +239,12 @@ class ClientViewModel(application: Application)
                     mClient.deleteFile(fileItem.name)
                 }
                 refreshInternal()
-                mOnSuccess.onNext("删除成功")
+                mOnSuccess.onNext(getApplication<Application>()
+                        .getString(R.string.del_success))
             } catch (e: Exception) {
                 e.printStackTrace()
-                mOnError.onNext("删除失败")
+                mOnError.onNext(getApplication<Application>()
+                        .getString(R.string.del_error))
             }
             mIsLoading.postValue(false)
         }
