@@ -93,7 +93,7 @@ public class FilesFragment extends Fragment {
                 .owner(this)
                 .inner(v -> new QMUIBottomSheet.BottomGridSheetBuilder(requireContext())
                         .addItem(R.drawable.upload,
-                                "上传文件",
+                                "上传文件到当前文件夹",
                                 R.drawable.upload,
                                 QMUIBottomSheet.BottomGridSheetBuilder.FIRST_LINE)
                         .addItem(R.drawable.new_dir,
@@ -114,11 +114,12 @@ public class FilesFragment extends Fragment {
                                     builder.setTitle("新建文件夹")
                                             .setPlaceholder("在此输入文件夹名称")
                                             .setInputType(InputType.TYPE_CLASS_TEXT)
-                                            .addAction("取消", (dialog1, index) -> dialog1.dismiss())
+                                            .addAction("取消",
+                                                    (dialog1, index) -> dialog1.dismiss())
                                             .addAction("确定", (dialog12, index) -> {
                                                 @SuppressWarnings("deprecation")
                                                 CharSequence text = builder.getEditText().getText();
-                                                if (TextUtils.isEmpty(text)) {
+                                                if (!TextUtils.isEmpty(text)) {
                                                     mClientViewModel.mkdir(text.toString());
                                                     dialog12.dismiss();
                                                 } else {

@@ -3,6 +3,7 @@ package org.kexie.android.ftper.viewmodel
 import android.app.Application
 import android.os.Handler
 import android.os.HandlerThread
+import android.preference.PreferenceManager
 import androidx.annotation.WorkerThread
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
@@ -109,13 +110,19 @@ class ClientViewModel(application: Application)
     }
 
     fun refresh() {
-        if (!mClient.isConnected) {
-            mOnError.onNext("未连接到服务器")
-            return
-        }
         mIsLoading.value = true
         mHandler.post {
-            refreshInternal()
+            if (mClient.isConnected) {
+                refreshInternal()
+            } else {
+                if (!connectInternal(PreferenceManager
+                                .getDefaultSharedPreferences(getApplication())
+                                .getInt(getApplication<Application>()
+                                        .getString(R.string.select_key),
+                                        Int.MIN_VALUE))) {
+                    mOnError.onNext("未选择服务器")
+                }
+            }
             mIsLoading.postValue(false)
         }
     }
@@ -146,35 +153,44 @@ class ClientViewModel(application: Application)
                 })
     }
 
-    fun connect(id: Int) {
+    @WorkerThread
+    private fun connectInternal(id: Int): Boolean {
         if (id == Int.MIN_VALUE) {
-            mFiles.value = emptyList()
-            return
+            mFiles.postValue(emptyList())
+            return false
         }
+        if (mClient.isConnected) {
+            mClient.disconnect()
+        }
+        try {
+            val config = mDao.findById(id)
+            mClient.connect(config.host, config.port)
+            mClient.login(config.username, config.password)
+            if (!FTPReply.isPositiveCompletion(mClient.replyCode)) {
+                throw IOException()
+            }
+            refreshInternal()
+            mOnSuccess.onNext("FTP服务器连接成功")
+            return true
+        } catch (e: MalformedURLException) {
+            e.printStackTrace()
+            mOnError.onNext("host格式有误,请不要包含port")
+            return false
+        } catch (e: IOException) {
+            e.printStackTrace()
+            mOnError.onNext("连接失败,清检查网络连接")
+            return false
+        } catch (e: Throwable) {
+            e.printStackTrace()
+            mOnError.onNext("连接失败,参数有误")
+            return false
+        }
+    }
+
+    fun connect(id: Int) {
         mIsLoading.value = true
         mHandler.post {
-            if (mClient.isConnected) {
-                mClient.disconnect()
-            }
-            try {
-                val config = mDao.findById(id)
-                mClient.connect(config.host, config.port)
-                mClient.login(config.username, config.password)
-                if (!FTPReply.isPositiveCompletion(mClient.replyCode)) {
-                    throw Exception()
-                }
-                refreshInternal()
-                mOnSuccess.onNext("FTP服务器连接成功")
-            } catch (e: MalformedURLException) {
-                e.printStackTrace()
-                mOnError.onNext("host格式有误,请不要包含port")
-            } catch (e: IOException) {
-                e.printStackTrace()
-                mOnError.onNext("连接失败,清检查网络连接")
-            } catch (e: Throwable) {
-                e.printStackTrace()
-                mOnError.onNext("连接失败,参数有误")
-            }
+            connectInternal(id)
             mIsLoading.postValue(false)
         }
     }
@@ -189,7 +205,14 @@ class ClientViewModel(application: Application)
     }
 
     fun mkdir(name: String) {
-
+        mHandler.post {
+            if (mClient.makeDirectory(name)) {
+                mOnSuccess.onNext("创建成功")
+                refreshInternal()
+            } else {
+                mOnError.onNext("创建失败")
+            }
+        }
     }
 
     fun delete(fileItem: FileItem) {
@@ -221,4 +244,3 @@ class ClientViewModel(application: Application)
         mWorkerThread.quit()
     }
 }
-

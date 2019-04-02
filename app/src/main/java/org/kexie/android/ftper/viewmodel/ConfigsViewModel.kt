@@ -13,6 +13,7 @@ import com.blankj.utilcode.util.TimeUtils
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.subjects.PublishSubject
+import org.kexie.android.ftper.R
 import org.kexie.android.ftper.app.AppGlobal
 import org.kexie.android.ftper.model.bean.ConfigEntity
 import org.kexie.android.ftper.viewmodel.bean.ConfigItem
@@ -22,22 +23,23 @@ class ConfigsViewModel(application: Application)
     : AndroidViewModel(application),
     SharedPreferences.OnSharedPreferenceChangeListener {
 
-    companion object {
-        const val SELECT_KEY = "select"
-    }
-
     private val mPreferences = PreferenceManager
-        .getDefaultSharedPreferences(getApplication())
-        .apply { registerOnSharedPreferenceChangeListener(this@ConfigsViewModel) }
+            .getDefaultSharedPreferences(getApplication())
+            .apply { registerOnSharedPreferenceChangeListener(this@ConfigsViewModel) }
 
     private val mWorkerThread = HandlerThread(toString())
-        .apply { start() }
+            .apply { start() }
 
     private val mHandler = Handler(mWorkerThread.looper)
 
-    private val mSelect = MutableLiveData<Int>(mPreferences.getInt(SELECT_KEY, Int.MIN_VALUE))
+    private val mSelect = MutableLiveData<Int>(selectValue)
 
     private val mConfigs = MutableLiveData<List<ConfigItem>>()
+
+    private val selectValue
+        get() = mPreferences.getInt(getApplication<Application>()
+                .getString(R.string.select_key),
+                Int.MIN_VALUE)
 
     /**
      *[ConfigsViewModel]是否在处理加载任务
@@ -58,8 +60,8 @@ class ConfigsViewModel(application: Application)
     private val mOnInfo = PublishSubject.create<String>()
 
     private val mDao = getApplication<AppGlobal>()
-        .appDatabase
-        .configDao
+            .appDatabase
+            .configDao
 
     val onError: Observable<String> = mOnError.observeOn(AndroidSchedulers.mainThread())
 
@@ -78,8 +80,8 @@ class ConfigsViewModel(application: Application)
     }
 
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String) {
-        if (SELECT_KEY == key) {
-            mSelect.value = mPreferences.getInt(SELECT_KEY, Int.MIN_VALUE)
+        if (getApplication<Application>().getString(R.string.select_key) == key) {
+            mSelect.value = selectValue
         }
     }
 
@@ -88,8 +90,10 @@ class ConfigsViewModel(application: Application)
             try {
                 if (mSelect.value == configItem.id) {
                     mPreferences.edit()
-                        .putInt(SELECT_KEY, Int.MIN_VALUE)
-                        .apply()
+                            .putInt(getApplication<Application>()
+                                    .getString(R.string.select_key),
+                                    Int.MIN_VALUE)
+                            .apply()
                 }
                 mDao.remove(configItem.toDatabaseEntity())
                 reload()
@@ -107,9 +111,8 @@ class ConfigsViewModel(application: Application)
             try {
                 mDao.update(configItem.toDatabaseEntity())
                 reload()
-                val id = mPreferences.getInt(SELECT_KEY, Int.MIN_VALUE)
-                if (configItem.id == id) {
-                    mSelect.postValue(id)
+                if (configItem.id == selectValue) {
+                    mSelect.postValue(selectValue)
                 }
                 mOnSuccess.onNext("数据已更新")
             } catch (e: Exception) {
@@ -143,14 +146,15 @@ class ConfigsViewModel(application: Application)
         }
         configItem.isSelect = true
         mPreferences.edit()
-            .putInt(SELECT_KEY, configItem.id)
-            .apply()
+                .putInt(getApplication<Application>()
+                        .getString(R.string.select_key), configItem.id)
+                .apply()
     }
 
     @WorkerThread
     private fun reload() {
         val list = mDao.loadAll()
-            .map { it.toReadabilityData() }
+                .map { it.toReadabilityData() }
         mConfigs.postValue(list)
     }
 
@@ -158,35 +162,35 @@ class ConfigsViewModel(application: Application)
     private fun ConfigItem.toDatabaseEntity(): ConfigEntity {
         val thiz = this
         return ConfigEntity()
-            .apply {
-                id = thiz.id
-                name = if (thiz.name.isNullOrBlank()) {
-                    null
-                } else {
-                    thiz.name
+                .apply {
+                    id = thiz.id
+                    name = if (thiz.name.isNullOrBlank()) {
+                        null
+                    } else {
+                        thiz.name
+                    }
+                    host = if (thiz.host.isNullOrBlank()) {
+                        throw Exception()
+                    } else {
+                        thiz.host
+                    }
+                    port = thiz.port!!.toInt()
+                    username = thiz.username
+                    password = thiz.password
+                    date = TimeUtils.getNowMills()
                 }
-                host = if (thiz.host.isNullOrBlank()) {
-                    throw Exception()
-                } else {
-                    thiz.host
-                }
-                port = thiz.port!!.toInt()
-                username = thiz.username
-                password = thiz.password
-                date = TimeUtils.getNowMills()
-            }
     }
 
     private fun ConfigEntity.toReadabilityData(): ConfigItem {
         return ConfigItem(
-            name = this.name,
-            id = this.id,
-            host = this.host,
-            port = this.port.toString(),
-            username = this.username,
-            password = this.password,
-            date = TimeUtils.millis2String(this.date),
-            isSelect = this.id == mPreferences.getInt(SELECT_KEY, Int.MIN_VALUE)
+                name = this.name,
+                id = this.id,
+                host = this.host,
+                port = this.port.toString(),
+                username = this.username,
+                password = this.password,
+                date = TimeUtils.millis2String(this.date),
+                isSelect = this.id == selectValue
         )
     }
 
