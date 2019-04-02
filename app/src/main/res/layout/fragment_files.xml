@@ -4,23 +4,40 @@
 
     <data>
         <variable
+            name="path"
+            type="String"/>
+        <variable
             name="adpater"
             type="androidx.recyclerview.widget.RecyclerView.Adapter" />
+        <variable
+            name="options"
+            type="android.view.View.OnClickListener"/>
     </data>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
-
-        <TextView
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="@color/white"
-            android:gravity="center"
-            android:text="文件"
-            android:textColor="@color/colorBlackAlpha54"
-            android:textSize="25dp" />
+            android:layout_height="?attr/actionBarSize">
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/white"
+                android:gravity="center"
+                android:text="文件"
+                android:textColor="@color/colorBlackAlpha54"
+                android:textSize="25dp" />
+            <ImageView
+                android:onClick="@{options}"
+                android:padding="15dp"
+                load_async='@{"sheng_lue"}'
+                android:scaleType="centerInside"
+                android:layout_gravity="center|right"
+                android:layout_width="?attr/actionBarSize"
+                android:layout_height="?attr/actionBarSize" />
+        </FrameLayout>
 
         <View
             android:layout_width="match_parent"
@@ -30,6 +47,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:text="@{path}"
             android:background="@color/colorBlackAlpha12"
             android:gravity="left|center"
             android:singleLine="true"

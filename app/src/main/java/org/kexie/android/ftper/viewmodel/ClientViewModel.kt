@@ -1,10 +1,9 @@
 package org.kexie.android.ftper.viewmodel
 
 import android.app.Application
-import android.content.SharedPreferences
 import android.os.Handler
 import android.os.HandlerThread
-import android.preference.PreferenceManager
+import androidx.annotation.WorkerThread
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
@@ -23,17 +22,13 @@ import java.io.File
 import java.io.IOException
 import java.net.MalformedURLException
 
-class ClientViewModel(application: Application)
-    : AndroidViewModel(application),
-    SharedPreferences.OnSharedPreferenceChangeListener {
 
-    private val mPreferences = PreferenceManager
-        .getDefaultSharedPreferences(getApplication())
-        .apply { registerOnSharedPreferenceChangeListener(this@ClientViewModel) }
+class ClientViewModel(application: Application)
+    : AndroidViewModel(application) {
 
     private val mDao = getApplication<AppGlobal>()
-        .appDatabase
-        .configDao
+            .appDatabase
+            .configDao
 
     /**
      * 使用[WorkManager]执行上传下载任务
@@ -43,13 +38,13 @@ class ClientViewModel(application: Application)
      * 轻量级的[HandlerThread]执行简单的删除和加载列表任务
      */
     private val mWorkerThread = HandlerThread(toString())
-        .apply {
-            start()
-            setUncaughtExceptionHandler { t, e ->
-                e.printStackTrace()
-                Logger.d(e)
+            .apply {
+                start()
+                setUncaughtExceptionHandler { t, e ->
+                    e.printStackTrace()
+                    Logger.d(e)
+                }
             }
-        }
     /**
      * [mWorkerThread]的[Handler]
      */
@@ -101,29 +96,62 @@ class ClientViewModel(application: Application)
 
     val onInfo: Observable<String> = mOnInfo.observeOn(AndroidSchedulers.mainThread())
 
-    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String) {
-        if (key == SELECT_KEY) {
-            connect(mPreferences.getInt(SELECT_KEY, Int.MIN_VALUE))
+    fun changeDir(path: String) {
+        mIsLoading.value = true
+        mHandler.post {
+            if (mClient.changeWorkingDirectory(path)) {
+                refreshInternal()
+            } else {
+                mOnError.onNext("切换目录失败请检查网络连接")
+            }
+            mIsLoading.postValue(false)
         }
     }
 
-    init {
-        refresh()
-    }
-
-    fun changeDir(path: String) {
-
-    }
-
     fun refresh() {
-        connect(mPreferences.getInt(SELECT_KEY, Int.MIN_VALUE))
+        if (!mClient.isConnected) {
+            mOnError.onNext("未连接到服务器")
+            return
+        }
+        mIsLoading.value = true
+        mHandler.post {
+            refreshInternal()
+            mIsLoading.postValue(false)
+        }
     }
 
-    private fun connect(id: Int) {
+    @WorkerThread
+    private fun refreshInternal() {
+        mCurrentDir.postValue(mClient.printWorkingDirectory())
+        mClient.enterLocalPassiveMode()
+        mFiles.postValue(mClient.listFiles()
+                .filter { it.name != "." }
+                .map {
+                    FileItem(
+                            name = it.name,
+                            size = it.size,
+                            icon = when {
+                                it.name == ".." -> ContextCompat.getDrawable(
+                                        getApplication(),
+                                        R.drawable.up)!!
+                                it.isDirectory -> ContextCompat.getDrawable(
+                                        getApplication(),
+                                        R.drawable.dir)!!
+                                else -> ContextCompat.getDrawable(
+                                        getApplication(),
+                                        R.drawable.file)!!
+                            },
+                            type = it.type
+                    )
+                })
+    }
+
+    fun connect(id: Int) {
         if (id == Int.MIN_VALUE) {
             mFiles.value = emptyList()
             return
         }
+        mIsLoading.value = true
         mHandler.post {
             if (mClient.isConnected) {
                 mClient.disconnect()
@@ -135,19 +163,7 @@ class ClientViewModel(application: Application)
                 if (!FTPReply.isPositiveCompletion(mClient.replyCode)) {
                     throw Exception()
                 }
-                mClient.enterLocalPassiveMode()
-                mFiles.postValue(mClient.listFiles()
-                    .map {
-                        FileItem(
-                            name = it.name,
-                            size = it.size,
-                            icon = ContextCompat.getDrawable(
-                                getApplication(),
-                                R.drawable.file
-                            )!!,
-                            type = it.type
-                        )
-                    })
+                refreshInternal()
                 mOnSuccess.onNext("FTP服务器连接成功")
             } catch (e: MalformedURLException) {
                 e.printStackTrace()
@@ -159,6 +175,7 @@ class ClientViewModel(application: Application)
                 e.printStackTrace()
                 mOnError.onNext("连接失败,参数有误")
             }
+            mIsLoading.postValue(false)
         }
     }
 
@@ -171,15 +188,24 @@ class ClientViewModel(application: Application)
 
     }
 
-    fun mkdir() {
+    fun mkdir(name: String) {
 
     }
 
     fun delete(fileItem: FileItem) {
+        if (".." == fileItem.name) {
+            return
+        }
         mIsLoading.value = true
         mHandler.post {
             try {
-                mClient.dele(fileItem.name)
+                if (fileItem.isDirectory) {
+
+                } else if (fileItem.isFile) {
+                    mClient.deleteFile(fileItem.name)
+                }
+                refreshInternal()
+                mOnSuccess.onNext("删除成功")
             } catch (e: Exception) {
                 e.printStackTrace()
                 mOnError.onNext("删除失败")
@@ -193,6 +219,6 @@ class ClientViewModel(application: Application)
             mClient.abort()
         }
         mWorkerThread.quit()
-        mPreferences.unregisterOnSharedPreferenceChangeListener(this)
     }
 }
+

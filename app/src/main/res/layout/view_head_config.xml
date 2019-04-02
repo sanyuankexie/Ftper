@@ -12,6 +12,8 @@
             android:layout_height="match_parent"
             app:cardUseCompatPadding="true"
             app:cardCornerRadius="20dp"
-            app:cardElevation="10dp"/>
+            app:cardElevation="10dp">
+
+        </androidx.cardview.widget.CardView>
     </FrameLayout>
 </layout>

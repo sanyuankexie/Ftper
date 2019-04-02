@@ -4,14 +4,10 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.databinding.DataBindingUtil;
-import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProviders;
+
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.qmuiteam.qmui.util.QMUIKeyboardHelper;
-import es.dmoral.toasty.Toasty;
+
 import org.kexie.android.ftper.BR;
 import org.kexie.android.ftper.R;
 import org.kexie.android.ftper.databinding.FragmentConfigsBinding;
@@ -22,6 +18,13 @@ import org.kexie.android.ftper.viewmodel.bean.ConfigItem;
 import org.kexie.android.ftper.widget.ConfigDialogBuilder;
 import org.kexie.android.ftper.widget.GenericQuickAdapter;
 import org.kexie.android.ftper.widget.RxWrapper;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.databinding.DataBindingUtil;
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProviders;
+import es.dmoral.toasty.Toasty;
 
 import static org.kexie.android.ftper.widget.FastUtils.subscribeToast;
 
@@ -69,7 +72,7 @@ public class ConfigsFragment extends Fragment {
     public void onViewCreated(@NonNull View view,
                               @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        mViewModel = ViewModelProviders.of(this)
+        mViewModel = ViewModelProviders.of(requireActivity())
                 .get(ConfigsViewModel.class);
 
         mViewModel.getConfigs().observe(this, mConfigAdapter::setNewData);

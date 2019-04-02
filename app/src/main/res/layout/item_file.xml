@@ -3,6 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <data>
+        <import type="android.view.View"/>
         <variable
             name="file"
             type="org.kexie.android.ftper.viewmodel.bean.FileItem"/>
@@ -31,7 +32,7 @@
                 android:layout_height="wrap_content">
                 <TextView
                     android:textSize="15dp"
-                    android:text="@{file.name}"
+                    android:text='@{"..".equals(file.name)?"返回上级目录":file.name}'
                     android:singleLine="true"
                     android:gravity="left|center"
                     android:hint="@string/app_name"
@@ -45,6 +46,7 @@
                     android:layout_height="wrap_content" />
             </LinearLayout>
             <ImageView
+                android:visibility="@{file.directory?View.VISIBLE:View.INVISIBLE}"
                 android:scaleType="centerInside"
                 load_async='@{"next"}'
                 android:layout_width="15dp"

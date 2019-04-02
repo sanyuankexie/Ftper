@@ -23,8 +23,12 @@ class AppGlobal : MultiDexApplication() {
         if (BuildConfig.DEBUG) {
             Logger.addLogAdapter(AndroidLogAdapter())
         }
+        //这看似不安全的操作，实际上却是安全的use by lazy{ }
         Thread {
             appDatabase
-        }.start()
+        }.apply {
+            priority = Thread.MAX_PRIORITY
+            start()
+        }
     }
 }

@@ -17,11 +17,14 @@ import org.kexie.android.ftper.app.AppGlobal
 import org.kexie.android.ftper.model.bean.ConfigEntity
 import org.kexie.android.ftper.viewmodel.bean.ConfigItem
 
-internal const val SELECT_KEY = "select"
 
 class ConfigsViewModel(application: Application)
     : AndroidViewModel(application),
     SharedPreferences.OnSharedPreferenceChangeListener {
+
+    companion object {
+        const val SELECT_KEY = "select"
+    }
 
     private val mPreferences = PreferenceManager
         .getDefaultSharedPreferences(getApplication())
@@ -32,7 +35,7 @@ class ConfigsViewModel(application: Application)
 
     private val mHandler = Handler(mWorkerThread.looper)
 
-    private val mSelect = MutableLiveData<Int>()
+    private val mSelect = MutableLiveData<Int>(mPreferences.getInt(SELECT_KEY, Int.MIN_VALUE))
 
     private val mConfigs = MutableLiveData<List<ConfigItem>>()
 
@@ -40,6 +43,7 @@ class ConfigsViewModel(application: Application)
      *[ConfigsViewModel]是否在处理加载任务
      */
     private val mIsLoading = MutableLiveData<Boolean>(false)
+
     /**
      *出错响应
      */
@@ -87,8 +91,9 @@ class ConfigsViewModel(application: Application)
                         .putInt(SELECT_KEY, Int.MIN_VALUE)
                         .apply()
                 }
-                mDao.remove(configItem.toEntity())
+                mDao.remove(configItem.toDatabaseEntity())
                 reload()
+                mOnInfo.onNext("已删除")
             } catch (e: Exception) {
                 e.printStackTrace()
                 mOnError.onNext("删除数据时出错")
@@ -100,8 +105,12 @@ class ConfigsViewModel(application: Application)
         mIsLoading.value = true
         mHandler.post {
             try {
-                mDao.update(configItem.toEntity())
+                mDao.update(configItem.toDatabaseEntity())
                 reload()
+                val id = mPreferences.getInt(SELECT_KEY, Int.MIN_VALUE)
+                if (configItem.id == id) {
+                    mSelect.postValue(id)
+                }
                 mOnSuccess.onNext("数据已更新")
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -115,7 +124,7 @@ class ConfigsViewModel(application: Application)
         mIsLoading.value = true
         mHandler.post {
             try {
-                mDao.add(configItem.toEntity())
+                mDao.add(configItem.toDatabaseEntity())
                 reload()
                 mOnSuccess.onNext("数据已更新")
             } catch (e: Exception) {
@@ -146,7 +155,7 @@ class ConfigsViewModel(application: Application)
     }
 
     @Throws(Exception::class)
-    private fun ConfigItem.toEntity(): ConfigEntity {
+    private fun ConfigItem.toDatabaseEntity(): ConfigEntity {
         val thiz = this
         return ConfigEntity()
             .apply {
