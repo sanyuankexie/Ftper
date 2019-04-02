@@ -1,14 +1,14 @@
 package org.kexie.android.ftper.widget;
 
-import androidx.collection.ArrayMap;
-import androidx.lifecycle.Lifecycle;
-import androidx.lifecycle.LifecycleOwner;
-import io.reactivex.subjects.PublishSubject;
-
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
+import androidx.collection.ArrayMap;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleOwner;
+import io.reactivex.subjects.PublishSubject;
 
 import static com.uber.autodispose.AutoDispose.autoDisposable;
 import static com.uber.autodispose.android.lifecycle.AndroidLifecycleScopeProvider.from;
@@ -17,7 +17,7 @@ import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 public final class RxWrapper<X>
 {
 
-    private static final int MINI_TIME = 500;
+    private static final int MINI_TIME = 200;
 
     private final Class<X> mInterface;
 

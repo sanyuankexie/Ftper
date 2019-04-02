@@ -6,14 +6,61 @@
         android:layout_marginBottom="-15dp"
         android:clipChildren="false"
         android:layout_width="match_parent"
-        android:layout_height="200dp">
+        android:layout_height="wrap_content">
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             app:cardUseCompatPadding="true"
             app:cardCornerRadius="20dp"
             app:cardElevation="10dp">
-
+            <LinearLayout
+                android:orientation="vertical"
+                android:layout_marginBottom="15dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginLeft="20dp"
+                android:layout_marginRight="20dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+                <TextView
+                    android:gravity="center|left"
+                    android:textSize="25dp"
+                    android:textColor="@color/colorBlackAlpha54"
+                    android:text="一个简单的 FTP Client"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+                <TextView
+                    android:textSize="15dp"
+                    android:text="1.点击最下方+可添加远程FTP服务器"
+                    android:layout_marginTop="10dp"
+                    android:gravity="center|left"
+                    android:textColor="@color/colorBlackAlpha54"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+                <TextView
+                    android:textSize="15dp"
+                    android:text="2.长按可编辑FTP服务器信息"
+                    android:layout_marginTop="5dp"
+                    android:gravity="center|left"
+                    android:textColor="@color/colorBlackAlpha54"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+                <TextView
+                    android:textSize="15dp"
+                    android:text="3.右方文件页面选定服务器后方可正常预览"
+                    android:layout_marginTop="5dp"
+                    android:gravity="center|left"
+                    android:textColor="@color/colorBlackAlpha54"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+                <TextView
+                    android:textSize="15dp"
+                    android:text="4.支持上传、下载、删除、创建文件夹等功能"
+                    android:layout_marginTop="5dp"
+                    android:gravity="center|left"
+                    android:textColor="@color/colorBlackAlpha54"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
         </androidx.cardview.widget.CardView>
     </FrameLayout>
 </layout>
