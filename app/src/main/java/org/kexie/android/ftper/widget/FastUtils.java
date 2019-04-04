@@ -64,9 +64,27 @@ public final class FastUtils {
 
     @SuppressWarnings("WeakerAccess")
     public static FragmentTransaction
-    openTransactionWithBundle(Fragment root,
-                              Class<? extends Fragment> type,
-                              Bundle bundle) {
+    openTransactionWithCode(Fragment root,
+                            Class<? extends Fragment> type,
+                            Bundle bundle,
+                            int requestCode) {
+        try {
+            Fragment fragment = type.newInstance();
+            fragment.setTargetFragment(root, requestCode);
+            fragment.setArguments(bundle);
+            return openBaseTransaction(root)
+                    .add(root.getId(), type.newInstance());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    public static FragmentTransaction
+    openTransaction(Fragment root,
+                    Class<? extends Fragment> type,
+                    Bundle bundle) {
         try {
             Fragment fragment = type.newInstance();
             fragment.setArguments(bundle);
@@ -79,25 +97,20 @@ public final class FastUtils {
     }
 
 
-    @SuppressWarnings("WeakerAccess")
-    public static FragmentTransaction
-    openTransactionNoBundle(Fragment root,
-                            Class<? extends Fragment> type) {
-        return openTransactionWithBundle(root, type, Bundle.EMPTY);
-    }
-
     public static void startFragment(Fragment root,
                                      Class<? extends Fragment> type,
                                      Bundle bundle) {
-        FragmentTransaction transaction = openTransactionWithBundle(root, type, bundle);
+        FragmentTransaction transaction = openTransaction(root, type, bundle);
         if (transaction != null) {
             transaction.commit();
         }
     }
 
-    public static void startFragment(Fragment root,
-                                     Class<? extends Fragment> type) {
-        FragmentTransaction transaction = openTransactionNoBundle(root, type);
+    public static void startFragmentForResult(Fragment root,
+                                              Class<? extends Fragment> type,
+                                              Bundle bundle,
+                                              int requestCode) {
+        FragmentTransaction transaction = openTransactionWithCode(root, type, bundle, requestCode);
         if (transaction != null) {
             transaction.commit();
         }

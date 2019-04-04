@@ -1,5 +1,6 @@
 package org.kexie.android.ftper.view;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.InputType;
 import android.text.TextUtils;
@@ -30,6 +31,7 @@ import androidx.lifecycle.ViewModelProviders;
 import es.dmoral.toasty.Toasty;
 
 import static com.chad.library.adapter.base.BaseQuickAdapter.OnItemClickListener;
+import static org.kexie.android.ftper.widget.FastUtils.startFragmentForResult;
 import static org.kexie.android.ftper.widget.FastUtils.subscribeToast;
 
 public class FilesFragment extends Fragment {
@@ -106,7 +108,10 @@ public class FilesFragment extends Fragment {
                             int tag = (int) itemView.getTag();
                             switch (tag) {
                                 case R.drawable.upload: {
-
+                                    startFragmentForResult(this,
+                                            SelectFragment.class,
+                                            Bundle.EMPTY,
+                                            R.id.open_select_request_code);
                                 }
                                 break;
                                 case R.drawable.new_dir: {
@@ -168,6 +173,12 @@ public class FilesFragment extends Fragment {
             return true;
         });
         mClientViewModel.getFiles().observe(this, mItemAdapter::setNewData);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
     }
 
     private void openFileBottomSheet(FileItem fileItem) {

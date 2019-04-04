@@ -1,17 +1,17 @@
 package org.kexie.android.ftper.widget;
 
+import androidx.collection.ArrayMap;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleOwner;
+import com.uber.autodispose.AutoDispose;
+import com.uber.autodispose.android.lifecycle.AndroidLifecycleScopeProvider;
+import io.reactivex.subjects.PublishSubject;
+
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import androidx.collection.ArrayMap;
-import androidx.lifecycle.Lifecycle;
-import androidx.lifecycle.LifecycleOwner;
-import io.reactivex.subjects.PublishSubject;
-
-import static com.uber.autodispose.AutoDispose.autoDisposable;
-import static com.uber.autodispose.android.lifecycle.AndroidLifecycleScopeProvider.from;
 import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 
 public final class RxWrapper<X>
@@ -88,7 +88,7 @@ public final class RxWrapper<X>
             PublishSubject<Object[]> subject = PublishSubject.create();
             subject.throttleFirst(mTime, TimeUnit.MILLISECONDS)
                     .observeOn(mainThread())
-                    .as(autoDisposable(from(mOwner, mEvent)))
+                    .as(AutoDispose.autoDisposable(AndroidLifecycleScopeProvider.from(mOwner, mEvent)))
                     .subscribe(args -> method.invoke(mInner, args));
             subjectMap.put(method, subject);
         }
