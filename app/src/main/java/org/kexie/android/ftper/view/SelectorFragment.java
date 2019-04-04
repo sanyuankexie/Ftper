@@ -8,20 +8,23 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.flyco.tablayout.listener.OnTabSelectListener;
+import com.orhanobut.logger.Logger;
+import com.qmuiteam.qmui.widget.dialog.QMUITipDialog;
 
 import org.kexie.android.ftper.R;
 import org.kexie.android.ftper.databinding.FragmentSelectorBinding;
 import org.kexie.android.ftper.viewmodel.SelectorViewModel;
 import org.kexie.android.ftper.viewmodel.bean.FileItem;
 import org.kexie.android.ftper.widget.FilePagerAdapter;
-import org.kexie.android.ftper.widget.FilePos;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
+import androidx.viewpager.widget.ViewPager;
 
 import static org.kexie.android.ftper.widget.FastUtils.subscribe;
 import static org.kexie.android.ftper.widget.FastUtils.wrapperOnTouch;
@@ -90,22 +93,45 @@ public class SelectorFragment extends Fragment {
 
         mBinding.pager.setOffscreenPageLimit(4);
 
+        mBinding.pager.addOnPageChangeListener(
+                new ViewPager.SimpleOnPageChangeListener() {
+            @Override
+            public void onPageSelected(int position) {
+                mBinding.tabs.setCurrentTab(position);
+                Logger.d(position);
+                mViewModel.loadData(position);
+            }
+        });
+
         mBinding.pager.setAdapter(mFilePagerAdapter);
 
-        mViewModel.getImage().observe(this,
-                fileItems -> mFilePagerAdapter.setData(FilePos.IMAGE_POS,fileItems));
+        for (int i = 0; i < 5; i++) {
+            final int position = i;
+            mViewModel.getPagerData(position).observe(this,
+                    data -> mFilePagerAdapter.setData(position, data));
+        }
 
-        mViewModel.getPdf().observe(this,
-                fileItems -> mFilePagerAdapter.setData(FilePos.PDF_POS,fileItems));
+        mViewModel.isLoading().observe(this,
+                new Observer<Boolean>() {
+                    private QMUITipDialog dialog = null;
 
-        mViewModel.getPpt().observe(this,
-                fileItems -> mFilePagerAdapter.setData(FilePos.PPT_POS,fileItems));
-
-        mViewModel.getWord().observe(this,
-                fileItems -> mFilePagerAdapter.setData(FilePos.WORD_POS,fileItems));
-
-        mViewModel.getXls().observe(this,
-                fileItems -> mFilePagerAdapter.setData(FilePos.XLS_POS,fileItems));
+                    @Override
+                    public void onChanged(Boolean isLoading) {
+                        if (isLoading && dialog == null) {
+                            dialog = new QMUITipDialog
+                                    .Builder(requireContext())
+                                    .setIconType(QMUITipDialog.Builder.ICON_TYPE_LOADING)
+                                    .setTipWord(getString(R.string.loading))
+                                    .create();
+                            dialog.show();
+                        } else {
+                            if (dialog != null) {
+                                dialog.dismiss();
+                                dialog = null;
+                            }
+                        }
+                    }
+                });
 
         subscribe(this,
                 mViewModel.getOnSelect(),
@@ -121,6 +147,8 @@ public class SelectorFragment extends Fragment {
                     }
                     requireActivity().onBackPressed();
                 });
+
+        mViewModel.loadData(mBinding.pager.getCurrentItem());
     }
 
     @Override

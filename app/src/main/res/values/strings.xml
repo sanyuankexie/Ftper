@@ -40,4 +40,5 @@
     <string name="ppt">PPT</string>
     <string name="pdf">PDF</string>
     <string name="file">file</string>
+    <string name="loading">正在加载</string>
 </resources>

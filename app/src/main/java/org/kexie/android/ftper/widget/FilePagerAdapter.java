@@ -33,7 +33,7 @@ public final class FilePagerAdapter extends PagerAdapter {
 
     private final BaseQuickAdapter.OnItemClickListener mListener;
 
-    private final Object[] mHolders = new Object[4];
+    private final Object[] mHolders = new Object[5];
 
     @NonNull
     @Override
