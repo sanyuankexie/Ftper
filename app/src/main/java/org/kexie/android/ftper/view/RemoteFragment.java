@@ -201,7 +201,7 @@ public class RemoteFragment extends Fragment {
         if (requestCode == R.id.open_select_request_code
                 && resultCode == Activity.RESULT_OK
                 && data != null) {
-            File file = data.getParcelableExtra(getString(R.string.file));
+            File file = (File) data.getSerializableExtra(getString(R.string.file));
             if (file != null) {
                 mRemoteViewModel.upload(file);
                 QMUITipDialog dialog = new QMUITipDialog

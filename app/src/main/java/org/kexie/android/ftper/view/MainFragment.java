@@ -130,7 +130,6 @@ public class MainFragment extends Fragment {
         super.onActivityResult(requestCode, resultCode, data);
         Logger.d(data);
         if (requestCode == R.id.open_select_request_code) {
-
             mRemoteFragment.onActivityResult(requestCode, resultCode, data);
         }
     }

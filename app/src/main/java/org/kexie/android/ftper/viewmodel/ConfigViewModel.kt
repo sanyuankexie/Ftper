@@ -146,6 +146,10 @@ class ConfigViewModel(application: Application)
     }
 
     fun select(configItem: ConfigItem) {
+        if (configItem.id == selectValue) {
+            mSelect.value = selectValue
+            return
+        }
         mConfigs.value?.let {
             it.forEach {
                 it.isSelect = false
