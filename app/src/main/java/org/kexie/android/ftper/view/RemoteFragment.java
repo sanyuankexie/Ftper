@@ -3,8 +3,6 @@ package org.kexie.android.ftper.view;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.text.InputType;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -24,6 +22,7 @@ import org.kexie.android.ftper.databinding.FragmentFilesBinding;
 import org.kexie.android.ftper.viewmodel.ConfigViewModel;
 import org.kexie.android.ftper.viewmodel.RemoteViewModel;
 import org.kexie.android.ftper.viewmodel.bean.RemoteItem;
+import org.kexie.android.ftper.widget.Utils;
 import org.kexie.android.ftper.widget.GenericQuickAdapter;
 import org.kexie.android.ftper.widget.RxWrapper;
 
@@ -37,8 +36,6 @@ import androidx.lifecycle.ViewModelProviders;
 import es.dmoral.toasty.Toasty;
 
 import static com.chad.library.adapter.base.BaseQuickAdapter.OnItemClickListener;
-import static org.kexie.android.ftper.widget.FastUtils.startFragmentForResult;
-import static org.kexie.android.ftper.widget.FastUtils.subscribeDialog;
 
 public class RemoteFragment extends Fragment {
 
@@ -50,7 +47,7 @@ public class RemoteFragment extends Fragment {
 
     private GenericQuickAdapter<RemoteItem> mItemAdapter;
 
-    private Handler mHandler = new Handler(Looper.getMainLooper());
+    private QMUITipDialog dialog = null;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -87,9 +84,23 @@ public class RemoteFragment extends Fragment {
         configViewModel.getSelect().observe(this, mRemoteViewModel::connect);
 
         mBinding.refresh.setOnRefreshListener(() -> mRemoteViewModel.refresh());
-        mRemoteViewModel.isLoading().observe(this, bool -> {
-            if (!bool) {
+        mRemoteViewModel.isLoading().observe(this, isLoading -> {
+            if (!isLoading) {
                 mBinding.refresh.setRefreshing(false);
+            }
+            if (isLoading && dialog == null) {
+                dialog = new QMUITipDialog
+                        .Builder(requireContext())
+                        .setIconType(QMUITipDialog.Builder.ICON_TYPE_LOADING)
+                        .setTipWord(getString(R.string.loading))
+                        .create();
+                dialog.setCancelable(false);
+                dialog.show();
+            } else {
+                if (dialog != null) {
+                    dialog.dismiss();
+                    dialog = null;
+                }
             }
         });
 
@@ -114,7 +125,7 @@ public class RemoteFragment extends Fragment {
                             int tag = (int) itemView.getTag();
                             switch (tag) {
                                 case R.drawable.upload: {
-                                    startFragmentForResult(requireParentFragment(),
+                                    Utils.startFragmentForResult(requireParentFragment(),
                                             SelectorFragment.class,
                                             Bundle.EMPTY,
                                             R.id.open_select_request_code);
@@ -243,15 +254,15 @@ public class RemoteFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
-        subscribeDialog(this,
+        Utils.subscribeDialog(this,
                 mRemoteViewModel.getOnError(),
                 QMUITipDialog.Builder.ICON_TYPE_FAIL);
 
-        subscribeDialog(this,
+        Utils.subscribeDialog(this,
                 mRemoteViewModel.getOnSuccess(),
                 QMUITipDialog.Builder.ICON_TYPE_SUCCESS);
 
-        subscribeDialog(this,
+        Utils.subscribeDialog(this,
                 mRemoteViewModel.getOnInfo(),
                 QMUITipDialog.Builder.ICON_TYPE_INFO);
     }
@@ -259,6 +270,10 @@ public class RemoteFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        if (dialog != null) {
+            dialog.dismiss();
+            dialog = null;
+        }
         mEmptyView = null;
         mBinding.unbind();
         mBinding = null;

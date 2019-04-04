@@ -55,7 +55,8 @@ class RemoteViewModel(application: Application)
      */
     private val mClient = FTPClient().apply {
         controlEncoding = getApplication<Application>().getString(R.string.gbk)
-        connectTimeout = 5
+        connectTimeout = 5000
+        defaultTimeout = 5000
     }
     /**
      * 当前目录使用[LiveData]同步到View层

@@ -2,21 +2,20 @@ package org.kexie.android.ftper.viewmodel;
 
 import android.app.Application;
 import android.content.ContentResolver;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.provider.MediaStore;
 
+import org.kexie.android.ftper.R;
 import org.kexie.android.ftper.viewmodel.bean.FileItem;
 import org.kexie.android.ftper.widget.FileType;
+import org.kexie.android.ftper.widget.Utils;
 
 import java.io.File;
-import java.text.DecimalFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
-import java.util.Locale;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
@@ -115,42 +114,43 @@ public final class SelectorViewModel extends AndroidViewModel {
         mLiveData.get(FileType.TYPE_IMAGE).postValue(fileItems);
     }
 
-    private static FileItem loadItem(String path, int type) {
+    private FileItem loadItem(String path, int type) {
         File file = new File(path);
         String name = file.getName();
         String rawPath = file.getAbsolutePath();
-        String size = sizeToString(file.length());
-        String time = getFileLastModifiedTime(file);
-        return new FileItem(name, rawPath, size, time, type);
-    }
-
-    private static String sizeToString(long size) {
-        DecimalFormat df = new DecimalFormat("#.00");
-        String fileSizeString;
-        String wrongSize = "0B";
-        if (size == 0) {
-            return wrongSize;
-        }
-        if (size < 1024) {
-            fileSizeString = df.format((double) size) + "B";
-        } else if (size < 1048576) {
-            fileSizeString = df.format((double) size / 1024) + "KB";
-        } else if (size < 1073741824) {
-            fileSizeString = df.format((double) size / 1048576) + "MB";
+        String size = Utils.sizeToString(file.length());
+        String time = Utils.getFileLastModifiedTime(file);
+        String iconRes;
+        if (type == FileType.TYPE_IMAGE) {
+            iconRes = rawPath;
         } else {
-            fileSizeString = df.format((double) size / 1073741824) + "GB";
+            iconRes = getIconName(type);
         }
-        return fileSizeString;
+        return new FileItem(name, rawPath, size, time, iconRes);
     }
 
-    private static String getFileLastModifiedTime(File f) {
-        Calendar cal = Calendar.getInstance();
-        long time = f.lastModified();
-        SimpleDateFormat formatter = new
-                SimpleDateFormat("yyyy-MM-dd HH:mm:ss",
-                Locale.getDefault());
-        cal.setTimeInMillis(time);
-        return formatter.format(cal.getTime());
+    private String getIconName(int type) {
+        String select = "";
+        Resources resources = getApplication().getResources();
+        switch (type) {
+            //word
+            case FileType.TYPE_WORD:
+                select = resources.getResourceName(R.drawable.word);
+                break;
+            //xls
+            case FileType.TYPE_XLS:
+                select = resources.getResourceName(R.drawable.xls);
+                break;
+            //ppt
+            case FileType.TYPE_PPT:
+                select = resources.getResourceName(R.drawable.ppt);
+                break;
+            //pdf
+            case FileType.TYPE_PDF:
+                select = resources.getResourceName(R.drawable.pdf);
+                break;
+        }
+        return select;
     }
 
     private void loadDocData(int selectType) {

@@ -16,6 +16,7 @@ import org.kexie.android.ftper.databinding.ViewHeadConfigBinding;
 import org.kexie.android.ftper.viewmodel.ConfigViewModel;
 import org.kexie.android.ftper.viewmodel.bean.ConfigItem;
 import org.kexie.android.ftper.widget.ConfigDialogBuilder;
+import org.kexie.android.ftper.widget.Utils;
 import org.kexie.android.ftper.widget.GenericQuickAdapter;
 import org.kexie.android.ftper.widget.RxWrapper;
 
@@ -27,7 +28,6 @@ import androidx.lifecycle.ViewModelProviders;
 
 import static android.view.View.OnClickListener;
 import static com.chad.library.adapter.base.BaseQuickAdapter.OnItemClickListener;
-import static org.kexie.android.ftper.widget.FastUtils.subscribeDialog;
 
 public class ConfigFragment extends Fragment {
 
@@ -126,15 +126,15 @@ public class ConfigFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
-        subscribeDialog(this,
+        Utils.subscribeDialog(this,
                 mViewModel.getOnError(),
                 QMUITipDialog.Builder.ICON_TYPE_FAIL);
 
-        subscribeDialog(this,
+        Utils.subscribeDialog(this,
                 mViewModel.getOnSuccess(),
                 QMUITipDialog.Builder.ICON_TYPE_SUCCESS);
 
-        subscribeDialog(this,
+        Utils.subscribeDialog(this,
                 mViewModel.getOnInfo(),
                 QMUITipDialog.Builder.ICON_TYPE_INFO);
     }

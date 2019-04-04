@@ -15,6 +15,7 @@ import org.kexie.android.ftper.R;
 import org.kexie.android.ftper.databinding.FragmentSelectorBinding;
 import org.kexie.android.ftper.viewmodel.SelectorViewModel;
 import org.kexie.android.ftper.viewmodel.bean.FileItem;
+import org.kexie.android.ftper.widget.Utils;
 import org.kexie.android.ftper.widget.FilePagerAdapter;
 
 import androidx.annotation.NonNull;
@@ -24,8 +25,6 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.viewpager.widget.ViewPager;
-
-import static org.kexie.android.ftper.widget.FastUtils.subscribe;
 
 
 public class SelectorFragment extends Fragment {
@@ -62,7 +61,7 @@ public class SelectorFragment extends Fragment {
                               @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        mViewModel = ViewModelProviders.of(this)
+        mViewModel = ViewModelProviders.of(requireActivity())
                 .get(SelectorViewModel.class);
 
         mFilePagerAdapter = new FilePagerAdapter(this,
@@ -130,7 +129,7 @@ public class SelectorFragment extends Fragment {
                     }
                 });
 
-        subscribe(this,
+        Utils.subscribe(this,
                 mViewModel.getOnSelect(),
                 Lifecycle.Event.ON_DESTROY,
                 file -> {

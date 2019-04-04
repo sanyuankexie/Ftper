@@ -33,7 +33,7 @@ public final class FilePagerAdapter extends PagerAdapter {
 
     private final BaseQuickAdapter.OnItemClickListener mListener;
 
-    private final Object[] mHolders = new Object[5];
+    private final Object[] mHolders = new Object[FileType.TYPE_PDF + 1];
 
     @SuppressWarnings("unchecked")
     @NonNull

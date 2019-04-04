@@ -15,6 +15,11 @@ import com.qmuiteam.qmui.widget.dialog.QMUITipDialog;
 
 import org.kexie.android.ftper.R;
 
+import java.io.File;
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Locale;
 import java.util.Objects;
 
 import androidx.databinding.BindingAdapter;
@@ -32,9 +37,9 @@ import static com.uber.autodispose.AutoDispose.autoDisposable;
 import static com.uber.autodispose.android.lifecycle.AndroidLifecycleScopeProvider.from;
 import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 
-public final class FastUtils {
+public final class Utils {
 
-    private FastUtils() {
+    private Utils() {
         throw new AssertionError();
     }
 
@@ -157,5 +162,35 @@ public final class FastUtils {
         }
         builder.apply(RequestOptions.priorityOf(IMMEDIATE))
                 .into(imageView);
+    }
+
+
+    public static String sizeToString(long size) {
+        DecimalFormat df = new DecimalFormat("#.00");
+        String fileSizeString;
+        String wrongSize = "0B";
+        if (size == 0) {
+            return wrongSize;
+        }
+        if (size < 1024) {
+            fileSizeString = df.format((double) size) + "B";
+        } else if (size < 1048576) {
+            fileSizeString = df.format((double) size / 1024) + "KB";
+        } else if (size < 1073741824) {
+            fileSizeString = df.format((double) size / 1048576) + "MB";
+        } else {
+            fileSizeString = df.format((double) size / 1073741824) + "GB";
+        }
+        return fileSizeString;
+    }
+
+    public static String getFileLastModifiedTime(File f) {
+        Calendar cal = Calendar.getInstance();
+        long time = f.lastModified();
+        SimpleDateFormat formatter = new
+                SimpleDateFormat("yyyy-MM-dd HH:mm:ss",
+                Locale.getDefault());
+        cal.setTimeInMillis(time);
+        return formatter.format(cal.getTime());
     }
 }
