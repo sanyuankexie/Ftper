@@ -19,6 +19,7 @@ import org.apache.commons.net.ftp.FTPReply
 import org.kexie.android.ftper.R
 import org.kexie.android.ftper.app.AppGlobal
 import org.kexie.android.ftper.viewmodel.bean.RemoteItem
+import org.kexie.android.ftper.widget.Utils
 import java.io.File
 import java.io.IOException
 import java.net.MalformedURLException
@@ -139,7 +140,7 @@ class RemoteViewModel(application: Application)
                 .map {
                     RemoteItem(
                             name = it.name,
-                            size = it.size,
+                            size = Utils.sizeToString(it.size),
                             icon = when {
                                 it.name == getApplication<Application>()
                                         .getString(R.string.uplayer_dir) ->

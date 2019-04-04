@@ -4,7 +4,7 @@ import android.graphics.drawable.Drawable
 
 data class RemoteItem(
     val name: String,
-    val size: Long,
+    val size: String,
     val icon: Drawable,
     private val type: Int
 ) {

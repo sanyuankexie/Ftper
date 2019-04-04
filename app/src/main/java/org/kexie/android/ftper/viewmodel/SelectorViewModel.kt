@@ -49,7 +49,7 @@ class SelectorViewModel(application: Application)
     }
 
     fun select(fileItem: FileItem) {
-
+        mOnSelect.onNext(File(fileItem.path))
     }
 
     fun loadData(position: Int) {

@@ -26,7 +26,11 @@ public final class FilePagerAdapter extends PagerAdapter {
     public FilePagerAdapter(LifecycleOwner lifecycleOwner,
                             BaseQuickAdapter.OnItemClickListener listener) {
         this.mLifecycle = lifecycleOwner.getLifecycle();
-        this.mListener = listener;
+        this.mListener = RxWrapper
+                .create(BaseQuickAdapter.OnItemClickListener.class)
+                .lifecycle(mLifecycle)
+                .inner(listener)
+                .build();
     }
 
     private final Lifecycle mLifecycle;
@@ -57,6 +61,7 @@ public final class FilePagerAdapter extends PagerAdapter {
             textView.setGravity(Gravity.CENTER);
             textView.setTextColor(container.getResources().getColor(R.color.colorBlackAlpha26));
             textView.setText(R.string.this_is_empty);
+            adapter.setOnItemClickListener(mListener);
             adapter.setEmptyView(textView);
             view.setAdapter(adapter);
         }
@@ -73,11 +78,6 @@ public final class FilePagerAdapter extends PagerAdapter {
         } else {
             if (holder == null) {
                 adapter = createAdapter();
-                adapter.setOnItemClickListener(RxWrapper
-                        .create(BaseQuickAdapter.OnItemClickListener.class)
-                        .lifecycle(mLifecycle)
-                        .inner(mListener)
-                        .build());
                 mHolders[pos] = adapter;
             } else {
                 adapter = (GenericQuickAdapter<FileItem>) holder;

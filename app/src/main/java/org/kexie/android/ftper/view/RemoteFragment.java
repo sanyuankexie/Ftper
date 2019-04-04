@@ -22,11 +22,12 @@ import org.kexie.android.ftper.databinding.FragmentFilesBinding;
 import org.kexie.android.ftper.viewmodel.ConfigViewModel;
 import org.kexie.android.ftper.viewmodel.RemoteViewModel;
 import org.kexie.android.ftper.viewmodel.bean.RemoteItem;
-import org.kexie.android.ftper.widget.Utils;
 import org.kexie.android.ftper.widget.GenericQuickAdapter;
 import org.kexie.android.ftper.widget.RxWrapper;
+import org.kexie.android.ftper.widget.Utils;
 
 import java.io.File;
+import java.util.Objects;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -200,9 +201,18 @@ public class RemoteFragment extends Fragment {
         if (requestCode == R.id.open_select_request_code
                 && resultCode == Activity.RESULT_OK
                 && data != null) {
-            File fileItem = data.getParcelableExtra(getString(R.string.file));
-            if (fileItem != null) {
-                mRemoteViewModel.upload(fileItem);
+            File file = data.getParcelableExtra(getString(R.string.file));
+            if (file != null) {
+                mRemoteViewModel.upload(file);
+                QMUITipDialog dialog = new QMUITipDialog
+                        .Builder(requireContext())
+                        .setIconType(QMUITipDialog.Builder.ICON_TYPE_SUCCESS)
+                        .setTipWord(getString(R.string.start_upload))
+                        .create();
+                dialog.setCancelable(false);
+                dialog.show();
+                Objects.requireNonNull(dialog.getWindow()).getDecorView()
+                        .postDelayed(dialog::dismiss, 1000);
             }
         }
     }

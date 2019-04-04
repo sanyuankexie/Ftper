@@ -98,7 +98,7 @@ public final class Utils {
             fragment.setTargetFragment(root, requestCode);
             fragment.setArguments(bundle);
             return openBaseTransaction(root)
-                    .add(root.getId(), type.newInstance());
+                    .add(root.getId(), fragment);
         } catch (Exception e) {
             e.printStackTrace();
             return null;
@@ -114,7 +114,7 @@ public final class Utils {
             Fragment fragment = type.newInstance();
             fragment.setArguments(bundle);
             return openBaseTransaction(root)
-                    .add(root.getId(), type.newInstance());
+                    .add(root.getId(), fragment);
         } catch (Exception e) {
             e.printStackTrace();
             return null;
