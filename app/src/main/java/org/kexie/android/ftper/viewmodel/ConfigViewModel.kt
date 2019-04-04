@@ -19,13 +19,13 @@ import org.kexie.android.ftper.model.bean.ConfigEntity
 import org.kexie.android.ftper.viewmodel.bean.ConfigItem
 
 
-class ConfigsViewModel(application: Application)
+class ConfigViewModel(application: Application)
     : AndroidViewModel(application),
     SharedPreferences.OnSharedPreferenceChangeListener {
 
     private val mPreferences = PreferenceManager
             .getDefaultSharedPreferences(getApplication())
-            .apply { registerOnSharedPreferenceChangeListener(this@ConfigsViewModel) }
+            .apply { registerOnSharedPreferenceChangeListener(this@ConfigViewModel) }
 
     private val mWorkerThread = HandlerThread(toString())
             .apply { start() }
@@ -42,7 +42,7 @@ class ConfigsViewModel(application: Application)
                 Int.MIN_VALUE)
 
     /**
-     *[ConfigsViewModel]是否在处理加载任务
+     *[ConfigViewModel]是否在处理加载任务
      */
     private val mIsLoading = MutableLiveData<Boolean>(false)
 

@@ -1,5 +1,6 @@
 package org.kexie.android.ftper.view;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -20,11 +21,13 @@ import com.qmuiteam.qmui.widget.dialog.QMUITipDialog;
 import org.kexie.android.ftper.BR;
 import org.kexie.android.ftper.R;
 import org.kexie.android.ftper.databinding.FragmentFilesBinding;
-import org.kexie.android.ftper.viewmodel.ClientViewModel;
-import org.kexie.android.ftper.viewmodel.ConfigsViewModel;
-import org.kexie.android.ftper.viewmodel.bean.FileItem;
+import org.kexie.android.ftper.viewmodel.ConfigViewModel;
+import org.kexie.android.ftper.viewmodel.RemoteViewModel;
+import org.kexie.android.ftper.viewmodel.bean.RemoteItem;
 import org.kexie.android.ftper.widget.GenericQuickAdapter;
 import org.kexie.android.ftper.widget.RxWrapper;
+
+import java.io.File;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -37,24 +40,22 @@ import static com.chad.library.adapter.base.BaseQuickAdapter.OnItemClickListener
 import static org.kexie.android.ftper.widget.FastUtils.startFragmentForResult;
 import static org.kexie.android.ftper.widget.FastUtils.subscribeDialog;
 
-public class FilesFragment extends Fragment {
+public class RemoteFragment extends Fragment {
 
     private FragmentFilesBinding mBinding;
 
     private QMUIEmptyView mEmptyView;
 
-    private ClientViewModel mClientViewModel;
+    private RemoteViewModel mRemoteViewModel;
 
-    private ConfigsViewModel mConfigsViewModel;
-
-    private GenericQuickAdapter<FileItem> mItemAdapter;
+    private GenericQuickAdapter<RemoteItem> mItemAdapter;
 
     private Handler mHandler = new Handler(Looper.getMainLooper());
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mItemAdapter = new GenericQuickAdapter<>(R.layout.item_file, BR.file);
+        mItemAdapter = new GenericQuickAdapter<>(R.layout.item_remote_file, BR.file);
     }
 
     @Nullable
@@ -77,16 +78,16 @@ public class FilesFragment extends Fragment {
                               @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        mClientViewModel = ViewModelProviders.of(this)
-                .get(ClientViewModel.class);
+        mRemoteViewModel = ViewModelProviders.of(this)
+                .get(RemoteViewModel.class);
 
-        mConfigsViewModel = ViewModelProviders.of(requireActivity())
-                .get(ConfigsViewModel.class);
+        ConfigViewModel configViewModel = ViewModelProviders.of(requireActivity())
+                .get(ConfigViewModel.class);
 
-        mConfigsViewModel.getSelect().observe(this, mClientViewModel::connect);
+        configViewModel.getSelect().observe(this, mRemoteViewModel::connect);
 
-        mBinding.refresh.setOnRefreshListener(() -> mClientViewModel.refresh());
-        mClientViewModel.isLoading().observe(this, bool -> {
+        mBinding.refresh.setOnRefreshListener(() -> mRemoteViewModel.refresh());
+        mRemoteViewModel.isLoading().observe(this, bool -> {
             if (!bool) {
                 mBinding.refresh.setRefreshing(false);
             }
@@ -94,7 +95,7 @@ public class FilesFragment extends Fragment {
 
         mEmptyView.setButton(getString(R.string.refresh), RxWrapper.create(View.OnClickListener.class)
                 .owner(this)
-                .inner(v -> mClientViewModel.refresh())
+                .inner(v -> mRemoteViewModel.refresh())
                 .build());
 
         mBinding.setOptions(RxWrapper.create(View.OnClickListener.class)
@@ -113,8 +114,8 @@ public class FilesFragment extends Fragment {
                             int tag = (int) itemView.getTag();
                             switch (tag) {
                                 case R.drawable.upload: {
-                                    startFragmentForResult(this,
-                                            SelectFragment.class,
+                                    startFragmentForResult(requireParentFragment(),
+                                            SelectorFragment.class,
                                             Bundle.EMPTY,
                                             R.id.open_select_request_code);
                                 }
@@ -131,7 +132,7 @@ public class FilesFragment extends Fragment {
                                                 @SuppressWarnings("deprecation")
                                                 CharSequence text = builder.getEditText().getText();
                                                 if (!TextUtils.isEmpty(text)) {
-                                                    mClientViewModel.mkdir(text.toString());
+                                                    mRemoteViewModel.mkdir(text.toString());
                                                     dialog12.dismiss();
                                                 } else {
                                                     Toasty.warning(requireContext(),
@@ -150,50 +151,59 @@ public class FilesFragment extends Fragment {
 
         mBinding.setAdpater(mItemAdapter);
 
-        mClientViewModel.getCurrentDir().observe(this, mBinding::setPath);
+        mRemoteViewModel.getCurrentDir().observe(this, mBinding::setPath);
 
         mItemAdapter.setOnItemClickListener(RxWrapper
                 .create(OnItemClickListener.class)
                 .owner(this)
                 .inner((adapter, view1, position) ->
                 {
-                    FileItem fileItem = (FileItem) adapter.getItem(position);
-                    if (fileItem == null) {
+                    RemoteItem remoteItem = (RemoteItem) adapter.getItem(position);
+                    if (remoteItem == null) {
                         return;
                     }
-                    if (fileItem.isDirectory()) {
-                        mClientViewModel.changeDir(fileItem.getName());
-                    } else if (fileItem.isFile()) {
-                        openFileBottomSheet(fileItem);
+                    if (remoteItem.isDirectory()) {
+                        mRemoteViewModel.changeDir(remoteItem.getName());
+                    } else if (remoteItem.isFile()) {
+                        openFileBottomSheet(remoteItem);
                     }
                 })
                 .build());
         mItemAdapter.setOnItemLongClickListener((adapter, view12, position) -> {
-            FileItem fileItem = (FileItem) adapter.getItem(position);
-            if (fileItem == null || getString(R.string.uplayer_dir)
-                    .equals(fileItem.getName())) {
+            RemoteItem remoteItem = (RemoteItem) adapter.getItem(position);
+            if (remoteItem == null || getString(R.string.uplayer_dir)
+                    .equals(remoteItem.getName())) {
                 return false;
             }
-            openFileBottomSheet(fileItem);
+            openFileBottomSheet(remoteItem);
             return true;
         });
-        mClientViewModel.getFiles().observe(this, mItemAdapter::setNewData);
+        mRemoteViewModel.getFiles().observe(this, mItemAdapter::setNewData);
     }
 
     @Override
-    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+    public void onActivityResult(int requestCode,
+                                 int resultCode,
+                                 @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
+        if (requestCode == R.id.open_select_request_code
+                && resultCode == Activity.RESULT_OK
+                && data != null) {
+            File fileItem = data.getParcelableExtra(getString(R.string.file));
+            if (fileItem != null) {
+                mRemoteViewModel.upload(fileItem);
+            }
+        }
     }
 
-    private void openFileBottomSheet(FileItem fileItem) {
+    private void openFileBottomSheet(RemoteItem remoteItem) {
         BottomGridSheetBuilder builder
                 = new BottomGridSheetBuilder(requireContext())
                 .addItem(R.drawable.delete,
                         getString(R.string.delete),
                         R.drawable.delete,
                         BottomGridSheetBuilder.FIRST_LINE);
-        if (fileItem.isFile()) {
+        if (remoteItem.isFile()) {
             builder.addItem(R.drawable.dl,
                     getString(R.string.download),
                     R.drawable.dl,
@@ -215,14 +225,14 @@ public class FilesFragment extends Fragment {
                                     (dialog12, index) ->
                                     {
                                         dialog12.dismiss();
-                                        mClientViewModel.delete(fileItem);
+                                        mRemoteViewModel.delete(remoteItem);
                                     })
                             .create(com.qmuiteam.qmui.R.style.QMUI_Dialog)
                             .show();
                 }
                 break;
                 case R.drawable.dl: {
-                    mClientViewModel.download(fileItem);
+                    mRemoteViewModel.download(remoteItem);
                 }
                 break;
             }
@@ -234,15 +244,15 @@ public class FilesFragment extends Fragment {
         super.onResume();
 
         subscribeDialog(this,
-                mClientViewModel.getOnError(),
+                mRemoteViewModel.getOnError(),
                 QMUITipDialog.Builder.ICON_TYPE_FAIL);
 
         subscribeDialog(this,
-                mClientViewModel.getOnSuccess(),
+                mRemoteViewModel.getOnSuccess(),
                 QMUITipDialog.Builder.ICON_TYPE_SUCCESS);
 
         subscribeDialog(this,
-                mClientViewModel.getOnInfo(),
+                mRemoteViewModel.getOnInfo(),
                 QMUITipDialog.Builder.ICON_TYPE_INFO);
     }
 

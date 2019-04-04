@@ -6,7 +6,7 @@
         <import type="android.view.View"/>
         <variable
             name="file"
-            type="org.kexie.android.ftper.viewmodel.bean.FileItem"/>
+            type="org.kexie.android.ftper.viewmodel.bean.RemoteItem"/>
     </data>
     <LinearLayout
         android:background="@color/white"

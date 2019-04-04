@@ -18,13 +18,13 @@ import org.apache.commons.net.ftp.FTPClient
 import org.apache.commons.net.ftp.FTPReply
 import org.kexie.android.ftper.R
 import org.kexie.android.ftper.app.AppGlobal
-import org.kexie.android.ftper.viewmodel.bean.FileItem
+import org.kexie.android.ftper.viewmodel.bean.RemoteItem
 import java.io.File
 import java.io.IOException
 import java.net.MalformedURLException
 
 
-class ClientViewModel(application: Application)
+class RemoteViewModel(application: Application)
     : AndroidViewModel(application) {
 
     private val mDao = getApplication<AppGlobal>()
@@ -64,7 +64,7 @@ class ClientViewModel(application: Application)
     /**
      * 使用[LiveData]列出文件列表
      */
-    private val mFiles = MutableLiveData<List<FileItem>>()
+    private val mFiles = MutableLiveData<List<RemoteItem>>()
     /**
      *[AndroidViewModel]是否在处理加载任务
      */
@@ -85,7 +85,7 @@ class ClientViewModel(application: Application)
     val currentDir: LiveData<String>
         get() = mCurrentDir
 
-    val files: LiveData<List<FileItem>>
+    val files: LiveData<List<RemoteItem>>
         get() = mFiles
 
     val isLoading: LiveData<Boolean>
@@ -136,7 +136,7 @@ class ClientViewModel(application: Application)
         mFiles.postValue(mClient.listFiles()
                 .filter { it.name != getApplication<Application>().getString(R.string.dot) }
                 .map {
-                    FileItem(
+                    RemoteItem(
                             name = it.name,
                             size = it.size,
                             icon = when {
@@ -202,15 +202,26 @@ class ClientViewModel(application: Application)
     }
 
     fun upload(file: File) {
-
+        if (!mClient.isConnected)
+        {
+            mOnError.onNext(getApplication<Application>()
+                    .getString(R.string.no_select_service))
+            return
+        }
 
     }
 
-    fun download(fileItem: FileItem) {
+    fun download(remoteItem: RemoteItem) {
 
     }
 
     fun mkdir(name: String) {
+        if (!mClient.isConnected)
+        {
+            mOnError.onNext(getApplication<Application>()
+                    .getString(R.string.no_select_service))
+            return
+        }
         mHandler.post {
             if (mClient.makeDirectory(name)) {
                 mOnSuccess.onNext(getApplication<Application>()
@@ -223,18 +234,18 @@ class ClientViewModel(application: Application)
         }
     }
 
-    fun delete(fileItem: FileItem) {
+    fun delete(remoteItem: RemoteItem) {
         if (getApplication<Application>().getString(R.string.uplayer_dir)
-                == fileItem.name) {
+                == remoteItem.name) {
             return
         }
         mIsLoading.value = true
         mHandler.post {
             try {
-                if (fileItem.isDirectory) {
+                if (remoteItem.isDirectory) {
 
-                } else if (fileItem.isFile) {
-                    mClient.deleteFile(fileItem.name)
+                } else if (remoteItem.isFile) {
+                    mClient.deleteFile(remoteItem.name)
                 }
                 refreshInternal()
                 mOnSuccess.onNext(getApplication<Application>()

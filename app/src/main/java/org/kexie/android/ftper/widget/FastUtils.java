@@ -1,9 +1,12 @@
 package org.kexie.android.ftper.widget;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -36,6 +39,17 @@ public final class FastUtils {
 
     private FastUtils() {
         throw new AssertionError();
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    private static final View.OnTouchListener NO_TOUCH = (v, event) -> true;
+
+    @SuppressLint("ClickableViewAccessibility")
+    public static View wrapperOnTouch(View view) {
+        FrameLayout frameLayout = new FrameLayout(view.getContext());
+        frameLayout.addView(view);
+        frameLayout.setOnTouchListener(NO_TOUCH);
+        return frameLayout;
     }
 
     @SuppressWarnings("WeakerAccess")

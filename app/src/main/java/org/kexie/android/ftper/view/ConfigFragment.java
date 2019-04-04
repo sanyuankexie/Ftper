@@ -10,10 +10,10 @@ import com.qmuiteam.qmui.widget.dialog.QMUITipDialog;
 
 import org.kexie.android.ftper.BR;
 import org.kexie.android.ftper.R;
-import org.kexie.android.ftper.databinding.FragmentConfigsBinding;
+import org.kexie.android.ftper.databinding.FragmentConfigBinding;
 import org.kexie.android.ftper.databinding.ViewFooterConfigAddBinding;
 import org.kexie.android.ftper.databinding.ViewHeadConfigBinding;
-import org.kexie.android.ftper.viewmodel.ConfigsViewModel;
+import org.kexie.android.ftper.viewmodel.ConfigViewModel;
 import org.kexie.android.ftper.viewmodel.bean.ConfigItem;
 import org.kexie.android.ftper.widget.ConfigDialogBuilder;
 import org.kexie.android.ftper.widget.GenericQuickAdapter;
@@ -29,15 +29,15 @@ import static android.view.View.OnClickListener;
 import static com.chad.library.adapter.base.BaseQuickAdapter.OnItemClickListener;
 import static org.kexie.android.ftper.widget.FastUtils.subscribeDialog;
 
-public class ConfigsFragment extends Fragment {
+public class ConfigFragment extends Fragment {
 
-    private FragmentConfigsBinding mBinding;
+    private FragmentConfigBinding mBinding;
 
     private ViewFooterConfigAddBinding mFooterBinding;
 
     private ViewHeadConfigBinding mHeadBinding;
 
-    private ConfigsViewModel mViewModel;
+    private ConfigViewModel mViewModel;
 
     private GenericQuickAdapter<ConfigItem> mConfigAdapter;
 
@@ -53,7 +53,7 @@ public class ConfigsFragment extends Fragment {
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
         mBinding = DataBindingUtil.inflate(inflater,
-                R.layout.fragment_configs,
+                R.layout.fragment_config,
                 container,
                 false);
         mFooterBinding = DataBindingUtil.inflate(inflater,
@@ -74,7 +74,7 @@ public class ConfigsFragment extends Fragment {
                               @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         mViewModel = ViewModelProviders.of(requireActivity())
-                .get(ConfigsViewModel.class);
+                .get(ConfigViewModel.class);
 
         mViewModel.getConfigs().observe(this, mConfigAdapter::setNewData);
 

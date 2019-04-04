@@ -34,4 +34,10 @@
     <string name="update_error">更新数据时出错</string>
     <string name="host_has_error">Host或Port有误</string>
     <string name="tf">传输</string>
+    <string name="image">IMAGE</string>
+    <string name="word">WORD</string>
+    <string name="xls">XLS</string>
+    <string name="ppt">PPT</string>
+    <string name="pdf">PDF</string>
+    <string name="file">file</string>
 </resources>

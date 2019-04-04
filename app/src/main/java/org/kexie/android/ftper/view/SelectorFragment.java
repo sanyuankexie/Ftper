@@ -1,0 +1,131 @@
+package org.kexie.android.ftper.view;
+
+import android.app.Activity;
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+
+import com.flyco.tablayout.listener.OnTabSelectListener;
+
+import org.kexie.android.ftper.R;
+import org.kexie.android.ftper.databinding.FragmentSelectorBinding;
+import org.kexie.android.ftper.viewmodel.SelectorViewModel;
+import org.kexie.android.ftper.viewmodel.bean.FileItem;
+import org.kexie.android.ftper.widget.FilePagerAdapter;
+import org.kexie.android.ftper.widget.FilePos;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.databinding.DataBindingUtil;
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.ViewModelProviders;
+
+import static org.kexie.android.ftper.widget.FastUtils.subscribe;
+import static org.kexie.android.ftper.widget.FastUtils.wrapperOnTouch;
+
+
+public class SelectorFragment extends Fragment {
+
+    private SelectorViewModel mViewModel;
+
+    private FilePagerAdapter mFilePagerAdapter;
+
+    private FragmentSelectorBinding mBinding;
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+    }
+
+    @Nullable
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater,
+                             @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
+        mBinding = DataBindingUtil.inflate(inflater,
+                R.layout.fragment_selector,
+                container,
+                false);
+        return wrapperOnTouch(mBinding.getRoot());
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view,
+                              @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        mViewModel = ViewModelProviders.of(this)
+                .get(SelectorViewModel.class);
+
+        mFilePagerAdapter = new FilePagerAdapter(this,
+                (adapter, view1, position) -> {
+                    FileItem fileItem = (FileItem) adapter.getItem(position);
+                    if (fileItem != null) {
+                        mViewModel.select(fileItem);
+                    }
+                });
+
+        mBinding.tabs.setTabData(new String[]{
+                getString(R.string.image),
+                getString(R.string.word),
+                getString(R.string.xls),
+                getString(R.string.ppt),
+                getString(R.string.pdf)
+        });
+
+        mBinding.tabs.setOnTabSelectListener(new OnTabSelectListener() {
+            @Override
+            public void onTabSelect(int position) {
+                mBinding.pager.setCurrentItem(position);
+            }
+
+            @Override
+            public void onTabReselect(int position) {
+
+            }
+        });
+
+        mBinding.pager.setOffscreenPageLimit(4);
+
+        mBinding.pager.setAdapter(mFilePagerAdapter);
+
+        mViewModel.getImage().observe(this,
+                fileItems -> mFilePagerAdapter.setData(FilePos.IMAGE_POS,fileItems));
+
+        mViewModel.getPdf().observe(this,
+                fileItems -> mFilePagerAdapter.setData(FilePos.PDF_POS,fileItems));
+
+        mViewModel.getPpt().observe(this,
+                fileItems -> mFilePagerAdapter.setData(FilePos.PPT_POS,fileItems));
+
+        mViewModel.getWord().observe(this,
+                fileItems -> mFilePagerAdapter.setData(FilePos.WORD_POS,fileItems));
+
+        mViewModel.getXls().observe(this,
+                fileItems -> mFilePagerAdapter.setData(FilePos.XLS_POS,fileItems));
+
+        subscribe(this,
+                mViewModel.getOnSelect(),
+                Lifecycle.Event.ON_DESTROY,
+                file -> {
+                    Fragment fragment = getTargetFragment();
+                    if (fragment != null) {
+                        Intent intent = new Intent();
+                        intent.putExtra(getString(R.string.file), file);
+                        fragment.onActivityResult(R.id.open_select_request_code,
+                                Activity.RESULT_OK,
+                                intent);
+                    }
+                    requireActivity().onBackPressed();
+                });
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        mFilePagerAdapter = null;
+    }
+}

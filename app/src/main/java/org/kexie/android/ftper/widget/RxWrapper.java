@@ -1,17 +1,18 @@
 package org.kexie.android.ftper.widget;
 
-import androidx.collection.ArrayMap;
-import androidx.lifecycle.Lifecycle;
-import androidx.lifecycle.LifecycleOwner;
 import com.uber.autodispose.AutoDispose;
-import com.uber.autodispose.android.lifecycle.AndroidLifecycleScopeProvider;
-import io.reactivex.subjects.PublishSubject;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import androidx.collection.ArrayMap;
+import androidx.lifecycle.Lifecycle;
+import androidx.lifecycle.LifecycleOwner;
+import io.reactivex.subjects.PublishSubject;
+
+import static com.uber.autodispose.android.lifecycle.AndroidLifecycleScopeProvider.from;
 import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 
 public final class RxWrapper<X>
@@ -23,7 +24,7 @@ public final class RxWrapper<X>
 
     private X mInner;
 
-    private LifecycleOwner mOwner;
+    private Lifecycle mLifecycle;
 
     private int mTime;
 
@@ -45,10 +46,15 @@ public final class RxWrapper<X>
         return this;
     }
 
+    public RxWrapper<X> lifecycle(Lifecycle lifecycle)
+    {
+        this.mLifecycle = lifecycle;
+        return this;
+    }
+
     public RxWrapper<X> owner(LifecycleOwner owner)
     {
-        mOwner = owner;
-        return this;
+        return lifecycle(owner.getLifecycle());
     }
 
     public RxWrapper<X> throttleFirst(int time)
@@ -78,7 +84,7 @@ public final class RxWrapper<X>
         {
             mEvent = Lifecycle.Event.ON_DESTROY;
         }
-        if (mOwner == null || mInner == null)
+        if (mLifecycle == null || mInner == null)
         {
             throw new IllegalStateException();
         }
@@ -88,7 +94,7 @@ public final class RxWrapper<X>
             PublishSubject<Object[]> subject = PublishSubject.create();
             subject.throttleFirst(mTime, TimeUnit.MILLISECONDS)
                     .observeOn(mainThread())
-                    .as(AutoDispose.autoDisposable(AndroidLifecycleScopeProvider.from(mOwner, mEvent)))
+                    .as(AutoDispose.autoDisposable(from(mLifecycle, mEvent)))
                     .subscribe(args -> method.invoke(mInner, args));
             subjectMap.put(method, subject);
         }

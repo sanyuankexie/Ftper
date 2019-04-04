@@ -1,5 +1,6 @@
 package org.kexie.android.ftper.view;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,6 +11,7 @@ import com.flyco.tablayout.listener.OnTabSelectListener;
 
 import org.kexie.android.ftper.R;
 import org.kexie.android.ftper.databinding.FragmentMainBinding;
+import org.kexie.android.ftper.viewmodel.ConfigViewModel;
 import org.kexie.android.ftper.viewmodel.bean.TabItem;
 
 import java.util.ArrayList;
@@ -20,6 +22,7 @@ import androidx.core.math.MathUtils;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentPagerAdapter;
+import androidx.lifecycle.ViewModelProviders;
 import androidx.viewpager.widget.PagerAdapter;
 
 import static androidx.viewpager.widget.ViewPager.SimpleOnPageChangeListener;
@@ -30,15 +33,21 @@ public class MainFragment extends Fragment {
 
     private PagerAdapter mPagerAdapter;
 
+    private ConfigFragment mConfigFragment = new ConfigFragment();
+
+    private RemoteFragment mRemoteFragment = new RemoteFragment();
+
+    private TransferFragment mTransferFragment = new TransferFragment();
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mPagerAdapter = new FragmentPagerAdapter(getChildFragmentManager()) {
 
             private Fragment[] fragments = new Fragment[]{
-                    new ConfigsFragment(),
-                    new FilesFragment(),
-                    new TransferFragment(),
+                    mConfigFragment,
+                    mRemoteFragment,
+                    mTransferFragment,
             };
 
             @NonNull
@@ -72,6 +81,8 @@ public class MainFragment extends Fragment {
     public void onViewCreated(@NonNull View view,
                               @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        ViewModelProviders.of(this).get(ConfigViewModel.class);
 
         mBinding.pages.setAdapter(mPagerAdapter);
         mBinding.pages.setOffscreenPageLimit(3);
@@ -109,6 +120,16 @@ public class MainFragment extends Fragment {
         super.onDestroyView();
         mBinding.unbind();
         mBinding = null;
+    }
+
+    @Override
+    public void onActivityResult(int requestCode,
+                                 int resultCode,
+                                 @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == R.id.open_select_request_code) {
+            mRemoteFragment.onActivityResult(requestCode, resultCode, data);
+        }
     }
 
     @Override
