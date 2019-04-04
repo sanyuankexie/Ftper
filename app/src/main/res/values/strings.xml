@@ -19,7 +19,7 @@
     <string name="files">文件</string>
     <string name="gbk">gbk</string>
     <string name="check_network">切换目录失败请检查网络连接</string>
-    <string name="no_select_service">未选择服务器或连接服务器失败</string>
+    <string name="no_select_service">连接服务器失败</string>
     <string name="dot">.</string>
     <string name="ftp_connect_sucess">FTP服务器连接成功</string>
     <string name="other_error">连接失败</string>

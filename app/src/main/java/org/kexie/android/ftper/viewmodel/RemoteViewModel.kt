@@ -159,10 +159,6 @@ class RemoteViewModel(application: Application)
 
     @WorkerThread
     private fun connectInternal(id: Int): Boolean {
-        if (id == Int.MIN_VALUE) {
-            mFiles.postValue(emptyList())
-            return false
-        }
         if (mClient.isConnected) {
             mClient.disconnect()
         }
@@ -188,6 +184,10 @@ class RemoteViewModel(application: Application)
     }
 
     fun connect(id: Int) {
+        if (id == Int.MIN_VALUE) {
+            mFiles.postValue(emptyList())
+            return
+        }
         mIsLoading.value = true
         mHandler.post {
             if (connectInternal(id)) {

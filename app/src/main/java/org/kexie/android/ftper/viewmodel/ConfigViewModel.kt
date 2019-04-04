@@ -76,7 +76,7 @@ class ConfigViewModel(application: Application)
         get() = mSelect
 
     init {
-        mHandler.post { reload() }
+        mHandler.post { reloadInternal() }
     }
 
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String) {
@@ -97,7 +97,7 @@ class ConfigViewModel(application: Application)
                             .apply()
                 }
                 mDao.remove(configItem.toDatabaseEntity())
-                reload()
+                reloadInternal()
                 mOnInfo.onNext(getApplication<Application>()
                         .getString(R.string.yi_del))
             } catch (e: Exception) {
@@ -113,7 +113,7 @@ class ConfigViewModel(application: Application)
         mHandler.post {
             try {
                 mDao.update(configItem.toDatabaseEntity())
-                reload()
+                reloadInternal()
                 if (configItem.id == selectValue) {
                     mSelect.postValue(selectValue)
                 }
@@ -133,7 +133,7 @@ class ConfigViewModel(application: Application)
         mHandler.post {
             try {
                 mDao.add(configItem.toDatabaseEntity())
-                reload()
+                reloadInternal()
                 mOnSuccess.onNext(getApplication<Application>()
                         .getString(R.string.yi_update))
             } catch (e: Exception) {
@@ -159,7 +159,7 @@ class ConfigViewModel(application: Application)
     }
 
     @WorkerThread
-    private fun reload() {
+    private fun reloadInternal() {
         val list = mDao.loadAll()
                 .map { it.toReadabilityData() }
         mConfigs.postValue(list)

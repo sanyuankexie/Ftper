@@ -1,12 +1,9 @@
 package org.kexie.android.ftper.widget;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.view.View;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -41,17 +38,6 @@ public final class FastUtils {
         throw new AssertionError();
     }
 
-    @SuppressLint("ClickableViewAccessibility")
-    private static final View.OnTouchListener NO_TOUCH = (v, event) -> true;
-
-    @SuppressLint("ClickableViewAccessibility")
-    public static View wrapperOnTouch(View view) {
-        FrameLayout frameLayout = new FrameLayout(view.getContext());
-        frameLayout.addView(view);
-        frameLayout.setOnTouchListener(NO_TOUCH);
-        return frameLayout;
-    }
-
     @SuppressWarnings("WeakerAccess")
     public static <T> void subscribe(LifecycleOwner lifecycleOwner,
                                      Observable<T> observable,
@@ -72,6 +58,7 @@ public final class FastUtils {
                             .setIconType(iconType)
                             .setTipWord(text)
                             .create();
+                    dialog.setCancelable(false);
                     dialog.show();
                     Objects.requireNonNull(dialog.getWindow()).getDecorView()
                             .postDelayed(dialog::dismiss, 1000);

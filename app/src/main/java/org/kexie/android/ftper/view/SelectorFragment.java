@@ -1,5 +1,6 @@
 package org.kexie.android.ftper.view;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -25,7 +26,6 @@ import androidx.lifecycle.ViewModelProviders;
 import androidx.viewpager.widget.ViewPager;
 
 import static org.kexie.android.ftper.widget.FastUtils.subscribe;
-import static org.kexie.android.ftper.widget.FastUtils.wrapperOnTouch;
 
 
 public class SelectorFragment extends Fragment {
@@ -43,6 +43,7 @@ public class SelectorFragment extends Fragment {
         super.onCreate(savedInstanceState);
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -52,7 +53,8 @@ public class SelectorFragment extends Fragment {
                 R.layout.fragment_selector,
                 container,
                 false);
-        return wrapperOnTouch(mBinding.getRoot());
+        mBinding.getRoot().setOnTouchListener((v, event) -> true);
+        return mBinding.getRoot();
     }
 
     @Override
@@ -118,6 +120,7 @@ public class SelectorFragment extends Fragment {
                                 .setIconType(QMUITipDialog.Builder.ICON_TYPE_LOADING)
                                 .setTipWord(getString(R.string.loading))
                                 .create();
+                        dialog.setCancelable(false);
                         dialog.show();
                     } else {
                         if (dialog != null) {
