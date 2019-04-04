@@ -8,14 +8,18 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.databinding.DataBindingUtil;
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProviders;
 import com.qmuiteam.qmui.widget.QMUIEmptyView;
 import com.qmuiteam.qmui.widget.dialog.QMUIBottomSheet.BottomGridSheetBuilder;
 import com.qmuiteam.qmui.widget.dialog.QMUIDialog;
 import com.qmuiteam.qmui.widget.dialog.QMUIDialog.EditTextDialogBuilder;
 import com.qmuiteam.qmui.widget.dialog.QMUIDialogAction;
 import com.qmuiteam.qmui.widget.dialog.QMUITipDialog;
-
+import es.dmoral.toasty.Toasty;
 import org.kexie.android.ftper.BR;
 import org.kexie.android.ftper.R;
 import org.kexie.android.ftper.databinding.FragmentFilesBinding;
@@ -28,13 +32,6 @@ import org.kexie.android.ftper.widget.Utils;
 
 import java.io.File;
 import java.util.Objects;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.databinding.DataBindingUtil;
-import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProviders;
-import es.dmoral.toasty.Toasty;
 
 import static com.chad.library.adapter.base.BaseQuickAdapter.OnItemClickListener;
 
@@ -76,7 +73,7 @@ public class RemoteFragment extends Fragment {
                               @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        mRemoteViewModel = ViewModelProviders.of(this)
+        mRemoteViewModel = ViewModelProviders.of(requireActivity())
                 .get(RemoteViewModel.class);
 
         ConfigViewModel configViewModel = ViewModelProviders.of(requireActivity())
