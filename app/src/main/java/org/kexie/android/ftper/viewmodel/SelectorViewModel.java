@@ -8,11 +8,15 @@ import android.os.HandlerThread;
 import android.provider.MediaStore;
 
 import org.kexie.android.ftper.viewmodel.bean.FileItem;
-import org.kexie.android.ftper.widget.FilePos;
+import org.kexie.android.ftper.widget.FileType;
 
 import java.io.File;
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
+import java.util.Locale;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
@@ -70,7 +74,7 @@ public final class SelectorViewModel extends AndroidViewModel {
     }
 
     private void loadDataInternal(int position) {
-        if (position == FilePos.IMAGE_POS) {
+        if (position == FileType.TYPE_IMAGE) {
             loadImageData();
         } else {
             loadDocData(position);
@@ -101,12 +105,52 @@ public final class SelectorViewModel extends AndroidViewModel {
         }
         List<FileItem> fileItems = new ArrayList<>();
         while (cursor.moveToNext()) {
-
-
+            String path = cursor.getString(cursor.getColumnIndex(
+                    MediaStore.Images.ImageColumns.DATA
+            ));
+            FileItem fileItem = loadItem(path, FileType.TYPE_IMAGE);
+            fileItems.add(fileItem);
         }
         cursor.close();
+        mLiveData.get(FileType.TYPE_IMAGE).postValue(fileItems);
+    }
 
-        mLiveData.get(FilePos.IMAGE_POS).setValue(fileItems);
+    private static FileItem loadItem(String path, int type) {
+        File file = new File(path);
+        String name = file.getName();
+        String rawPath = file.getAbsolutePath();
+        String size = sizeToString(file.length());
+        String time = getFileLastModifiedTime(file);
+        return new FileItem(name, rawPath, size, time, type);
+    }
+
+    private static String sizeToString(long size) {
+        DecimalFormat df = new DecimalFormat("#.00");
+        String fileSizeString;
+        String wrongSize = "0B";
+        if (size == 0) {
+            return wrongSize;
+        }
+        if (size < 1024) {
+            fileSizeString = df.format((double) size) + "B";
+        } else if (size < 1048576) {
+            fileSizeString = df.format((double) size / 1024) + "KB";
+        } else if (size < 1073741824) {
+            fileSizeString = df.format((double) size / 1048576) + "MB";
+        } else {
+            fileSizeString = df.format((double) size / 1073741824) + "GB";
+        }
+        return fileSizeString;
+    }
+
+    private static String getFileLastModifiedTime(File f) {
+        Calendar cal = Calendar.getInstance();
+        long time = f.lastModified();
+        SimpleDateFormat formatter = new
+                SimpleDateFormat("yyyy-MM-dd HH:mm:ss",
+                Locale.getDefault());
+        cal.setTimeInMillis(time);
+        return formatter.format(cal.getTime());
     }
 
     private void loadDocData(int selectType) {
@@ -131,10 +175,11 @@ public final class SelectorViewModel extends AndroidViewModel {
             List<FileItem> fileItems = new ArrayList<>();
             while (cursor.moveToNext()) {
                 String path = cursor.getString(index);
-
+                FileItem fileItem = loadItem(path, selectType);
+                fileItems.add(fileItem);
             }
             cursor.close();
-            mLiveData.get(selectType).setValue(fileItems);
+            mLiveData.get(selectType).postValue(fileItems);
         }
     }
 
@@ -143,7 +188,7 @@ public final class SelectorViewModel extends AndroidViewModel {
 
         switch (selectType) {
             //word
-            case FilePos.WORD_POS:
+            case FileType.TYPE_WORD:
                 select = "(" + MediaStore.Files.FileColumns.DATA
                         + " LIKE '%.doc'"
                         + " or "
@@ -151,7 +196,7 @@ public final class SelectorViewModel extends AndroidViewModel {
                         + " LIKE '%.docx'" + ")";
                 break;
             //xls
-            case FilePos.XLS_POS:
+            case FileType.TYPE_XLS:
                 select = "(" + MediaStore.Files.FileColumns.DATA
                         + " LIKE '%.xls'"
                         + " or "
@@ -159,7 +204,7 @@ public final class SelectorViewModel extends AndroidViewModel {
                         + " LIKE '%.xlsx'" + ")";
                 break;
             //ppt
-            case FilePos.PPT_POS:
+            case FileType.TYPE_PPT:
                 select = "(" + MediaStore.Files.FileColumns.DATA
                         + " LIKE '%.ppt'"
                         + " or "
@@ -167,7 +212,7 @@ public final class SelectorViewModel extends AndroidViewModel {
                         + " LIKE '%.pptx'" + ")";
                 break;
             //pdf
-            case FilePos.PDF_POS:
+            case FileType.TYPE_PDF:
                 select = "("
                         + MediaStore.Files.FileColumns.DATA
                         + " LIKE '%.pdf'"

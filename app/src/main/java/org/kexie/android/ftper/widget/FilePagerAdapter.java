@@ -21,8 +21,6 @@ import androidx.viewpager.widget.PagerAdapter;
 @SuppressWarnings("WeakerAccess")
 public final class FilePagerAdapter extends PagerAdapter {
 
-
-
     public FilePagerAdapter(LifecycleOwner lifecycleOwner,
                             BaseQuickAdapter.OnItemClickListener listener) {
         this.mLifecycle = lifecycleOwner.getLifecycle();
@@ -47,21 +45,23 @@ public final class FilePagerAdapter extends PagerAdapter {
             view = new RecyclerView(container.getContext());
             mHolders[position] = view;
             view.setLayoutManager(new LinearLayoutManager(container.getContext()));
-            view.setAdapter((RecyclerView.Adapter) holder);
+            view.setAdapter(holder instanceof RecyclerView.Adapter
+                    ? (RecyclerView.Adapter) holder
+                    : createAdapter());
         }
         container.addView(view);
         return view;
     }
 
     @SuppressWarnings("All")
-    public void setData(@FilePos int pos, List<FileItem> data) {
+    public void setData(@FileType int pos, List<FileItem> data) {
         Object holder = mHolders[pos];
         GenericQuickAdapter<FileItem> adapter;
         if (holder instanceof RecyclerView) {
             adapter = ((GenericQuickAdapter<FileItem>) ((RecyclerView) holder).getAdapter());
         } else {
             if (holder == null) {
-                adapter = new GenericQuickAdapter<>(R.layout.item_local_file, BR.file);
+                adapter = createAdapter();
                 adapter.setOnItemClickListener(RxWrapper
                         .create(BaseQuickAdapter.OnItemClickListener.class)
                         .lifecycle(mLifecycle)
@@ -73,6 +73,10 @@ public final class FilePagerAdapter extends PagerAdapter {
             }
         }
         adapter.setNewData(data);
+    }
+
+    private static GenericQuickAdapter<FileItem> createAdapter() {
+        return new GenericQuickAdapter<>(R.layout.item_local_file, BR.file);
     }
 
     @Override

@@ -8,7 +8,6 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.flyco.tablayout.listener.OnTabSelectListener;
-import com.orhanobut.logger.Logger;
 import com.qmuiteam.qmui.widget.dialog.QMUITipDialog;
 
 import org.kexie.android.ftper.R;
@@ -22,7 +21,6 @@ import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Lifecycle;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.viewpager.widget.ViewPager;
 
@@ -37,6 +35,8 @@ public class SelectorFragment extends Fragment {
     private FilePagerAdapter mFilePagerAdapter;
 
     private FragmentSelectorBinding mBinding;
+
+    private QMUITipDialog dialog = null;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -95,13 +95,12 @@ public class SelectorFragment extends Fragment {
 
         mBinding.pager.addOnPageChangeListener(
                 new ViewPager.SimpleOnPageChangeListener() {
-            @Override
-            public void onPageSelected(int position) {
-                mBinding.tabs.setCurrentTab(position);
-                Logger.d(position);
-                mViewModel.loadData(position);
-            }
-        });
+                    @Override
+                    public void onPageSelected(int position) {
+                        mBinding.tabs.setCurrentTab(position);
+                        mViewModel.loadData(position);
+                    }
+                });
 
         mBinding.pager.setAdapter(mFilePagerAdapter);
 
@@ -112,23 +111,18 @@ public class SelectorFragment extends Fragment {
         }
 
         mViewModel.isLoading().observe(this,
-                new Observer<Boolean>() {
-                    private QMUITipDialog dialog = null;
-
-                    @Override
-                    public void onChanged(Boolean isLoading) {
-                        if (isLoading && dialog == null) {
-                            dialog = new QMUITipDialog
-                                    .Builder(requireContext())
-                                    .setIconType(QMUITipDialog.Builder.ICON_TYPE_LOADING)
-                                    .setTipWord(getString(R.string.loading))
-                                    .create();
-                            dialog.show();
-                        } else {
-                            if (dialog != null) {
-                                dialog.dismiss();
-                                dialog = null;
-                            }
+                isLoading -> {
+                    if (isLoading && dialog == null) {
+                        dialog = new QMUITipDialog
+                                .Builder(requireContext())
+                                .setIconType(QMUITipDialog.Builder.ICON_TYPE_LOADING)
+                                .setTipWord(getString(R.string.loading))
+                                .create();
+                        dialog.show();
+                    } else {
+                        if (dialog != null) {
+                            dialog.dismiss();
+                            dialog = null;
                         }
                     }
                 });
@@ -155,5 +149,9 @@ public class SelectorFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         mFilePagerAdapter = null;
+        if (dialog != null) {
+            dialog.dismiss();
+            dialog = null;
+        }
     }
 }

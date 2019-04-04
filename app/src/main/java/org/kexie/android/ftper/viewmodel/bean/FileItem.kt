@@ -8,7 +8,7 @@ data class FileItem(
         val path:String,
         val size:String,
         val time:String,
-        val isImage:Boolean)
+        val type:Int)
     : Parcelable {
 
     @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
@@ -17,7 +17,7 @@ data class FileItem(
             parcel.readString(),
             parcel.readString(),
             parcel.readString(),
-            parcel.readByte() != 0.toByte()) {
+            parcel.readInt()) {
     }
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
@@ -25,7 +25,7 @@ data class FileItem(
         parcel.writeString(path)
         parcel.writeString(size)
         parcel.writeString(time)
-        parcel.writeByte(if (isImage) 1 else 0)
+        parcel.writeInt(type)
     }
 
     override fun describeContents(): Int {
@@ -41,4 +41,5 @@ data class FileItem(
             return arrayOfNulls(size)
         }
     }
+
 }
