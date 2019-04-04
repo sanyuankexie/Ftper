@@ -19,12 +19,10 @@
     <string name="files">文件</string>
     <string name="gbk">gbk</string>
     <string name="check_network">切换目录失败请检查网络连接</string>
-    <string name="no_select_service">未选择服务器</string>
+    <string name="no_select_service">未选择服务器或连接服务器失败</string>
     <string name="dot">.</string>
     <string name="ftp_connect_sucess">FTP服务器连接成功</string>
-    <string name="host_error">host格式有误,请不要包含port</string>
-    <string name="network_error">连接失败,清检查网络连接</string>
-    <string name="other_error">连接失败,参数有误</string>
+    <string name="other_error">连接失败</string>
     <string name="create_sucess">创建成功</string>
     <string name="create_error">创建失败</string>
     <string name="del_success">删除成功</string>
@@ -35,4 +33,5 @@
     <string name="yi_update">数据已更新</string>
     <string name="update_error">更新数据时出错</string>
     <string name="host_has_error">Host或Port有误</string>
+    <string name="tf">传输</string>
 </resources>

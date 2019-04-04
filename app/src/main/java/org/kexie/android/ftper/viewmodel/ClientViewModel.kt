@@ -174,23 +174,15 @@ class ClientViewModel(application: Application)
                 throw IOException()
             }
             refreshInternal()
-            mOnSuccess.onNext(getApplication<Application>()
-                    .getString(R.string.ftp_connect_sucess))
             return true
         } catch (e: MalformedURLException) {
             e.printStackTrace()
-            mOnError.onNext(getApplication<Application>()
-                    .getString(R.string.host_error))
             return false
         } catch (e: IOException) {
             e.printStackTrace()
-            mOnError.onNext(getApplication<Application>()
-                    .getString(R.string.network_error))
             return false
         } catch (e: Throwable) {
             e.printStackTrace()
-            mOnError.onNext(getApplication<Application>()
-                    .getString(R.string.other_error))
             return false
         }
     }
@@ -198,7 +190,13 @@ class ClientViewModel(application: Application)
     fun connect(id: Int) {
         mIsLoading.value = true
         mHandler.post {
-            connectInternal(id)
+            if (connectInternal(id)) {
+                mOnSuccess.onNext(getApplication<Application>()
+                        .getString(R.string.ftp_connect_sucess))
+            } else {
+                mOnError.onNext(getApplication<Application>()
+                        .getString(R.string.other_error))
+            }
             mIsLoading.postValue(false)
         }
     }

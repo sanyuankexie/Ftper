@@ -11,8 +11,11 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.RequestBuilder;
 import com.bumptech.glide.RequestManager;
 import com.bumptech.glide.request.RequestOptions;
+import com.qmuiteam.qmui.widget.dialog.QMUITipDialog;
 
 import org.kexie.android.ftper.R;
+
+import java.util.Objects;
 
 import androidx.databinding.BindingAdapter;
 import androidx.fragment.app.Fragment;
@@ -43,6 +46,22 @@ public final class FastUtils {
         observable.observeOn(mainThread())
                 .as(autoDisposable(from(lifecycleOwner, event)))
                 .subscribe(consumer);
+    }
+
+    public static void subscribeDialog(Fragment fragment,
+                                       Observable<String> observable,
+                                       @QMUITipDialog.Builder.IconType int iconType) {
+        subscribe(fragment, observable, Lifecycle.Event.ON_PAUSE,
+                text -> {
+                    QMUITipDialog dialog = new QMUITipDialog
+                            .Builder(fragment.requireContext())
+                            .setIconType(iconType)
+                            .setTipWord(text)
+                            .create();
+                    dialog.show();
+                    Objects.requireNonNull(dialog.getWindow()).getDecorView()
+                            .postDelayed(dialog::dismiss, 1000);
+                });
     }
 
     public static void subscribeToast(Fragment fragment,

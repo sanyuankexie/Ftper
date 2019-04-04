@@ -2,6 +2,8 @@ package org.kexie.android.ftper.view;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.InputType;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -13,6 +15,7 @@ import com.qmuiteam.qmui.widget.dialog.QMUIBottomSheet.BottomGridSheetBuilder;
 import com.qmuiteam.qmui.widget.dialog.QMUIDialog;
 import com.qmuiteam.qmui.widget.dialog.QMUIDialog.EditTextDialogBuilder;
 import com.qmuiteam.qmui.widget.dialog.QMUIDialogAction;
+import com.qmuiteam.qmui.widget.dialog.QMUITipDialog;
 
 import org.kexie.android.ftper.BR;
 import org.kexie.android.ftper.R;
@@ -32,7 +35,7 @@ import es.dmoral.toasty.Toasty;
 
 import static com.chad.library.adapter.base.BaseQuickAdapter.OnItemClickListener;
 import static org.kexie.android.ftper.widget.FastUtils.startFragmentForResult;
-import static org.kexie.android.ftper.widget.FastUtils.subscribeToast;
+import static org.kexie.android.ftper.widget.FastUtils.subscribeDialog;
 
 public class FilesFragment extends Fragment {
 
@@ -45,6 +48,8 @@ public class FilesFragment extends Fragment {
     private ConfigsViewModel mConfigsViewModel;
 
     private GenericQuickAdapter<FileItem> mItemAdapter;
+
+    private Handler mHandler = new Handler(Looper.getMainLooper());
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -228,17 +233,17 @@ public class FilesFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
-        subscribeToast(this,
+        subscribeDialog(this,
                 mClientViewModel.getOnError(),
-                Toasty::error);
+                QMUITipDialog.Builder.ICON_TYPE_FAIL);
 
-        subscribeToast(this,
+        subscribeDialog(this,
                 mClientViewModel.getOnSuccess(),
-                Toasty::success);
+                QMUITipDialog.Builder.ICON_TYPE_SUCCESS);
 
-        subscribeToast(this,
+        subscribeDialog(this,
                 mClientViewModel.getOnInfo(),
-                Toasty::info);
+                QMUITipDialog.Builder.ICON_TYPE_INFO);
     }
 
     @Override

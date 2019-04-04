@@ -54,7 +54,7 @@
                     android:layout_height="wrap_content" />
                 <TextView
                     android:textSize="15dp"
-                    android:text="4.支持上传、下载、删除、创建文件夹等功能"
+                    android:text="4.支持上传、下载、删除、创建文件夹"
                     android:layout_marginTop="5dp"
                     android:gravity="center|left"
                     android:textColor="@color/colorBlackAlpha54"

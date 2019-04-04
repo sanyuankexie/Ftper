@@ -5,21 +5,15 @@ import android.text.method.PasswordTransformationMethod;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ScrollView;
-
+import androidx.databinding.DataBindingUtil;
 import com.qmuiteam.qmui.util.QMUIResHelper;
 import com.qmuiteam.qmui.util.QMUIViewHelper;
 import com.qmuiteam.qmui.widget.dialog.QMUIDialog;
-
 import org.kexie.android.ftper.R;
 import org.kexie.android.ftper.databinding.DialogMultiInputBinding;
 
-import java.util.Arrays;
-
-import androidx.databinding.DataBindingUtil;
-
 public final class ConfigDialogBuilder
         extends QMUIDialog.AutoResizeDialogBuilder {
-
 
     private DialogMultiInputBinding mBinding;
 
@@ -36,12 +30,12 @@ public final class ConfigDialogBuilder
         mBinding = DataBindingUtil.inflate(dialog.getLayoutInflater(),
                 R.layout.dialog_multi_input, parent,
                 false);
-        for (EditText editText : Arrays.asList(
+        for (EditText editText : new EditText[]{
                 mBinding.name,
                 mBinding.host,
                 mBinding.port,
                 mBinding.username,
-                mBinding.password)) {
+                mBinding.password}) {
             QMUIViewHelper.setBackgroundKeepingPadding(editText,
                     QMUIResHelper.getAttrDrawable(dialog.getContext(),
                             R.attr.qmui_list_item_bg_with_border_bottom));

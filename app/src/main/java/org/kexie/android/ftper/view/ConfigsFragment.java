@@ -6,6 +6,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.qmuiteam.qmui.util.QMUIKeyboardHelper;
+import com.qmuiteam.qmui.widget.dialog.QMUITipDialog;
 
 import org.kexie.android.ftper.BR;
 import org.kexie.android.ftper.R;
@@ -23,11 +24,10 @@ import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
-import es.dmoral.toasty.Toasty;
 
-import static android.view.View.*;
+import static android.view.View.OnClickListener;
 import static com.chad.library.adapter.base.BaseQuickAdapter.OnItemClickListener;
-import static org.kexie.android.ftper.widget.FastUtils.subscribeToast;
+import static org.kexie.android.ftper.widget.FastUtils.subscribeDialog;
 
 public class ConfigsFragment extends Fragment {
 
@@ -126,17 +126,17 @@ public class ConfigsFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
-        subscribeToast(this,
+        subscribeDialog(this,
                 mViewModel.getOnError(),
-                Toasty::error);
+                QMUITipDialog.Builder.ICON_TYPE_FAIL);
 
-        subscribeToast(this,
+        subscribeDialog(this,
                 mViewModel.getOnSuccess(),
-                Toasty::success);
+                QMUITipDialog.Builder.ICON_TYPE_SUCCESS);
 
-        subscribeToast(this,
+        subscribeDialog(this,
                 mViewModel.getOnInfo(),
-                Toasty::info);
+                QMUITipDialog.Builder.ICON_TYPE_INFO);
     }
 
     private void openConfigDialog(ConfigItem configItem)
