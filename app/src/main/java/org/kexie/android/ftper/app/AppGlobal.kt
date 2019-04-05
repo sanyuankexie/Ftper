@@ -1,5 +1,11 @@
 package org.kexie.android.ftper.app
 
+import android.annotation.SuppressLint
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import androidx.multidex.MultiDexApplication
 import androidx.room.Room
 import com.orhanobut.logger.AndroidLogAdapter
@@ -27,7 +33,16 @@ class AppGlobal : MultiDexApplication() {
             Logger.addLogAdapter(AndroidLogAdapter())
         }
         AutoPermissions.addCallback {
-            Toasty.error(this,"").show()
+            if (!it.isEmpty()) {
+                jumpToSystemSetting()
+                Toasty.error(this,
+                        "请授予权限")
+                        .show()
+                Handler(Looper.getMainLooper())
+                        .postDelayed({
+                            System.exit(1)
+                        }, 1000)
+            }
         }
         //这看似不安全的操作，实际上却是安全的use by lazy(LazyThreadSafetyMode.SYNCHRONIZED){ }
         Thread {
@@ -36,5 +51,23 @@ class AppGlobal : MultiDexApplication() {
             priority = Thread.MAX_PRIORITY
             start()
         }
+    }
+
+    @SuppressLint("ObsoleteSdkInt")
+    private fun jumpToSystemSetting() {
+        val intent = Intent()
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+            intent.action = "android.settings.APPLICATION_DETAILS_SETTINGS"
+            intent.data = Uri.fromParts("package",
+                    this.packageName, null)
+        } else if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.FROYO) {
+            intent.action = Intent.ACTION_VIEW
+            intent.setClassName("com.android.settings",
+                    "com.android.settings.InstalledAppDetails")
+            intent.putExtra("com.android.settings.ApplicationPkgName",
+                    this.packageName)
+        }
+        this.startActivity(intent)
     }
 }

@@ -6,11 +6,16 @@ import androidx.work.WorkerParameters
 import org.apache.commons.net.ftp.FTP
 import org.apache.commons.net.ftp.FTPClient
 import org.kexie.android.ftper.R
+import org.kexie.android.ftper.app.AppGlobal
 import org.kexie.android.ftper.model.bean.WorkerConfig
 import java.io.File
 
 abstract class FTPWorker(context: Context, workerParams: WorkerParameters)
     : Worker(context, workerParams) {
+
+    protected val mDatabase = (applicationContext as AppGlobal).appDatabase
+
+    protected val mDao = mDatabase.transferDao
 
     protected val mConfig by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
         WorkerConfig(

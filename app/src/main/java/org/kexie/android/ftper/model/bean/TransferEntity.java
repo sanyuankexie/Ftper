@@ -8,7 +8,7 @@ public class TransferEntity {
     @PrimaryKey(autoGenerate = true)
     private int id;
 
-    private int workerId;
+    private String workerId;
 
     private String name;
 
@@ -58,11 +58,11 @@ public class TransferEntity {
         this.size = size;
     }
 
-    public int getWorkerId() {
+    public String getWorkerId() {
         return workerId;
     }
 
-    public void setWorkerId(int workerId) {
+    public void setWorkerId(String workerId) {
         this.workerId = workerId;
     }
 }

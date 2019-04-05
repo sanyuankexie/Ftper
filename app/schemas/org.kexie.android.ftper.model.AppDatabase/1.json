@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "d1ac97b896690ee6c18634d6285b3918",
+    "identityHash": "7783fac526753cdf0e7102fcc1a34544",
     "entities": [
       {
         "tableName": "configs",
@@ -62,7 +62,7 @@
       },
       {
         "tableName": "transfers",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `workerId` INTEGER NOT NULL, `name` TEXT, `doSize` INTEGER NOT NULL, `type` INTEGER NOT NULL, `size` INTEGER NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `workerId` TEXT, `name` TEXT, `doSize` INTEGER NOT NULL, `type` INTEGER NOT NULL, `size` INTEGER NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -73,8 +73,8 @@
           {
             "fieldPath": "workerId",
             "columnName": "workerId",
-            "affinity": "INTEGER",
-            "notNull": true
+            "affinity": "TEXT",
+            "notNull": false
           },
           {
             "fieldPath": "name",
@@ -113,7 +113,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, \"d1ac97b896690ee6c18634d6285b3918\")"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, \"7783fac526753cdf0e7102fcc1a34544\")"
     ]
   }
 }

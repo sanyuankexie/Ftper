@@ -9,9 +9,9 @@ class DownloadWorker(context: Context, workerParams: WorkerParameters)
 
     override fun doWork(): ListenableWorker.Result {
         return try {
-            connect()
+            val client = connect()
             mConfig.file
-            
+
             ListenableWorker.Result.success()
         } catch (e: Throwable) {
             e.printStackTrace()
