@@ -2,15 +2,13 @@ package org.kexie.android.ftper.model
 
 import android.content.Context
 import androidx.work.ListenableWorker
-import androidx.work.Worker
 import androidx.work.WorkerParameters
 
-class DownloadWorker(context: Context,
-                     workerParams: WorkerParameters) : Worker(context, workerParams) {
-
-    private val mConfig = workerParams.inputData.loadConfig(context)
+class DownloadWorker(context: Context, workerParams: WorkerParameters)
+    : FTPWorker(context, workerParams) {
 
     override fun doWork(): ListenableWorker.Result {
+
         return ListenableWorker.Result.failure()
     }
 
