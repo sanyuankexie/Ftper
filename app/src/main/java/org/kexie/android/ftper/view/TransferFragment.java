@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import org.kexie.android.ftper.BR;
 import org.kexie.android.ftper.R;
 import org.kexie.android.ftper.databinding.FragmentTransferBinding;
 import org.kexie.android.ftper.widget.GenericQuickAdapter;
@@ -23,7 +24,7 @@ public class TransferFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mAdapter = new GenericQuickAdapter<>(0, 0);
+        mAdapter = new GenericQuickAdapter<>(R.layout.item_transfer, BR.file);
     }
 
     @Nullable
@@ -44,6 +45,11 @@ public class TransferFragment extends Fragment {
                               @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         mBinding.setAdapter(mAdapter);
+        mAdapter.setOnItemLongClickListener((adapter, view1, position) -> {
+
+
+            return true;
+        });
     }
 
     @Override

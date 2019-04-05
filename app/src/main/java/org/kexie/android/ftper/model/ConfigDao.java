@@ -15,7 +15,7 @@ import androidx.room.Update;
 *像不像hibernate?
 */
 @Dao
-public interface ConfigEntityDao {
+public interface ConfigDao {
 
     @Update
     void update(ConfigEntity configEntity);

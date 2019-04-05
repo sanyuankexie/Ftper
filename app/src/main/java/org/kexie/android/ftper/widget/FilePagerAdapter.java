@@ -1,5 +1,6 @@
 package org.kexie.android.ftper.widget;
 
+import android.content.Context;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,15 +26,13 @@ public final class FilePagerAdapter extends PagerAdapter {
 
     public FilePagerAdapter(LifecycleOwner lifecycleOwner,
                             BaseQuickAdapter.OnItemClickListener listener) {
-        this.mLifecycle = lifecycleOwner.getLifecycle();
+        Lifecycle lifecycle = lifecycleOwner.getLifecycle();
         this.mListener = RxWrapper
                 .create(BaseQuickAdapter.OnItemClickListener.class)
-                .lifecycle(mLifecycle)
+                .lifecycle(lifecycle)
                 .inner(listener)
                 .build();
     }
-
-    private final Lifecycle mLifecycle;
 
     private final BaseQuickAdapter.OnItemClickListener mListener;
 
@@ -56,13 +55,8 @@ public final class FilePagerAdapter extends PagerAdapter {
                     = holder instanceof RecyclerView.Adapter
                     ? (GenericQuickAdapter<FileItem>) holder
                     : createAdapter();
-            AppCompatTextView textView = new AppCompatTextView(container.getContext());
-            textView.setTextSize(20);
-            textView.setGravity(Gravity.CENTER);
-            textView.setTextColor(container.getResources().getColor(R.color.colorBlackAlpha26));
-            textView.setText(R.string.this_is_empty);
             adapter.setOnItemClickListener(mListener);
-            adapter.setEmptyView(textView);
+            adapter.setEmptyView(createEmptyView(container.getContext()));
             view.setAdapter(adapter);
         }
         container.addView(view);
@@ -88,6 +82,15 @@ public final class FilePagerAdapter extends PagerAdapter {
 
     private static GenericQuickAdapter<FileItem> createAdapter() {
         return new GenericQuickAdapter<>(R.layout.item_local_file, BR.file);
+    }
+
+    private static View createEmptyView(Context context) {
+        AppCompatTextView textView = new AppCompatTextView(context);
+        textView.setTextSize(20);
+        textView.setGravity(Gravity.CENTER);
+        textView.setTextColor(context.getResources().getColor(R.color.colorBlackAlpha26));
+        textView.setText(R.string.this_is_empty);
+        return textView;
     }
 
     @Override

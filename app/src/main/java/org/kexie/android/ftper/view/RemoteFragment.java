@@ -31,7 +31,6 @@ import org.kexie.android.ftper.widget.RxWrapper;
 import org.kexie.android.ftper.widget.Utils;
 
 import java.io.File;
-import java.util.Objects;
 
 import static com.chad.library.adapter.base.BaseQuickAdapter.OnItemClickListener;
 
@@ -201,15 +200,6 @@ public class RemoteFragment extends Fragment {
             File file = (File) data.getSerializableExtra(getString(R.string.file));
             if (file != null) {
                 mRemoteViewModel.upload(file);
-                QMUITipDialog dialog = new QMUITipDialog
-                        .Builder(requireContext())
-                        .setIconType(QMUITipDialog.Builder.ICON_TYPE_SUCCESS)
-                        .setTipWord(getString(R.string.start_upload))
-                        .create();
-                dialog.setCancelable(false);
-                dialog.show();
-                Objects.requireNonNull(dialog.getWindow()).getDecorView()
-                        .postDelayed(dialog::dismiss, 1000);
             }
         }
     }

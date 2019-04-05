@@ -14,6 +14,7 @@ import com.orhanobut.logger.Logger
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.subjects.PublishSubject
+import org.apache.commons.net.ftp.FTP
 import org.apache.commons.net.ftp.FTPClient
 import org.apache.commons.net.ftp.FTPReply
 import org.kexie.android.ftper.R
@@ -277,7 +278,6 @@ class RemoteViewModel(application: Application)
     @WorkerThread
     private fun refreshInternal() {
         mCurrentDir.postValue(mClient.printWorkingDirectory())
-        mClient.enterLocalPassiveMode()
         mFiles.postValue(mClient.listFiles()
             .filter { it.name != getApplication<Application>().getString(R.string.dot) }
             .map {
@@ -317,6 +317,8 @@ class RemoteViewModel(application: Application)
         if (!FTPReply.isPositiveCompletion(mClient.replyCode)) {
             throw RuntimeException()
         }
+        mClient.enterLocalPassiveMode()
+        mClient.setFileType(FTP.BINARY_FILE_TYPE)
         refreshInternal()
     }
 

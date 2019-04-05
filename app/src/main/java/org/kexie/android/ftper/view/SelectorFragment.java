@@ -37,11 +37,6 @@ public class SelectorFragment extends Fragment {
 
     private QMUITipDialog dialog = null;
 
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-    }
-
     @SuppressLint("ClickableViewAccessibility")
     @Nullable
     @Override
