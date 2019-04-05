@@ -46,8 +46,10 @@
     <string name="long_click_del">长按可删除文件夹,右上角还有更多功能</string>
     <string name="port_key">port</string>
     <string name="host_key">host</string>
-    <string name="path_key">path</string>
     <string name="username_key">username</string>
     <string name="password_key">password</string>
     <string name="remote_key">remote</string>
+    <string name="result_key">result</string>
+    <string name="local_key">local</string>
+    <string name="r">r</string>
 </resources>

@@ -9,9 +9,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.work.Data
-import androidx.work.OneTimeWorkRequest
-import androidx.work.WorkManager
+import androidx.work.*
 import com.orhanobut.logger.Logger
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -192,12 +190,18 @@ class RemoteViewModel(application: Application)
         }
         mHandler.post {
             try {
+                val constraints = Constraints.Builder()
+                        .setRequiresBatteryNotLow(true)
+                        .setRequiredNetworkType(NetworkType.CONNECTED)
+                        .build()
+
                 val input = Data.Builder()
                         .putConfig(mConfig, file, mClient.printWorkingDirectory())
                         .build()
 
                 val request = OneTimeWorkRequest
                         .Builder(UploadWorker::class.java)
+                        .setConstraints(constraints)
                         .setInputData(input)
                         .build()
 
@@ -337,7 +341,7 @@ class RemoteViewModel(application: Application)
                 .putString(context.getString(R.string.username_key), configEntity.username)
                 .putString(context.getString(R.string.password_key), configEntity.password)
                 .putString(getApplication<Application>()
-                        .getString(R.string.path_key),
+                        .getString(R.string.local_key),
                         file.absolutePath)
                 .putString(context.getString(R.string.remote_key),remote)
     }

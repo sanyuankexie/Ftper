@@ -1,6 +1,8 @@
 package org.kexie.android.ftper.model
 
 import android.content.Context
+import androidx.work.Data
+import androidx.work.ListenableWorker
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import org.apache.commons.net.ftp.FTP
@@ -13,16 +15,16 @@ import java.io.File
 abstract class FTPWorker(context: Context, workerParams: WorkerParameters)
     : Worker(context, workerParams) {
 
-    protected val mDatabase = (applicationContext as AppGlobal).appDatabase
+    protected val database = (applicationContext as AppGlobal).appDatabase
 
-    protected val mDao = mDatabase.transferDao
+    protected val dao = database.transferDao
 
-    protected val mConfig by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+    protected val config by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
         WorkerConfig(
                 host = inputData.getString(applicationContext.getString(R.string.host_key))!!,
                 password = inputData.getString(applicationContext.getString(R.string.password_key))!!,
                 username = inputData.getString(applicationContext.getString(R.string.username_key))!!,
-                file = File(inputData.getString(applicationContext.getString(R.string.path_key))!!),
+                local = File(inputData.getString(applicationContext.getString(R.string.local_key))!!),
                 remote = inputData.getString(applicationContext.getString(R.string.remote_key))!!,
                 port = {
                     val value = inputData.getInt(applicationContext
@@ -34,17 +36,25 @@ abstract class FTPWorker(context: Context, workerParams: WorkerParameters)
                 }())
     }
 
-    @Throws(Exception::class)
+    @Throws(Throwable::class)
     protected fun connect(): FTPClient {
         return FTPClient()
                 .apply {
-                    connect(mConfig.host, mConfig.port)
-                    login(mConfig.username, mConfig.password)
+                    connect(config.host, config.port)
+                    login(config.username, config.password)
                     enterLocalPassiveMode()
                     setFileType(FTP.BINARY_FILE_TYPE)
                     controlEncoding = applicationContext.getString(R.string.gbk)
                     connectTimeout = 5000
                     defaultTimeout = 5000
                 }
+    }
+
+    protected fun failure(@FailureType type: Int): ListenableWorker.Result {
+        val data = Data.Builder()
+                .putInt(applicationContext.getString(R.string.result_key),
+                        FailureType.UNKNOWN_ERROR)
+                .build()
+        return ListenableWorker.Result.failure(data)
     }
 }
