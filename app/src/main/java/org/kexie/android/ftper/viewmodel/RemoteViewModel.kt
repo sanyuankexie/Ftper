@@ -9,6 +9,8 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.work.Data
+import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
 import com.orhanobut.logger.Logger
 import io.reactivex.Observable
@@ -19,7 +21,9 @@ import org.apache.commons.net.ftp.FTPClient
 import org.apache.commons.net.ftp.FTPReply
 import org.kexie.android.ftper.R
 import org.kexie.android.ftper.app.AppGlobal
+import org.kexie.android.ftper.model.bean.ConfigEntity
 import org.kexie.android.ftper.viewmodel.bean.RemoteItem
+import org.kexie.android.ftper.widget.UploadWorker
 import org.kexie.android.ftper.widget.Utils
 import java.io.File
 
@@ -28,8 +32,8 @@ class RemoteViewModel(application: Application)
     : AndroidViewModel(application) {
 
     private val mDao = getApplication<AppGlobal>()
-        .appDatabase
-        .configDao
+            .appDatabase
+            .configDao
 
     /**
      * 使用[WorkManager]执行上传下载任务
@@ -39,13 +43,13 @@ class RemoteViewModel(application: Application)
      * 轻量级的[HandlerThread]执行简单的删除和加载列表任务
      */
     private val mWorkerThread = HandlerThread(toString())
-        .apply {
-            start()
-            setUncaughtExceptionHandler { t, e ->
-                e.printStackTrace()
-                Logger.d(e)
+            .apply {
+                start()
+                setUncaughtExceptionHandler { t, e ->
+                    e.printStackTrace()
+                    Logger.d(e)
+                }
             }
-        }
     /**
      * [mWorkerThread]的[Handler]
      */
@@ -83,6 +87,8 @@ class RemoteViewModel(application: Application)
      */
     private val mOnInfo = PublishSubject.create<String>()
 
+    private lateinit var mConfig: ConfigEntity
+
     val currentDir: LiveData<String>
         get() = mCurrentDir
 
@@ -113,8 +119,8 @@ class RemoteViewModel(application: Application)
             }
             if (!result) {
                 mOnError.onNext(
-                    getApplication<Application>()
-                        .getString(R.string.check_network)
+                        getApplication<Application>()
+                                .getString(R.string.check_network)
                 )
             }
             mIsLoading.postValue(false)
@@ -132,8 +138,8 @@ class RemoteViewModel(application: Application)
                         e.printStackTrace()
                         clearAll()
                         mOnInfo.onNext(
-                            getApplication<Application>()
-                                .getString(R.string.re_link)
+                                getApplication<Application>()
+                                        .getString(R.string.re_link)
                         )
                         connectDefault()
                     }
@@ -144,8 +150,8 @@ class RemoteViewModel(application: Application)
                 e.printStackTrace()
                 clearAll()
                 mOnError.onNext(
-                    getApplication<Application>()
-                        .getString(R.string.no_select_service)
+                        getApplication<Application>()
+                                .getString(R.string.no_select_service)
                 )
             }
             mIsLoading.postValue(false)
@@ -162,14 +168,14 @@ class RemoteViewModel(application: Application)
             try {
                 connectInternal(id)
                 mOnSuccess.onNext(
-                    getApplication<Application>()
-                        .getString(R.string.ftp_connect_sucess)
+                        getApplication<Application>()
+                                .getString(R.string.ftp_connect_sucess)
                 )
             } catch (e: Throwable) {
                 e.printStackTrace()
                 mOnError.onNext(
-                    getApplication<Application>()
-                        .getString(R.string.other_error)
+                        getApplication<Application>()
+                                .getString(R.string.other_error)
                 )
             }
             mIsLoading.postValue(false)
@@ -179,22 +185,45 @@ class RemoteViewModel(application: Application)
     fun upload(file: File) {
         if (!mClient.isConnected) {
             mOnError.onNext(
-                getApplication<Application>()
-                    .getString(R.string.no_select_service)
+                    getApplication<Application>()
+                            .getString(R.string.no_select_service)
             )
             return
+        }
+        mHandler.post {
+            try {
+                val input = Data.Builder()
+                        .putString(getApplication<Application>()
+                                .getString(R.string.path),
+                                file.absolutePath)
+                        .putConfig(mConfig)
+                        .build()
+
+                val request = OneTimeWorkRequest
+                        .Builder(UploadWorker::class.java)
+                        .setInputData(input)
+                        .build()
+
+                mWorkManager.enqueue(request)
+
+
+            } catch (e: Throwable) {
+                e.printStackTrace()
+
+            }
         }
     }
 
     fun download(remoteItem: RemoteItem) {
+
 
     }
 
     fun mkdir(name: String) {
         if (!mClient.isConnected) {
             mOnError.onNext(
-                getApplication<Application>()
-                    .getString(R.string.no_select_service)
+                    getApplication<Application>()
+                            .getString(R.string.no_select_service)
             )
             return
         }
@@ -211,13 +240,13 @@ class RemoteViewModel(application: Application)
             }
             if (result) {
                 mOnSuccess.onNext(
-                    getApplication<Application>()
-                        .getString(R.string.create_sucess)
+                        getApplication<Application>()
+                                .getString(R.string.create_sucess)
                 )
             } else {
                 mOnError.onNext(
-                    getApplication<Application>()
-                        .getString(R.string.create_error)
+                        getApplication<Application>()
+                                .getString(R.string.create_error)
                 )
             }
         }
@@ -225,7 +254,7 @@ class RemoteViewModel(application: Application)
 
     fun delete(remoteItem: RemoteItem) {
         if (getApplication<Application>().getString(R.string.uplayer_dir)
-            == remoteItem.name
+                == remoteItem.name
         ) {
             return
         }
@@ -240,14 +269,14 @@ class RemoteViewModel(application: Application)
                 }
                 refreshInternal()
                 mOnSuccess.onNext(
-                    getApplication<Application>()
-                        .getString(R.string.del_success)
+                        getApplication<Application>()
+                                .getString(R.string.del_success)
                 )
             } catch (e: Exception) {
                 e.printStackTrace()
                 mOnError.onNext(
-                    getApplication<Application>()
-                        .getString(R.string.del_error)
+                        getApplication<Application>()
+                                .getString(R.string.del_error)
                 )
             }
             mIsLoading.postValue(false)
@@ -255,23 +284,21 @@ class RemoteViewModel(application: Application)
     }
 
     @WorkerThread
-    private fun clearAll()
-    {
+    private fun clearAll() {
         mCurrentDir.postValue("")
         mFiles.postValue(emptyList())
     }
 
     @Throws(Exception::class)
     @WorkerThread
-    private fun connectDefault()
-    {
+    private fun connectDefault() {
         connectInternal(
-            PreferenceManager
-                .getDefaultSharedPreferences(getApplication())
-                .getInt(
-                    getApplication<Application>()
-                        .getString(R.string.select_key), Int.MIN_VALUE
-                ))
+                PreferenceManager
+                        .getDefaultSharedPreferences(getApplication())
+                        .getInt(
+                                getApplication<Application>()
+                                        .getString(R.string.select_key), Int.MIN_VALUE
+                        ))
     }
 
     @Throws(Exception::class)
@@ -279,30 +306,38 @@ class RemoteViewModel(application: Application)
     private fun refreshInternal() {
         mCurrentDir.postValue(mClient.printWorkingDirectory())
         mFiles.postValue(mClient.listFiles()
-            .filter { it.name != getApplication<Application>().getString(R.string.dot) }
-            .map {
-                RemoteItem(
-                    name = it.name,
-                    size = Utils.sizeToString(it.size),
-                    icon = when {
-                        it.name == getApplication<Application>()
-                            .getString(R.string.uplayer_dir) ->
-                            ContextCompat.getDrawable(
-                                getApplication(),
-                                R.drawable.up
-                            )!!
-                        it.isDirectory -> ContextCompat.getDrawable(
-                            getApplication(),
-                            R.drawable.dir
-                        )!!
-                        else -> ContextCompat.getDrawable(
-                            getApplication(),
-                            R.drawable.file
-                        )!!
-                    },
-                    type = it.type
-                )
-            })
+                .filter { it.name != getApplication<Application>().getString(R.string.dot) }
+                .map {
+                    RemoteItem(
+                            name = it.name,
+                            size = Utils.sizeToString(it.size),
+                            icon = when {
+                                it.name == getApplication<Application>()
+                                        .getString(R.string.uplayer_dir) ->
+                                    ContextCompat.getDrawable(
+                                            getApplication(),
+                                            R.drawable.up
+                                    )!!
+                                it.isDirectory -> ContextCompat.getDrawable(
+                                        getApplication(),
+                                        R.drawable.dir
+                                )!!
+                                else -> ContextCompat.getDrawable(
+                                        getApplication(),
+                                        R.drawable.file
+                                )!!
+                            },
+                            type = it.type
+                    )
+                })
+    }
+
+    private fun Data.Builder.putConfig(configEntity: ConfigEntity): Data.Builder {
+        val context = getApplication<Application>()
+        return this.putInt(context.getString(R.string.port_key), configEntity.port)
+                .putString(context.getString(R.string.host_key), configEntity.host)
+                .putString(context.getString(R.string.username_key), configEntity.username)
+                .putString(context.getString(R.string.password_key), configEntity.password)
     }
 
     @Throws(Exception::class)
@@ -311,9 +346,9 @@ class RemoteViewModel(application: Application)
         if (mClient.isConnected) {
             mClient.disconnect()
         }
-        val config = mDao.findById(id)
-        mClient.connect(config.host, config.port)
-        mClient.login(config.username, config.password)
+        mConfig = mDao.findById(id)
+        mClient.connect(mConfig.host, mConfig.port)
+        mClient.login(mConfig.username, mConfig.password)
         if (!FTPReply.isPositiveCompletion(mClient.replyCode)) {
             throw RuntimeException()
         }

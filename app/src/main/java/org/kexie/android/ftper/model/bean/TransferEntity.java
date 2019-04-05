@@ -7,9 +7,15 @@ import androidx.room.PrimaryKey;
 public class TransferEntity {
     @PrimaryKey(autoGenerate = true)
     private int id;
+
+    private int workerId;
+
     private String name;
-    private int percent;
+
+    private int doSize;
+
     private int type;
+
     private int size;
 
     public int getId() {
@@ -20,8 +26,8 @@ public class TransferEntity {
         return name;
     }
 
-    public int getPercent() {
-        return percent;
+    public int getDoSize() {
+        return doSize;
     }
 
     public int getType() {
@@ -40,8 +46,8 @@ public class TransferEntity {
         this.name = name;
     }
 
-    public void setPercent(int percent) {
-        this.percent = percent;
+    public void setDoSize(int doSize) {
+        this.doSize = doSize;
     }
 
     public void setType(int type) {
@@ -50,5 +56,13 @@ public class TransferEntity {
 
     public void setSize(int size) {
         this.size = size;
+    }
+
+    public int getWorkerId() {
+        return workerId;
+    }
+
+    public void setWorkerId(int workerId) {
+        this.workerId = workerId;
     }
 }

@@ -1,6 +1,5 @@
 package org.kexie.android.ftper.model.bean;
 
-import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
@@ -9,18 +8,19 @@ import androidx.room.PrimaryKey;
 public class ConfigEntity {
     @PrimaryKey(autoGenerate = true)
     private int id;
-    @ColumnInfo(name = "host")
+
     private String host;
-    @ColumnInfo(name = "port")
+
     private int port;
-    @ColumnInfo(name = "username")
+
     private String username;
-    @ColumnInfo(name = "password")
+
     private String password;
-    @ColumnInfo(name = "name")
+
     private String name;
-    @ColumnInfo(name = "date")
+
     private long date;
+
     public int getId() {
         return id;
     }
