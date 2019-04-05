@@ -16,7 +16,7 @@ import org.kexie.android.ftper.databinding.ViewHeadConfigBinding;
 import org.kexie.android.ftper.viewmodel.ConfigViewModel;
 import org.kexie.android.ftper.viewmodel.bean.ConfigItem;
 import org.kexie.android.ftper.widget.ConfigDialogBuilder;
-import org.kexie.android.ftper.widget.Utils;
+import org.kexie.android.ftper.widget.UIUtils;
 import org.kexie.android.ftper.widget.GenericQuickAdapter;
 import org.kexie.android.ftper.widget.RxWrapper;
 
@@ -126,15 +126,15 @@ public class ConfigFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
-        Utils.subscribeDialog(this,
+        UIUtils.subscribeDialog(this,
                 mViewModel.getOnError(),
                 QMUITipDialog.Builder.ICON_TYPE_FAIL);
 
-        Utils.subscribeDialog(this,
+        UIUtils.subscribeDialog(this,
                 mViewModel.getOnSuccess(),
                 QMUITipDialog.Builder.ICON_TYPE_SUCCESS);
 
-        Utils.subscribeDialog(this,
+        UIUtils.subscribeDialog(this,
                 mViewModel.getOnInfo(),
                 QMUITipDialog.Builder.ICON_TYPE_INFO);
     }

@@ -4,12 +4,11 @@ import android.content.Context
 import androidx.work.ListenableWorker
 import androidx.work.Worker
 import androidx.work.WorkerParameters
-import org.kexie.android.ftper.model.bean.WorkerConfig
 
 class UploadWorker(context: Context,
                    workerParams: WorkerParameters) : Worker(context, workerParams) {
 
-    val config = WorkerConfig.loadForm(context,workerParams.inputData)
+    private val mConfig = workerParams.inputData.loadConfig(context)
 
     override fun doWork(): ListenableWorker.Result {
         return ListenableWorker.Result.failure()

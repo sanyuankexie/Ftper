@@ -25,7 +25,7 @@ import org.kexie.android.ftper.viewmodel.RemoteViewModel;
 import org.kexie.android.ftper.viewmodel.bean.RemoteItem;
 import org.kexie.android.ftper.widget.GenericQuickAdapter;
 import org.kexie.android.ftper.widget.RxWrapper;
-import org.kexie.android.ftper.widget.Utils;
+import org.kexie.android.ftper.widget.UIUtils;
 
 import java.io.File;
 
@@ -140,7 +140,7 @@ public class RemoteFragment extends Fragment {
                             int tag = (int) itemView.getTag();
                             switch (tag) {
                                 case R.drawable.upload: {
-                                    Utils.startFragmentForResult(requireParentFragment(),
+                                    UIUtils.startFragmentForResult(requireParentFragment(),
                                             SelectorFragment.class,
                                             Bundle.EMPTY,
                                             R.id.open_select_request_code);
@@ -269,15 +269,15 @@ public class RemoteFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
-        Utils.subscribeDialog(this,
+        UIUtils.subscribeDialog(this,
                 mRemoteViewModel.getOnError(),
                 QMUITipDialog.Builder.ICON_TYPE_FAIL);
 
-        Utils.subscribeDialog(this,
+        UIUtils.subscribeDialog(this,
                 mRemoteViewModel.getOnSuccess(),
                 QMUITipDialog.Builder.ICON_TYPE_SUCCESS);
 
-        Utils.subscribeDialog(this,
+        UIUtils.subscribeDialog(this,
                 mRemoteViewModel.getOnInfo(),
                 QMUITipDialog.Builder.ICON_TYPE_INFO);
     }

@@ -13,7 +13,7 @@ import io.reactivex.subjects.PublishSubject
 import org.kexie.android.ftper.R
 import org.kexie.android.ftper.viewmodel.bean.FileItem
 import org.kexie.android.ftper.model.FileType
-import org.kexie.android.ftper.widget.Utils
+import org.kexie.android.ftper.widget.UIUtils
 import java.io.File
 import java.util.*
 
@@ -103,8 +103,8 @@ class SelectorViewModel(application: Application)
         val file = File(path)
         val name = file.name
         val rawPath = file.absolutePath
-        val size = Utils.sizeToString(file.length())
-        val time = Utils.getFileLastModifiedTime(file)
+        val size = UIUtils.sizeToString(file.length())
+        val time = UIUtils.getFileLastModifiedTime(file)
         val iconRes: String
         if (type == FileType.TYPE_IMAGE) {
             iconRes = rawPath

@@ -24,7 +24,7 @@ import org.kexie.android.ftper.app.AppGlobal
 import org.kexie.android.ftper.model.UploadWorker
 import org.kexie.android.ftper.model.bean.ConfigEntity
 import org.kexie.android.ftper.viewmodel.bean.RemoteItem
-import org.kexie.android.ftper.widget.Utils
+import org.kexie.android.ftper.widget.UIUtils
 import java.io.File
 
 
@@ -309,7 +309,7 @@ class RemoteViewModel(application: Application)
                 .map {
                     RemoteItem(
                             name = it.name,
-                            size = Utils.sizeToString(it.size),
+                            size = UIUtils.sizeToString(it.size),
                             icon = when {
                                 it.name == getApplication<Application>()
                                         .getString(R.string.uplayer_dir) ->
