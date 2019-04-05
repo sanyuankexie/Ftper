@@ -37,9 +37,9 @@ import static com.uber.autodispose.AutoDispose.autoDisposable;
 import static com.uber.autodispose.android.lifecycle.AndroidLifecycleScopeProvider.from;
 import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 
-public final class UIUtils {
+public final class Utils {
 
-    private UIUtils() {
+    private Utils() {
         throw new AssertionError();
     }
 

@@ -49,4 +49,5 @@
     <string name="path_key">path</string>
     <string name="username_key">username</string>
     <string name="password_key">password</string>
+    <string name="remote_key">remote</string>
 </resources>

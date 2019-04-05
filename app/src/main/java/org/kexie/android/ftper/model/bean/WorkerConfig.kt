@@ -8,4 +8,5 @@ data class WorkerConfig(
         val port: Int,
         val username: String,
         val password: String,
-        val file:File)
+        val file:File,
+        val remote:String)

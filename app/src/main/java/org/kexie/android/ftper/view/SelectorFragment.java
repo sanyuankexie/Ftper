@@ -16,7 +16,7 @@ import org.kexie.android.ftper.databinding.FragmentSelectorBinding;
 import org.kexie.android.ftper.viewmodel.SelectorViewModel;
 import org.kexie.android.ftper.viewmodel.bean.FileItem;
 import org.kexie.android.ftper.widget.FilePagerAdapter;
-import org.kexie.android.ftper.widget.UIUtils;
+import org.kexie.android.ftper.widget.Utils;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -124,7 +124,7 @@ public class SelectorFragment extends Fragment {
                     }
                 });
 
-        UIUtils.subscribe(this,
+        Utils.subscribe(this,
                 mViewModel.getOnSelect(),
                 Lifecycle.Event.ON_DESTROY,
                 file -> {

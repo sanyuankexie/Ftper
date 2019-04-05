@@ -1,7 +1,6 @@
 package org.kexie.android.ftper.model
 
 import android.content.Context
-import androidx.work.Data
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import org.apache.commons.net.ftp.FTP
@@ -13,9 +12,22 @@ import java.io.File
 abstract class FTPWorker(context: Context, workerParams: WorkerParameters)
     : Worker(context, workerParams) {
 
-    protected val mConfig = workerParams.inputData.loadConfig()
-
-    protected val mClient = FTPClient()
+    protected val mConfig by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        WorkerConfig(
+                host = inputData.getString(applicationContext.getString(R.string.host_key))!!,
+                password = inputData.getString(applicationContext.getString(R.string.password_key))!!,
+                username = inputData.getString(applicationContext.getString(R.string.username_key))!!,
+                file = File(inputData.getString(applicationContext.getString(R.string.path_key))!!),
+                remote = inputData.getString(applicationContext.getString(R.string.remote_key))!!,
+                port = {
+                    val value = inputData.getInt(applicationContext
+                            .getString(R.string.port_key), Int.MIN_VALUE)
+                    if (value == Int.MIN_VALUE) {
+                        throw RuntimeException()
+                    }
+                    value
+                }())
+    }
 
     @Throws(Exception::class)
     protected fun connect(): FTPClient {
@@ -29,14 +41,5 @@ abstract class FTPWorker(context: Context, workerParams: WorkerParameters)
                     connectTimeout = 5000
                     defaultTimeout = 5000
                 }
-    }
-
-    private fun Data.loadConfig(): WorkerConfig {
-        return WorkerConfig(
-                host = this.getString(applicationContext.getString(R.string.host_key))!!,
-                password = this.getString(applicationContext.getString(R.string.password_key))!!,
-                username = this.getString(applicationContext.getString(R.string.username_key))!!,
-                file = File(this.getString(applicationContext.getString(R.string.path_key))!!),
-                port = this.getInt(applicationContext.getString(R.string.port_key), Int.MIN_VALUE))
     }
 }

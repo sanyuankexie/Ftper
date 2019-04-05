@@ -24,7 +24,7 @@ import org.kexie.android.ftper.app.AppGlobal
 import org.kexie.android.ftper.model.UploadWorker
 import org.kexie.android.ftper.model.bean.ConfigEntity
 import org.kexie.android.ftper.viewmodel.bean.RemoteItem
-import org.kexie.android.ftper.widget.UIUtils
+import org.kexie.android.ftper.widget.Utils
 import java.io.File
 
 
@@ -193,7 +193,7 @@ class RemoteViewModel(application: Application)
         mHandler.post {
             try {
                 val input = Data.Builder()
-                        .putConfig(mConfig, file)
+                        .putConfig(mConfig, file, mClient.printWorkingDirectory())
                         .build()
 
                 val request = OneTimeWorkRequest
@@ -306,7 +306,7 @@ class RemoteViewModel(application: Application)
                 .map {
                     RemoteItem(
                             name = it.name,
-                            size = UIUtils.sizeToString(it.size),
+                            size = Utils.sizeToString(it.size),
                             icon = when {
                                 it.name == getApplication<Application>()
                                         .getString(R.string.uplayer_dir) ->
@@ -328,7 +328,9 @@ class RemoteViewModel(application: Application)
                 })
     }
 
-    private fun Data.Builder.putConfig(configEntity: ConfigEntity, file: File): Data.Builder {
+    private fun Data.Builder.putConfig(configEntity: ConfigEntity,
+                                       file: File,
+                                       remote:String): Data.Builder {
         val context = getApplication<Application>()
         return this.putInt(context.getString(R.string.port_key), configEntity.port)
                 .putString(context.getString(R.string.host_key), configEntity.host)
@@ -337,6 +339,7 @@ class RemoteViewModel(application: Application)
                 .putString(getApplication<Application>()
                         .getString(R.string.path_key),
                         file.absolutePath)
+                .putString(context.getString(R.string.remote_key),remote)
     }
 
     @Throws(Exception::class)
