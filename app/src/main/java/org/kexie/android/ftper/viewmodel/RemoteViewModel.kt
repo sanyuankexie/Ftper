@@ -125,21 +125,23 @@ class RemoteViewModel(application: Application)
         mHandler.post {
             try {
                 if (mClient.isConnected) {
-                    refreshInternal()
+                    try {
+                        refreshInternal()
+                    } catch (e: Throwable) {
+                        e.printStackTrace()
+                        clearAll()
+                        mOnInfo.onNext(
+                            getApplication<Application>()
+                                .getString(R.string.re_link)
+                        )
+                        connectDefault()
+                    }
                 } else {
-                    connectInternal(
-                        PreferenceManager
-                            .getDefaultSharedPreferences(getApplication())
-                            .getInt(
-                                getApplication<Application>()
-                                    .getString(R.string.select_key), Int.MIN_VALUE
-                            )
-                    )
+                    connectDefault()
                 }
             } catch (e: Throwable) {
                 e.printStackTrace()
-                mCurrentDir.postValue("")
-                mFiles.postValue(emptyList())
+                clearAll()
                 mOnError.onNext(
                     getApplication<Application>()
                         .getString(R.string.no_select_service)
@@ -251,6 +253,25 @@ class RemoteViewModel(application: Application)
         }
     }
 
+    @WorkerThread
+    private fun clearAll()
+    {
+        mCurrentDir.postValue("")
+        mFiles.postValue(emptyList())
+    }
+
+    @Throws(Exception::class)
+    @WorkerThread
+    private fun connectDefault()
+    {
+        connectInternal(
+            PreferenceManager
+                .getDefaultSharedPreferences(getApplication())
+                .getInt(
+                    getApplication<Application>()
+                        .getString(R.string.select_key), Int.MIN_VALUE
+                ))
+    }
 
     @Throws(Exception::class)
     @WorkerThread

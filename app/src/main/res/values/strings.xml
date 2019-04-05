@@ -42,4 +42,5 @@
     <string name="file">file</string>
     <string name="loading">正在加载</string>
     <string name="start_upload">开始上传文件</string>
+    <string name="re_link">连接已断开\n正在尝试重连</string>
 </resources>
