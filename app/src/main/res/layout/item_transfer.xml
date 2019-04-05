@@ -1,14 +1,93 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layout
-    xmlns:android="http://schemas.android.com/apk/res/android">
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
+
     <data>
         <variable
             name="file"
-            type="org.kexie.android.ftper.viewmodel.bean.TransferItem"/>
+            type="org.kexie.android.ftper.viewmodel.bean.TransferItem" />
     </data>
     <LinearLayout
+        android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:layout_height="wrap_content">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <ImageView
+                load_async='@{"file"}'
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_margin="10dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:gravity="left|center"
+                        android:singleLine="true"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="4"
+                        android:hint="@string/app_name"
+                        android:text="@{file.name}"
+                        android:textColor="@color/colorBlackAlpha54"
+                        android:textSize="20dp" />
+
+                    <TextView
+                        android:layout_marginRight="10dp"
+                        android:gravity="center|right"
+                        android:singleLine="true"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="2"
+                        android:hint="@string/app_name"
+                        android:text="@{file.size}"
+                        android:textColor="@color/colorBlackAlpha54"
+                        android:textSize="20dp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <FrameLayout
+                        android:layout_width="250dp"
+                        android:layout_height="match_parent">
+                        <ImageView
+                            load_async='@{"progress"}'
+                            android:layout_width="match_parent"
+                            android:layout_height="10dp"
+                            android:layout_gravity="center" />
+                    </FrameLayout>
+
+                    <TextView
+                        android:singleLine="true"
+                        android:gravity="center"
+                        android:textSize="15dp"
+                        android:text='@{file.percent+"%"}'
+                        android:textColor="@color/colorBlackAlpha54"
+                        android:hint="@string/app_name"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+        <View
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:background="@color/colorBlackAlpha12"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"/>
     </LinearLayout>
 </layout>

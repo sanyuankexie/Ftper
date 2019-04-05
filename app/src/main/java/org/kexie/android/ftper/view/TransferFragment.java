@@ -8,18 +8,25 @@ import android.view.ViewGroup;
 import org.kexie.android.ftper.BR;
 import org.kexie.android.ftper.R;
 import org.kexie.android.ftper.databinding.FragmentTransferBinding;
+import org.kexie.android.ftper.viewmodel.TransferViewModel;
+import org.kexie.android.ftper.viewmodel.bean.TransferItem;
 import org.kexie.android.ftper.widget.GenericQuickAdapter;
+
+import java.util.ArrayList;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProviders;
 
 public class TransferFragment extends Fragment {
 
+    private TransferViewModel mViewModel;
+
     private FragmentTransferBinding mBinding;
 
-    private GenericQuickAdapter<Object> mAdapter;
+    private GenericQuickAdapter<TransferItem> mAdapter;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -44,11 +51,24 @@ public class TransferFragment extends Fragment {
     public void onViewCreated(@NonNull View view,
                               @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        mViewModel = ViewModelProviders.of(requireActivity()).get(TransferViewModel.class);
+
         mBinding.setAdapter(mAdapter);
         mAdapter.setOnItemLongClickListener((adapter, view1, position) -> {
 
 
             return true;
+        });
+
+        mAdapter.setNewData(new ArrayList<TransferItem>() {
+            {
+                TransferItem transferItem = new TransferItem("xxx", 100, "ad", 0);
+                add(transferItem);
+                add(transferItem);
+                add(transferItem);
+                add(transferItem);
+
+            }
         });
     }
 

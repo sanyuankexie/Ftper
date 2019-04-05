@@ -43,4 +43,5 @@
     <string name="loading">正在加载</string>
     <string name="start_upload">开始上传文件</string>
     <string name="re_link">连接已断开\n正在尝试重连</string>
+    <string name="long_click_del">长按可删除文件夹右上角还有更多功能</string>
 </resources>
