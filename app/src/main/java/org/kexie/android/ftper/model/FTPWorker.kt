@@ -15,9 +15,13 @@ import java.io.File
 abstract class FTPWorker(context: Context, workerParams: WorkerParameters)
     : Worker(context, workerParams) {
 
-    protected val database = (applicationContext as AppGlobal).appDatabase
+    protected val database by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        (applicationContext as AppGlobal).appDatabase
+    }
 
-    protected val dao = database.transferDao
+    protected val dao by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        database.transferDao
+    }
 
     protected val config by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
         WorkerConfig(
