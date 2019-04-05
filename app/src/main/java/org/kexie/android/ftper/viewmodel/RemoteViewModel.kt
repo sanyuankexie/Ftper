@@ -193,10 +193,7 @@ class RemoteViewModel(application: Application)
         mHandler.post {
             try {
                 val input = Data.Builder()
-                        .putString(getApplication<Application>()
-                                .getString(R.string.path_key),
-                                file.absolutePath)
-                        .putConfig(mConfig)
+                        .putConfig(mConfig, file)
                         .build()
 
                 val request = OneTimeWorkRequest
@@ -331,12 +328,15 @@ class RemoteViewModel(application: Application)
                 })
     }
 
-    private fun Data.Builder.putConfig(configEntity: ConfigEntity): Data.Builder {
+    private fun Data.Builder.putConfig(configEntity: ConfigEntity, file: File): Data.Builder {
         val context = getApplication<Application>()
         return this.putInt(context.getString(R.string.port_key), configEntity.port)
                 .putString(context.getString(R.string.host_key), configEntity.host)
                 .putString(context.getString(R.string.username_key), configEntity.username)
                 .putString(context.getString(R.string.password_key), configEntity.password)
+                .putString(getApplication<Application>()
+                        .getString(R.string.path_key),
+                        file.absolutePath)
     }
 
     @Throws(Exception::class)

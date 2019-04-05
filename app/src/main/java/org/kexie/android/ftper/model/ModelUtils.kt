@@ -12,6 +12,6 @@ fun Data.loadConfig(context: Context): WorkerConfig {
             host = this.getString(context.getString(R.string.host_key))!!,
             password = this.getString(context.getString(R.string.password_key))!!,
             username = this.getString(context.getString(R.string.username_key))!!,
-            file = File(context.getString(R.string.path_key)),
+            file = File(this.getString(context.getString(R.string.path_key))!!),
             port = this.getInt(context.getString(R.string.port_key), Int.MIN_VALUE))
 }
