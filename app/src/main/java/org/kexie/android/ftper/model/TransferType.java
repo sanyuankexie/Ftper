@@ -1,11 +1,11 @@
-package org.kexie.android.ftper.widget;
+package org.kexie.android.ftper.model;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 import androidx.annotation.IntDef;
 
-import static org.kexie.android.ftper.widget.TransferType.*;
+import static org.kexie.android.ftper.model.TransferType.*;
 
 @IntDef({TYPE_ERROR,TYPE_UPLOAD,TYPE_DOWNLOAD,TYPE_UPLOAD_FINISH,TYPE_DOWNLOAD_FINISH})
 @Retention(RetentionPolicy.SOURCE)

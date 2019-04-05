@@ -9,6 +9,7 @@ import com.chad.library.adapter.base.BaseQuickAdapter;
 
 import org.kexie.android.ftper.BR;
 import org.kexie.android.ftper.R;
+import org.kexie.android.ftper.model.FileType;
 import org.kexie.android.ftper.viewmodel.bean.FileItem;
 
 import java.util.List;

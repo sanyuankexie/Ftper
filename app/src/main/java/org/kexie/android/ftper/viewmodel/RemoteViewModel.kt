@@ -21,9 +21,9 @@ import org.apache.commons.net.ftp.FTPClient
 import org.apache.commons.net.ftp.FTPReply
 import org.kexie.android.ftper.R
 import org.kexie.android.ftper.app.AppGlobal
+import org.kexie.android.ftper.model.UploadWorker
 import org.kexie.android.ftper.model.bean.ConfigEntity
 import org.kexie.android.ftper.viewmodel.bean.RemoteItem
-import org.kexie.android.ftper.widget.UploadWorker
 import org.kexie.android.ftper.widget.Utils
 import java.io.File
 
@@ -31,9 +31,9 @@ import java.io.File
 class RemoteViewModel(application: Application)
     : AndroidViewModel(application) {
 
-    private val mDao = getApplication<AppGlobal>()
-            .appDatabase
-            .configDao
+    private val mDataBase = getApplication<AppGlobal>().appDatabase
+
+    private val mDao = mDataBase.configDao
 
     /**
      * 使用[WorkManager]执行上传下载任务
@@ -205,7 +205,6 @@ class RemoteViewModel(application: Application)
                         .build()
 
                 mWorkManager.enqueue(request)
-
 
             } catch (e: Throwable) {
                 e.printStackTrace()

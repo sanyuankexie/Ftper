@@ -12,7 +12,7 @@ import io.reactivex.Observable
 import io.reactivex.subjects.PublishSubject
 import org.kexie.android.ftper.R
 import org.kexie.android.ftper.viewmodel.bean.FileItem
-import org.kexie.android.ftper.widget.FileType
+import org.kexie.android.ftper.model.FileType
 import org.kexie.android.ftper.widget.Utils
 import java.io.File
 import java.util.*
