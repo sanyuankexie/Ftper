@@ -50,7 +50,6 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="2"
                         android:hint="@string/app_name"
-                        android:text="@{file.size}"
                         android:textColor="@color/colorBlackAlpha54"
                         android:textSize="20dp" />
                 </LinearLayout>
@@ -75,7 +74,6 @@
                         android:singleLine="true"
                         android:gravity="center"
                         android:textSize="15dp"
-                        android:text='@{file.doSize+"%"}'
                         android:textColor="@color/colorBlackAlpha54"
                         android:hint="@string/app_name"
                         android:layout_width="match_parent"

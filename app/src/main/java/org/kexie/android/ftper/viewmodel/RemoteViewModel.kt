@@ -194,7 +194,7 @@ class RemoteViewModel(application: Application)
             try {
                 val input = Data.Builder()
                         .putString(getApplication<Application>()
-                                .getString(R.string.path),
+                                .getString(R.string.path_key),
                                 file.absolutePath)
                         .putConfig(mConfig)
                         .build()
