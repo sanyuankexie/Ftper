@@ -3,7 +3,7 @@ package org.kexie.android.ftper.model;
 import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.work.WorkerParameters;
-import es.dmoral.toasty.Toasty;
+import com.orhanobut.logger.Logger;
 import org.apache.commons.net.ftp.FTPFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,6 +35,7 @@ public final class DownloadWorker extends TransferWorker {
                     local.createNewFile();
                 }
                 if (local.length() >= files[0].getSize()) {
+                    Logger.d(getWorker().getLocal());
                     return Result.success();
                 }
                 BufferedOutputStream out = new BufferedOutputStream(
@@ -50,7 +51,7 @@ public final class DownloadWorker extends TransferWorker {
                 out.flush();
                 out.close();
                 input.close();
-                Toasty.info(getApplicationContext(),worker.getLocal()).show();
+                Logger.d(getWorker().getLocal());
                 return client.completePendingCommand()
                         ? Result.success()
                         : Result.failure();

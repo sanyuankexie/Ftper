@@ -7,7 +7,7 @@ import org.kexie.android.ftper.model.TransferStatus;
 @Entity(tableName = "workers")
 public class WorkerEntity {
 
-    @PrimaryKey
+    @PrimaryKey(autoGenerate = true)
     private int id;
 
     private String workerId;

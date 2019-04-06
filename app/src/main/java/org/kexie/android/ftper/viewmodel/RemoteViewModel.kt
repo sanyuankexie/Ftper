@@ -221,13 +221,13 @@ class RemoteViewModel(application: Application)
                     .setConstraints(constraints)
                     .build()
 
+
+
                 val worker = WorkerEntity().apply {
                     workerId = request.id.toString()
                     status = TransferStatus.UPLOAD_WAIT_START
                     local = file.absolutePath
-                    remote = mClient.printWorkingDirectory() +
-                            File.separator +
-                            file.name
+                    remote = getRemoteName(file.name)
                     configId = selectId
                 }
 
@@ -269,11 +269,7 @@ class RemoteViewModel(application: Application)
                         workerId = request.id.toString()
                         status = TransferStatus.DOWNLOAD_WAIT_START
                         local = getNewLocalName(remoteItem.name)
-
-                        remote = mClient.printWorkingDirectory() +
-                                File.separator +
-                                remoteItem.name
-
+                        remote = getRemoteName(remoteItem.name)
                         configId = selectId
                     }
 
@@ -364,10 +360,27 @@ class RemoteViewModel(application: Application)
         }
     }
 
-    private fun getNewLocalName(name:String):String {
-        return Environment.getExternalStorageDirectory()
-            .absolutePath + File.separator + getApplication<Application>()
-            .applicationInfo.name + File.separator + name
+    @WorkerThread
+    @Throws(Exception::class)
+    private fun getRemoteName(name:String):String {
+        val workingDir = mClient.printWorkingDirectory().trim()
+        return if (workingDir == "/") {
+            workingDir + name
+        } else {
+            workingDir + File.separator + name
+        }
+    }
+
+    private fun getNewLocalName(name: String): String {
+        val dir = File(
+            Environment.getExternalStorageDirectory()
+                .absolutePath + File.separator + getApplication<Application>()
+                .applicationInfo.name
+        )
+        if (!dir.exists()) {
+            dir.mkdirs()
+        }
+        return dir.absolutePath + File.separator + name
     }
 
     @Throws(Exception::class)

@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "e3cfa976fe19a45ab717da1cc841bd67",
+    "identityHash": "3bb60de5db345614c35e8b87ce46ce94",
     "entities": [
       {
         "tableName": "configs",
@@ -62,7 +62,7 @@
       },
       {
         "tableName": "workers",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `workerId` TEXT, `name` TEXT, `doSize` INTEGER NOT NULL, `status` INTEGER NOT NULL, `size` INTEGER NOT NULL, `configId` INTEGER NOT NULL, `remote` TEXT, `local` TEXT, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `workerId` TEXT, `name` TEXT, `doSize` INTEGER NOT NULL, `status` INTEGER NOT NULL, `size` INTEGER NOT NULL, `configId` INTEGER NOT NULL, `remote` TEXT, `local` TEXT)",
         "fields": [
           {
             "fieldPath": "id",
@@ -123,7 +123,7 @@
           "columnNames": [
             "id"
           ],
-          "autoGenerate": false
+          "autoGenerate": true
         },
         "indices": [],
         "foreignKeys": []
@@ -131,7 +131,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, \"e3cfa976fe19a45ab717da1cc841bd67\")"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, \"3bb60de5db345614c35e8b87ce46ce94\")"
     ]
   }
 }
