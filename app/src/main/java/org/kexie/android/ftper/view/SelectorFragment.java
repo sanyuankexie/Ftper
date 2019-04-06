@@ -7,17 +7,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-
-import com.flyco.tablayout.listener.OnTabSelectListener;
-import com.qmuiteam.qmui.widget.dialog.QMUITipDialog;
-
-import org.kexie.android.ftper.R;
-import org.kexie.android.ftper.databinding.FragmentSelectorBinding;
-import org.kexie.android.ftper.viewmodel.SelectorViewModel;
-import org.kexie.android.ftper.viewmodel.bean.FileItem;
-import org.kexie.android.ftper.widget.FilePagerAdapter;
-import org.kexie.android.ftper.widget.Utils;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
@@ -25,6 +14,15 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.viewpager.widget.ViewPager;
+import com.flyco.tablayout.listener.OnTabSelectListener;
+import com.qmuiteam.qmui.widget.dialog.QMUIDialog;
+import com.qmuiteam.qmui.widget.dialog.QMUITipDialog;
+import org.kexie.android.ftper.R;
+import org.kexie.android.ftper.databinding.FragmentSelectorBinding;
+import org.kexie.android.ftper.viewmodel.SelectorViewModel;
+import org.kexie.android.ftper.viewmodel.bean.FileItem;
+import org.kexie.android.ftper.widget.FilePagerAdapter;
+import org.kexie.android.ftper.widget.Utils;
 
 
 public class SelectorFragment extends Fragment {
@@ -63,7 +61,16 @@ public class SelectorFragment extends Fragment {
                 (adapter, view1, position) -> {
                     FileItem fileItem = (FileItem) adapter.getItem(position);
                     if (fileItem != null) {
-                        mViewModel.select(fileItem);
+                        new QMUIDialog.MessageDialogBuilder(requireContext())
+                                .setTitle("提示")
+                                .setMessage("确定要上传该文件吗？")
+                                .addAction("取消", (dialog1, index1) -> dialog1.dismiss())
+                                .addAction("确认", (dialog12, index12) -> {
+                                    mViewModel.select(fileItem);
+                                    dialog12.dismiss();
+                                })
+                                .create(com.qmuiteam.qmui.R.style.QMUI_Dialog)
+                                .show();
                     }
                 });
 

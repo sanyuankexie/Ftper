@@ -6,6 +6,8 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.qmuiteam.qmui.util.QMUIKeyboardHelper;
+import com.qmuiteam.qmui.widget.dialog.QMUIDialog;
+import com.qmuiteam.qmui.widget.dialog.QMUIDialogAction;
 import com.qmuiteam.qmui.widget.dialog.QMUITipDialog;
 
 import org.kexie.android.ftper.BR;
@@ -139,8 +141,7 @@ public class ConfigFragment extends Fragment {
                 QMUITipDialog.Builder.ICON_TYPE_INFO);
     }
 
-    private void openConfigDialog(ConfigItem configItem)
-    {
+    private void openConfigDialog(ConfigItem configItem) {
         boolean isAdd = configItem == null;
         ConfigDialogBuilder builder = new ConfigDialogBuilder(requireContext());
         builder.addAction("保存", (dialog, index) ->
@@ -148,27 +149,34 @@ public class ConfigFragment extends Fragment {
             ConfigItem configItem2 = builder
                     .getBinding()
                     .getConfigItem();
-            if (isAdd)
-            {
+            if (isAdd) {
                 mViewModel.add(configItem2);
-            } else
-            {
+            } else {
                 mViewModel.update(configItem2);
             }
             dialog.dismiss();
         });
-        if (!isAdd)
-        {
+        if (!isAdd) {
             builder.addAction("删除",
                     (dialog, index) -> {
-                        ConfigItem configItem2 = builder
-                                .getBinding()
-                                .getConfigItem();
-                        mViewModel.remove(configItem2);
                         dialog.dismiss();
+                        new QMUIDialog.MessageDialogBuilder(requireContext())
+                                .setTitle("提示")
+                                .setMessage("确定要删除吗？")
+                                .addAction("取消", (dialog1, index1) -> dialog1.dismiss())
+                                .addAction(0,
+                                        "删除", QMUIDialogAction.ACTION_PROP_NEGATIVE,
+                                        (dialog12, index12) -> {
+                                            ConfigItem configItem2 = builder
+                                                    .getBinding()
+                                                    .getConfigItem();
+                                            mViewModel.remove(configItem2);
+                                            dialog12.dismiss();
+                                        })
+                                .create(com.qmuiteam.qmui.R.style.QMUI_Dialog)
+                                .show();
                     }).setTitle("修改服务器信息");
-        } else
-        {
+        } else {
             builder.setTitle("添加服务器");
         }
         builder.addAction("取消", (dialog, index) -> dialog.dismiss())
