@@ -1,8 +1,9 @@
 package org.kexie.android.ftper.model.bean;
 
+import org.kexie.android.ftper.model.WorkerType;
+
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
-import org.kexie.android.ftper.model.TransferStatus;
 
 @Entity(tableName = "workers")
 public class WorkerEntity {
@@ -10,22 +11,31 @@ public class WorkerEntity {
     @PrimaryKey(autoGenerate = true)
     private int id;
 
+    @WorkerType
+    private int type;
+
+    private long doSize = 0;
+
+    private long size = 0;
+
     private String workerId;
 
     private String name;
-
-    private long doSize;
-
-    @TransferStatus
-    private int status;
-
-    private long size;
 
     private int configId;
 
     private String remote;
 
     private String local;
+
+    public void setType(@WorkerType int type) {
+        this.type = type;
+    }
+
+    @WorkerType
+    public int getType() {
+        return type;
+    }
 
     public void setId(int id) {
         this.id = id;
@@ -65,15 +75,6 @@ public class WorkerEntity {
 
     public void setDoSize(long doSize) {
         this.doSize = doSize;
-    }
-
-    public void setStatus(@TransferStatus int status) {
-        this.status = status;
-    }
-
-    @TransferStatus
-    public int getStatus() {
-        return status;
     }
 
     public long getSize() {

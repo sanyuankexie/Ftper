@@ -25,8 +25,8 @@ import org.apache.commons.net.ftp.FTPReply
 import org.kexie.android.ftper.R
 import org.kexie.android.ftper.app.AppGlobal
 import org.kexie.android.ftper.model.DownloadWorker
-import org.kexie.android.ftper.model.TransferStatus
 import org.kexie.android.ftper.model.UploadWorker
+import org.kexie.android.ftper.model.WorkerType
 import org.kexie.android.ftper.model.bean.WorkerEntity
 import org.kexie.android.ftper.viewmodel.bean.RemoteItem
 import org.kexie.android.ftper.widget.Utils
@@ -221,11 +221,9 @@ class RemoteViewModel(application: Application)
                     .setConstraints(constraints)
                     .build()
 
-
-
                 val worker = WorkerEntity().apply {
                     workerId = request.id.toString()
-                    status = TransferStatus.UPLOAD_WAIT_START
+                    type = WorkerType.UPLOAD
                     local = file.absolutePath
                     remote = getRemoteName(file.name)
                     configId = selectId
@@ -267,7 +265,7 @@ class RemoteViewModel(application: Application)
                 val worker = WorkerEntity()
                     .apply {
                         workerId = request.id.toString()
-                        status = TransferStatus.DOWNLOAD_WAIT_START
+                        type = WorkerType.DOWNLOAD
                         local = getNewLocalName(remoteItem.name)
                         remote = getRemoteName(remoteItem.name)
                         configId = selectId
@@ -372,10 +370,11 @@ class RemoteViewModel(application: Application)
     }
 
     private fun getNewLocalName(name: String): String {
-        val dir = File(
-            Environment.getExternalStorageDirectory()
-                .absolutePath + File.separator + getApplication<Application>()
-                .applicationInfo.name
+        val dir = File(Environment
+                .getExternalStorageDirectory()
+                .absolutePath +
+                File.separator +
+                getApplication<Application>().getString(R.string.app_name)
         )
         if (!dir.exists()) {
             dir.mkdirs()

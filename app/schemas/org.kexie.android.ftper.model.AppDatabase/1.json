@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "3bb60de5db345614c35e8b87ce46ce94",
+    "identityHash": "3a7915d7bbf3e39e91bbaf0ef38daa9b",
     "entities": [
       {
         "tableName": "configs",
@@ -62,11 +62,29 @@
       },
       {
         "tableName": "workers",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `workerId` TEXT, `name` TEXT, `doSize` INTEGER NOT NULL, `status` INTEGER NOT NULL, `size` INTEGER NOT NULL, `configId` INTEGER NOT NULL, `remote` TEXT, `local` TEXT)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `type` INTEGER NOT NULL, `doSize` INTEGER NOT NULL, `size` INTEGER NOT NULL, `workerId` TEXT, `name` TEXT, `configId` INTEGER NOT NULL, `remote` TEXT, `local` TEXT)",
         "fields": [
           {
             "fieldPath": "id",
             "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "type",
+            "columnName": "type",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "doSize",
+            "columnName": "doSize",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "size",
+            "columnName": "size",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -81,24 +99,6 @@
             "columnName": "name",
             "affinity": "TEXT",
             "notNull": false
-          },
-          {
-            "fieldPath": "doSize",
-            "columnName": "doSize",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "status",
-            "columnName": "status",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "size",
-            "columnName": "size",
-            "affinity": "INTEGER",
-            "notNull": true
           },
           {
             "fieldPath": "configId",
@@ -131,7 +131,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, \"3bb60de5db345614c35e8b87ce46ce94\")"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, \"3a7915d7bbf3e39e91bbaf0ef38daa9b\")"
     ]
   }
 }

@@ -14,15 +14,26 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
-
-        <TextView
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="@color/white"
-            android:gravity="center"
-            android:text="配置"
-            android:textColor="@color/colorBlackAlpha54"
-            android:textSize="25dp"/>
+            android:layout_height="?attr/actionBarSize">
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/white"
+                android:gravity="center"
+                android:text="配置"
+                android:textColor="@color/colorBlackAlpha54"
+                android:textSize="25dp"/>
+
+            <ImageView
+                android:padding="15dp"
+                android:layout_gravity="center|right"
+                android:scaleType="centerInside"
+                load_async='@{"info"}'
+                android:layout_width="?attr/actionBarSize"
+                android:layout_height="match_parent" />
+        </FrameLayout>
 
         <View
             android:layout_width="match_parent"
