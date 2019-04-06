@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "7783fac526753cdf0e7102fcc1a34544",
+    "identityHash": "4cf216e1ff1caabbfb05e5f848201d52",
     "entities": [
       {
         "tableName": "configs",
@@ -61,20 +61,14 @@
         "foreignKeys": []
       },
       {
-        "tableName": "transfers",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `workerId` TEXT, `name` TEXT, `doSize` INTEGER NOT NULL, `type` INTEGER NOT NULL, `size` INTEGER NOT NULL)",
+        "tableName": "workers",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT, `doSize` INTEGER NOT NULL, `type` INTEGER NOT NULL, `size` INTEGER NOT NULL, `configId` INTEGER NOT NULL, `remote` TEXT, `local` TEXT, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
             "columnName": "id",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "workerId",
-            "columnName": "workerId",
             "affinity": "TEXT",
-            "notNull": false
+            "notNull": true
           },
           {
             "fieldPath": "name",
@@ -99,13 +93,31 @@
             "columnName": "size",
             "affinity": "INTEGER",
             "notNull": true
+          },
+          {
+            "fieldPath": "configId",
+            "columnName": "configId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "remote",
+            "columnName": "remote",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "local",
+            "columnName": "local",
+            "affinity": "TEXT",
+            "notNull": false
           }
         ],
         "primaryKey": {
           "columnNames": [
             "id"
           ],
-          "autoGenerate": true
+          "autoGenerate": false
         },
         "indices": [],
         "foreignKeys": []
@@ -113,7 +125,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, \"7783fac526753cdf0e7102fcc1a34544\")"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, \"4cf216e1ff1caabbfb05e5f848201d52\")"
     ]
   }
 }

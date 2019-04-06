@@ -1,13 +1,18 @@
 package org.kexie.android.ftper.model.bean;
 
+import androidx.annotation.NonNull;
 import androidx.room.Entity;
 import androidx.room.ForeignKey;
 import androidx.room.PrimaryKey;
 
-@Entity(tableName = "transfers")
-public class TransferEntity {
+import java.util.UUID;
+
+@Entity(tableName = "workers")
+public class WorkerEntity {
+
     @PrimaryKey
-    private String workerId;
+    @NonNull
+    private String id = UUID.randomUUID().toString();
 
     private String name;
 
@@ -19,7 +24,7 @@ public class TransferEntity {
 
     @ForeignKey(entity = ConfigEntity.class,
             parentColumns = {"id"},
-            childColumns = {"configId"})
+            childColumns = "configId")
     private int configId;
 
     private String remote;
@@ -34,12 +39,13 @@ public class TransferEntity {
         return configId;
     }
 
-    public String getWorkerId() {
-        return workerId;
+    public void setId(@NonNull String id) {
+        this.id = id;
     }
 
-    public void setWorkerId(String workerId) {
-        this.workerId = workerId;
+    @NonNull
+    public String getId() {
+        return id;
     }
 
     public String getName() {

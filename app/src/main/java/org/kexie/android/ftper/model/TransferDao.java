@@ -1,31 +1,26 @@
 package org.kexie.android.ftper.model;
 
-import org.kexie.android.ftper.model.bean.TransferEntity;
+import androidx.room.*;
+import org.kexie.android.ftper.model.bean.WorkerEntity;
 
 import java.util.List;
-
-import androidx.room.Dao;
-import androidx.room.Delete;
-import androidx.room.Insert;
-import androidx.room.Query;
-import androidx.room.Update;
 
 @Dao
 public interface TransferDao {
 
     @Update
-    void update(TransferEntity configEntity);
+    void update(WorkerEntity configEntity);
 
     @Insert
-    void add(TransferEntity configEntity);
+    void add(WorkerEntity configEntity);
 
     @Delete
-    void remove(TransferEntity configEntity);
+    void remove(WorkerEntity configEntity);
 
-    @Query("select * from transfers")
-    List<TransferEntity> loadAll();
+    @Query("select * from workers")
+    List<WorkerEntity> loadAll();
 
-    @Query("select * from transfers where id=:id")
-    TransferEntity findById(int id);
+    @Query("select * from workers where id=:id")
+    WorkerEntity findById(String id);
 
 }
