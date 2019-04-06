@@ -1,24 +1,21 @@
 package org.kexie.android.ftper.model
 
 import android.content.Context
-import androidx.work.Data
-import androidx.work.ListenableWorker
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import org.apache.commons.net.ftp.FTP
 import org.apache.commons.net.ftp.FTPClient
 import org.kexie.android.ftper.R
 import org.kexie.android.ftper.app.AppGlobal
-import org.kexie.android.ftper.model.bean.WorkerConfig
 import java.io.File
 
-abstract class FTPWorker(context: Context, workerParams: WorkerParameters)
+abstract class TransferWorker(context: Context, workerParams: WorkerParameters)
     : Worker(context, workerParams) {
 
     protected val database = (applicationContext as AppGlobal).appDatabase
 
     protected val config by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
-        WorkerConfig(
+        Config(
             host = inputData.getString(applicationContext.getString(R.string.host_key))!!,
             password = inputData.getString(applicationContext.getString(R.string.password_key))!!,
             username = inputData.getString(applicationContext.getString(R.string.username_key))!!,
@@ -41,23 +38,25 @@ abstract class FTPWorker(context: Context, workerParams: WorkerParameters)
     protected fun connect(): FTPClient {
         return FTPClient()
             .apply {
+                val timeout = 5000
                 controlEncoding = applicationContext.getString(R.string.gbk)
-                connectTimeout = 5000
-                defaultTimeout = 5000
+                connectTimeout = timeout
+                defaultTimeout = timeout
                 connect(config.host, config.port)
                 login(config.username, config.password)
+                soTimeout = timeout
                 enterLocalPassiveMode()
                 setFileType(FTP.BINARY_FILE_TYPE)
+                changeWorkingDirectory(config.remote)
             }
     }
 
-    protected fun failure(@FailureType type: Int): ListenableWorker.Result {
-        val data = Data.Builder()
-            .putInt(
-                applicationContext.getString(R.string.result_key),
-                FailureType.UNKNOWN_ERROR
-            )
-            .build()
-        return ListenableWorker.Result.failure(data)
-    }
+    protected data class Config(
+        val host: String,
+        val port: Int,
+        val username: String,
+        val password: String,
+        val local: File,
+        val remote: String
+    )
 }

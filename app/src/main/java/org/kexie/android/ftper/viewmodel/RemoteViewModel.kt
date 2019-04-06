@@ -347,7 +347,7 @@ class RemoteViewModel(application: Application)
             )
             .putString(
                 context.getString(R.string.remote_key),
-                mClient.printWorkingDirectory() + File.separator + file.name
+                mClient.printWorkingDirectory()
             )
     }
 

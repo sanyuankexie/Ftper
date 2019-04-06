@@ -6,12 +6,12 @@ import androidx.work.WorkerParameters;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 import org.jetbrains.annotations.NotNull;
-import org.kexie.android.ftper.R;
 
-import java.io.OutputStream;
-import java.io.RandomAccessFile;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 
-public final class UploadWorker extends FTPWorker {
+public final class UploadWorker extends TransferWorker {
 
     public UploadWorker(@NotNull Context context,
                         @NotNull WorkerParameters workerParams) {
@@ -23,43 +23,30 @@ public final class UploadWorker extends FTPWorker {
     public Result doWork() {
         try {
             FTPClient ftpClient = connect();
-            FTPFile[] files = ftpClient.listFiles(getConfig().getRemote());
-            if (files.length == 0) {
-                return upload(ftpClient, 0);
-            } else if (files.length == 1) {
-                long localSize = getConfig().getLocal().length();
+            BufferedInputStream buffer = new BufferedInputStream(
+                    new FileInputStream(getConfig().getLocal())
+            );
+            Config config = getConfig();
+            FTPFile[] files = ftpClient.listFiles(
+                    config.getRemote()
+                            + File.separator
+                            + config.getLocal().getName());
+            if (files.length == 1) {
                 long remoteSize = files[0].getSize();
-                if (remoteSize >= localSize) {
-                    return failure(FailureType.FILE_EXIT);
-                } else {
-                    return upload(ftpClient, remoteSize);
+                if (remoteSize > 0) {
+                    if (buffer.skip(remoteSize) == remoteSize) {
+                        ftpClient.setRestartOffset(remoteSize);
+                    }
                 }
-            } else {
+            } else if (files.length > 1) {
                 throw new RuntimeException();
             }
+            return ftpClient.storeFile(config.getLocal().getName(), buffer)
+                    ? Result.success()
+                    : Result.failure();
         } catch (Throwable e) {
             e.printStackTrace();
-            return failure(FailureType.UNKNOWN_ERROR);
+            return Result.failure();
         }
-    }
-
-    private Result upload(FTPClient client, long remoteSize) throws Exception {
-        RandomAccessFile randomAccessFile = new RandomAccessFile(getConfig().getLocal(),
-                getApplicationContext().getString(R.string.r));
-        OutputStream outputStream = client.appendFileStream(getConfig().getRemote());
-        if (remoteSize > 0) {
-            client.setRestartOffset(remoteSize);
-            randomAccessFile.seek(remoteSize);
-        }
-        byte[] bytes = new byte[1024];
-        int c;
-        while ((c = randomAccessFile.read(bytes)) != -1) {
-            outputStream.write(bytes, 0, c);
-        }
-        outputStream.close();
-        randomAccessFile.close();
-        return client.completePendingCommand()
-                ? Result.success()
-                : failure(FailureType.UNKNOWN_ERROR);
     }
 }
