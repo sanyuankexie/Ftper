@@ -1,12 +1,12 @@
 package org.kexie.android.ftper.app
 
 import android.annotation.SuppressLint
+import android.app.Application
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
-import androidx.multidex.MultiDexApplication
 import androidx.room.Room
 import com.orhanobut.logger.AndroidLogAdapter
 import com.orhanobut.logger.Logger
@@ -15,7 +15,7 @@ import org.kexie.android.autopermissions.AutoPermissions
 import org.kexie.android.ftper.BuildConfig
 import org.kexie.android.ftper.model.AppDatabase
 
-class AppGlobal : MultiDexApplication() {
+class AppGlobal : Application() {
 
     val appDatabase: AppDatabase by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
         Room.databaseBuilder(
