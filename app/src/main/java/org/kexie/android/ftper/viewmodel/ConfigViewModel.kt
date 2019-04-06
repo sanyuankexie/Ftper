@@ -9,7 +9,6 @@ import androidx.annotation.WorkerThread
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import com.blankj.utilcode.util.TimeUtils
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.subjects.PublishSubject
@@ -17,6 +16,7 @@ import org.kexie.android.ftper.R
 import org.kexie.android.ftper.app.AppGlobal
 import org.kexie.android.ftper.model.bean.ConfigEntity
 import org.kexie.android.ftper.viewmodel.bean.ConfigItem
+import org.kexie.android.ftper.widget.TimeUtils
 
 
 class ConfigViewModel(application: Application)
