@@ -202,7 +202,7 @@ class RemoteViewModel(application: Application)
 
     fun upload(file: File) {
         val selectId = selectValue
-        if (!mClient.isConnected || selectId != Int.MIN_VALUE) {
+        if (!mClient.isConnected || selectId == Int.MIN_VALUE) {
             mOnError.onNext(
                 getApplication<Application>()
                     .getString(R.string.no_select_service)
@@ -243,7 +243,7 @@ class RemoteViewModel(application: Application)
 
     fun download(remoteItem: RemoteItem) {
         val selectId = selectValue
-        if (!mClient.isConnected || selectId != Int.MIN_VALUE) {
+        if (!mClient.isConnected || selectId == Int.MIN_VALUE) {
             mOnError.onNext(
                 getApplication<Application>()
                     .getString(R.string.no_select_service)

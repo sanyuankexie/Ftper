@@ -15,7 +15,6 @@ import androidx.lifecycle.ViewModelProviders;
 import androidx.viewpager.widget.PagerAdapter;
 import com.flyco.tablayout.listener.CustomTabEntity;
 import com.flyco.tablayout.listener.OnTabSelectListener;
-import com.orhanobut.logger.Logger;
 import org.kexie.android.ftper.R;
 import org.kexie.android.ftper.databinding.FragmentMainBinding;
 import org.kexie.android.ftper.viewmodel.ConfigViewModel;
@@ -134,7 +133,6 @@ public class MainFragment extends Fragment {
                                  int resultCode,
                                  @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        Logger.d(data);
         if (requestCode == R.id.open_select_request_code) {
             mRemoteFragment.onActivityResult(requestCode, resultCode, data);
         }
