@@ -1,6 +1,7 @@
 package org.kexie.android.ftper.app;
 
 import android.os.Bundle;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.databinding.DataBindingUtil;
@@ -23,5 +24,12 @@ public class HostActivity extends AppCompatActivity {
                 .add(R.id.fragment_container, fragment)
                 .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
                 .commit();
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        //MVVM不需要此方法
+        outState.clear();
     }
 }

@@ -5,20 +5,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-
-import com.flyco.tablayout.listener.CustomTabEntity;
-import com.flyco.tablayout.listener.OnTabSelectListener;
-import com.orhanobut.logger.Logger;
-
-import org.kexie.android.ftper.R;
-import org.kexie.android.ftper.databinding.FragmentMainBinding;
-import org.kexie.android.ftper.viewmodel.ConfigViewModel;
-import org.kexie.android.ftper.viewmodel.RemoteViewModel;
-import org.kexie.android.ftper.viewmodel.TransferViewModel;
-import org.kexie.android.ftper.viewmodel.bean.TabItem;
-
-import java.util.ArrayList;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.math.MathUtils;
@@ -27,6 +13,17 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentPagerAdapter;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.viewpager.widget.PagerAdapter;
+import com.flyco.tablayout.listener.CustomTabEntity;
+import com.flyco.tablayout.listener.OnTabSelectListener;
+import com.orhanobut.logger.Logger;
+import org.kexie.android.ftper.R;
+import org.kexie.android.ftper.databinding.FragmentMainBinding;
+import org.kexie.android.ftper.viewmodel.ConfigViewModel;
+import org.kexie.android.ftper.viewmodel.RemoteViewModel;
+import org.kexie.android.ftper.viewmodel.TransferViewModel;
+import org.kexie.android.ftper.viewmodel.bean.TabItem;
+
+import java.util.ArrayList;
 
 import static androidx.viewpager.widget.ViewPager.SimpleOnPageChangeListener;
 

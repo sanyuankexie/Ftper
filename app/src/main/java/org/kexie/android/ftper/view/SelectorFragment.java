@@ -35,6 +35,27 @@ public class SelectorFragment extends Fragment {
 
     private QMUITipDialog dialog = null;
 
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        mFilePagerAdapter = new FilePagerAdapter(this,
+                (adapter, view1, position) -> {
+                    FileItem fileItem = (FileItem) adapter.getItem(position);
+                    if (fileItem != null) {
+                        new QMUIDialog.MessageDialogBuilder(requireContext())
+                                .setTitle("提示")
+                                .setMessage("确定要上传该文件吗？")
+                                .addAction("取消", (dialog1, index1) -> dialog1.dismiss())
+                                .addAction("确认", (dialog12, index12) -> {
+                                    mViewModel.select(fileItem);
+                                    dialog12.dismiss();
+                                })
+                                .create(com.qmuiteam.qmui.R.style.QMUI_Dialog)
+                                .show();
+                    }
+                });
+    }
+
     @SuppressLint("ClickableViewAccessibility")
     @Nullable
     @Override
@@ -57,22 +78,7 @@ public class SelectorFragment extends Fragment {
         mViewModel = ViewModelProviders.of(requireActivity())
                 .get(SelectorViewModel.class);
 
-        mFilePagerAdapter = new FilePagerAdapter(this,
-                (adapter, view1, position) -> {
-                    FileItem fileItem = (FileItem) adapter.getItem(position);
-                    if (fileItem != null) {
-                        new QMUIDialog.MessageDialogBuilder(requireContext())
-                                .setTitle("提示")
-                                .setMessage("确定要上传该文件吗？")
-                                .addAction("取消", (dialog1, index1) -> dialog1.dismiss())
-                                .addAction("确认", (dialog12, index12) -> {
-                                    mViewModel.select(fileItem);
-                                    dialog12.dismiss();
-                                })
-                                .create(com.qmuiteam.qmui.R.style.QMUI_Dialog)
-                                .show();
-                    }
-                });
+
 
         mBinding.tabs.setTabData(new String[]{
                 getString(R.string.image),
@@ -152,10 +158,15 @@ public class SelectorFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        mFilePagerAdapter = null;
         if (dialog != null) {
             dialog.dismiss();
             dialog = null;
         }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        mFilePagerAdapter = null;
     }
 }
