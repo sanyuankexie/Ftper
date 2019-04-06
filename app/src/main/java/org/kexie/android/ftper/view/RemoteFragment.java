@@ -1,6 +1,7 @@
 package org.kexie.android.ftper.view;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.InputType;
@@ -9,14 +10,21 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.widget.AppCompatTextView;
+import androidx.databinding.DataBindingUtil;
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProviders;
+import androidx.recyclerview.widget.RecyclerView;
 import com.qmuiteam.qmui.widget.QMUIEmptyView;
 import com.qmuiteam.qmui.widget.dialog.QMUIBottomSheet.BottomGridSheetBuilder;
 import com.qmuiteam.qmui.widget.dialog.QMUIDialog;
 import com.qmuiteam.qmui.widget.dialog.QMUIDialog.EditTextDialogBuilder;
 import com.qmuiteam.qmui.widget.dialog.QMUIDialogAction;
 import com.qmuiteam.qmui.widget.dialog.QMUITipDialog;
-
+import es.dmoral.toasty.Toasty;
+import me.jessyan.autosize.utils.AutoSizeUtils;
 import org.kexie.android.ftper.BR;
 import org.kexie.android.ftper.R;
 import org.kexie.android.ftper.databinding.FragmentFilesBinding;
@@ -28,16 +36,6 @@ import org.kexie.android.ftper.widget.RxWrapper;
 import org.kexie.android.ftper.widget.Utils;
 
 import java.io.File;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.widget.AppCompatTextView;
-import androidx.databinding.DataBindingUtil;
-import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProviders;
-import androidx.recyclerview.widget.RecyclerView;
-import es.dmoral.toasty.Toasty;
-import me.jessyan.autosize.utils.AutoSizeUtils;
 
 import static com.chad.library.adapter.base.BaseQuickAdapter.OnItemClickListener;
 
@@ -71,18 +69,21 @@ public class RemoteFragment extends Fragment {
         mEmptyView = new QMUIEmptyView(inflater.getContext());
         mEmptyView.setTitleText(getString(R.string.this_is_empty));
         mItemAdapter.setEmptyView(mEmptyView);
-        AppCompatTextView textView = new AppCompatTextView(inflater.getContext());
+        mItemAdapter.addFooterView(getFooterView(inflater.getContext()));
+        return mBinding.getRoot();
+    }
+
+    private static View getFooterView(Context context) {
+        AppCompatTextView textView = new AppCompatTextView(context);
         textView.setGravity(Gravity.CENTER);
-        textView.setTextColor(inflater
-                .getContext()
+        textView.setTextColor(context
                 .getResources()
                 .getColor(R.color.colorBlackAlpha26));
         textView.setText(R.string.long_click_del);
         textView.setLayoutParams(new RecyclerView.LayoutParams(
                 RecyclerView.LayoutParams.MATCH_PARENT,
-                AutoSizeUtils.dp2px(inflater.getContext(),40)));
-        mItemAdapter.addFooterView(textView);
-        return mBinding.getRoot();
+                AutoSizeUtils.dp2px(context, 40)));
+        return textView;
     }
 
     @Override

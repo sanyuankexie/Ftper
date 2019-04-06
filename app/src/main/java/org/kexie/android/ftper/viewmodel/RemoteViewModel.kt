@@ -20,6 +20,7 @@ import org.apache.commons.net.ftp.FTPClient
 import org.apache.commons.net.ftp.FTPReply
 import org.kexie.android.ftper.R
 import org.kexie.android.ftper.app.AppGlobal
+import org.kexie.android.ftper.model.DownloadWorker
 import org.kexie.android.ftper.model.UploadWorker
 import org.kexie.android.ftper.model.bean.ConfigEntity
 import org.kexie.android.ftper.viewmodel.bean.RemoteItem
@@ -201,7 +202,6 @@ class RemoteViewModel(application: Application)
             )
             return
         }
-
         mHandler.post {
             try {
                 val constraints = Constraints.Builder()
@@ -209,7 +209,12 @@ class RemoteViewModel(application: Application)
                     .build()
 
                 val input = Data.Builder()
-                    .putConfig(file, config)
+                    .putConfig(
+                        file, config,
+                        mClient.printWorkingDirectory()
+                                + File.separator
+                                + file.name
+                    )
                     .build()
 
                 val request = OneTimeWorkRequest
@@ -220,18 +225,52 @@ class RemoteViewModel(application: Application)
 
                 mWorkManager.enqueue(request)
 
-                mOnInfo.onNext(getApplication<Application>().getString(R.string.start_upload_text))
-
+                mOnSuccess.onNext(getApplication<Application>().getString(R.string.start_upload_text))
             } catch (e: Throwable) {
                 e.printStackTrace()
-
             }
         }
     }
 
     fun download(remoteItem: RemoteItem) {
+        val config = mConfig
+        if (!mClient.isConnected || config == null) {
+            mOnError.onNext(
+                getApplication<Application>()
+                    .getString(R.string.no_select_service)
+            )
+            return
+        }
+        mHandler.post {
+            try {
+                val constraints = Constraints.Builder()
+                    .setRequiredNetworkType(NetworkType.CONNECTED)
+                    .build()
 
+                val file = File("")
 
+                val input = Data.Builder()
+                    .putConfig(
+                        file, config,
+                        mClient.printWorkingDirectory()
+                                + File.separator
+                                + remoteItem.name
+                    )
+                    .build()
+
+                val request = OneTimeWorkRequest
+                    .Builder(DownloadWorker::class.java)
+                    .setConstraints(constraints)
+                    .setInputData(input)
+                    .build()
+
+                mWorkManager.enqueue(request)
+
+                mOnSuccess.onNext(getApplication<Application>().getString(R.string.start_dl_text))
+            } catch (e: Throwable) {
+                e.printStackTrace()
+            }
+        }
     }
 
     fun mkdir(name: String) {
@@ -347,7 +386,11 @@ class RemoteViewModel(application: Application)
     }
 
     @Throws(Exception::class)
-    private fun Data.Builder.putConfig(file: File, config: ConfigEntity): Data.Builder {
+    private fun Data.Builder.putConfig(
+        file: File,
+        config: ConfigEntity,
+        remote: String
+    ): Data.Builder {
         val context = getApplication<Application>()
         return this.putInt(context.getString(R.string.port_key), config.port)
             .putString(context.getString(R.string.host_key), config.host)
@@ -360,7 +403,7 @@ class RemoteViewModel(application: Application)
             )
             .putString(
                 context.getString(R.string.remote_key),
-                mClient.printWorkingDirectory()
+                remote
             )
     }
 

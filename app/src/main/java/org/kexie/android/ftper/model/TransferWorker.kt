@@ -45,9 +45,7 @@ abstract class TransferWorker(context: Context, workerParams: WorkerParameters)
                 connect(config.host, config.port)
                 login(config.username, config.password)
                 soTimeout = timeout
-                enterLocalPassiveMode()
                 setFileType(FTP.BINARY_FILE_TYPE)
-                changeWorkingDirectory(config.remote)
             }
     }
 
