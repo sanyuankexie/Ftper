@@ -3,6 +3,7 @@ package org.kexie.android.ftper.model;
 import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.work.WorkerParameters;
+import es.dmoral.toasty.Toasty;
 import org.apache.commons.net.ftp.FTPFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,6 +50,7 @@ public final class DownloadWorker extends TransferWorker {
                 out.flush();
                 out.close();
                 input.close();
+                Toasty.info(getApplicationContext(),worker.getLocal()).show();
                 return client.completePendingCommand()
                         ? Result.success()
                         : Result.failure();

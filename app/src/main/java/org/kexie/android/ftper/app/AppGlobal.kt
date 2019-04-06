@@ -35,18 +35,21 @@ class AppGlobal : MultiDexApplication() {
         AutoPermissions.addCallback {
             if (!it.isEmpty()) {
                 jumpToSystemSetting()
-                Toasty.error(this,
-                        "请授予权限")
-                        .show()
+                Toasty.error(
+                    this,
+                    "请授予权限"
+                )
+                    .show()
                 Handler(Looper.getMainLooper())
-                        .postDelayed({
-                            System.exit(1)
-                        }, 1000)
+                    .postDelayed({
+                        System.exit(1)
+                    }, 1000)
             }
         }
-        //这看似不安全的操作，实际上却是安全的use by lazy(LazyThreadSafetyMode.SYNCHRONIZED){ }
+        // 这看似不安全的操作，实际上却是安全的
+        // use by lazy(LazyThreadSafetyMode.SYNCHRONIZED){ }
         Thread {
-            appDatabase
+            Logger.d("database init : " + appDatabase.openHelper.databaseName)
         }.apply {
             priority = Thread.MAX_PRIORITY
             start()

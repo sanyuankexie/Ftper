@@ -1,6 +1,7 @@
 package org.kexie.android.ftper.viewmodel
 
 import android.app.Application
+import android.os.Environment
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.Looper
@@ -258,8 +259,6 @@ class RemoteViewModel(application: Application)
                     .setRequiredNetworkType(NetworkType.CONNECTED)
                     .build()
 
-                val file = File("")
-
                 val request = OneTimeWorkRequest
                     .Builder(DownloadWorker::class.java)
                     .setConstraints(constraints)
@@ -269,10 +268,12 @@ class RemoteViewModel(application: Application)
                     .apply {
                         workerId = request.id.toString()
                         status = TransferStatus.DOWNLOAD_WAIT_START
-                        local = file.absolutePath
+                        local = getNewLocalName(remoteItem.name)
+
                         remote = mClient.printWorkingDirectory() +
                                 File.separator +
                                 remoteItem.name
+
                         configId = selectId
                     }
 
@@ -332,7 +333,6 @@ class RemoteViewModel(application: Application)
             try {
                 if (remoteItem.isDirectory) {
 
-
                 } else if (remoteItem.isFile) {
                     mClient.deleteFile(remoteItem.name)
                 }
@@ -362,6 +362,12 @@ class RemoteViewModel(application: Application)
             mFiles.postValue(emptyList())
             mIsLoading.postValue(false)
         }
+    }
+
+    private fun getNewLocalName(name:String):String {
+        return Environment.getExternalStorageDirectory()
+            .absolutePath + File.separator + getApplication<Application>()
+            .applicationInfo.name + File.separator + name
     }
 
     @Throws(Exception::class)

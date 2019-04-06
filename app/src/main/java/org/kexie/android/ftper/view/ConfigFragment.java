@@ -143,6 +143,8 @@ public class ConfigFragment extends Fragment {
 
     private void openConfigDialog(ConfigItem configItem) {
         boolean isAdd = configItem == null;
+        //防御性拷贝
+        ConfigItem backup = isAdd ? new ConfigItem() : configItem.clone();
         ConfigDialogBuilder builder = new ConfigDialogBuilder(requireContext());
         builder.addAction("保存", (dialog, index) ->
         {
@@ -158,24 +160,22 @@ public class ConfigFragment extends Fragment {
         });
         if (!isAdd) {
             builder.addAction("删除",
-                    (dialog, index) -> {
-                        dialog.dismiss();
-                        new QMUIDialog.MessageDialogBuilder(requireContext())
-                                .setTitle("提示")
-                                .setMessage("确定要删除吗？")
-                                .addAction("取消", (dialog1, index1) -> dialog1.dismiss())
-                                .addAction(0,
-                                        "删除", QMUIDialogAction.ACTION_PROP_NEGATIVE,
-                                        (dialog12, index12) -> {
-                                            ConfigItem configItem2 = builder
-                                                    .getBinding()
-                                                    .getConfigItem();
-                                            mViewModel.remove(configItem2);
-                                            dialog12.dismiss();
-                                        })
-                                .create(com.qmuiteam.qmui.R.style.QMUI_Dialog)
-                                .show();
-                    }).setTitle("修改服务器信息");
+                    (dialog, index) -> new QMUIDialog.MessageDialogBuilder(requireContext())
+                            .setTitle("提示")
+                            .setMessage("确定要删除吗？")
+                            .addAction("取消", (dialog1, index1) -> dialog1.dismiss())
+                            .addAction(0,
+                                    "删除", QMUIDialogAction.ACTION_PROP_NEGATIVE,
+                                    (dialog12, index12) -> {
+                                        dialog.dismiss();
+                                        dialog12.dismiss();
+                                        ConfigItem configItem2 = builder
+                                                .getBinding()
+                                                .getConfigItem();
+                                        mViewModel.remove(configItem2);
+                                    })
+                            .create(com.qmuiteam.qmui.R.style.QMUI_Dialog)
+                            .show()).setTitle("修改服务器信息");
         } else {
             builder.setTitle("添加服务器");
         }
@@ -183,7 +183,7 @@ public class ConfigFragment extends Fragment {
                 .create(com.qmuiteam.qmui.R.style.QMUI_Dialog)
                 .show();
         QMUIKeyboardHelper.showKeyboard(builder.getBinding().host, true);
-        builder.getBinding().setConfigItem(isAdd ? new ConfigItem() : configItem);
+        builder.getBinding().setConfigItem(backup);
     }
 
     @Override
