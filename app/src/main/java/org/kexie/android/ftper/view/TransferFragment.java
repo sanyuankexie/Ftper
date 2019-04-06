@@ -4,7 +4,11 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.databinding.DataBindingUtil;
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProviders;
 import org.kexie.android.ftper.BR;
 import org.kexie.android.ftper.R;
 import org.kexie.android.ftper.databinding.FragmentTransferBinding;
@@ -13,12 +17,6 @@ import org.kexie.android.ftper.viewmodel.bean.TransferItem;
 import org.kexie.android.ftper.widget.GenericQuickAdapter;
 
 import java.util.ArrayList;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.databinding.DataBindingUtil;
-import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProviders;
 
 public class TransferFragment extends Fragment {
 
@@ -67,7 +65,6 @@ public class TransferFragment extends Fragment {
                 add(transferItem);
                 add(transferItem);
                 add(transferItem);
-
             }
         });
     }
