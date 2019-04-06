@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "c854caf7a8ef1d775e61cdcb84c2c27a",
+    "identityHash": "e3cfa976fe19a45ab717da1cc841bd67",
     "entities": [
       {
         "tableName": "configs",
@@ -62,13 +62,19 @@
       },
       {
         "tableName": "workers",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT, `doSize` INTEGER NOT NULL, `status` INTEGER NOT NULL, `size` INTEGER NOT NULL, `configId` INTEGER NOT NULL, `remote` TEXT, `local` TEXT, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `workerId` TEXT, `name` TEXT, `doSize` INTEGER NOT NULL, `status` INTEGER NOT NULL, `size` INTEGER NOT NULL, `configId` INTEGER NOT NULL, `remote` TEXT, `local` TEXT, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
             "columnName": "id",
-            "affinity": "TEXT",
+            "affinity": "INTEGER",
             "notNull": true
+          },
+          {
+            "fieldPath": "workerId",
+            "columnName": "workerId",
+            "affinity": "TEXT",
+            "notNull": false
           },
           {
             "fieldPath": "name",
@@ -125,7 +131,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, \"c854caf7a8ef1d775e61cdcb84c2c27a\")"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, \"e3cfa976fe19a45ab717da1cc841bd67\")"
     ]
   }
 }

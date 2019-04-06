@@ -31,7 +31,7 @@
 
         <androidx.recyclerview.widget.RecyclerView
             android:clipChildren="false"
-            android:workerId="@+workerId/configs"
+            android:id="@+id/configs"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"

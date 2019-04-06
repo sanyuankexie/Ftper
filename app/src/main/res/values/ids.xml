@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <item name="open_select_request_code" type="workerId"/>
+    <item name="open_select_request_code" type="id"/>
 </resources>
