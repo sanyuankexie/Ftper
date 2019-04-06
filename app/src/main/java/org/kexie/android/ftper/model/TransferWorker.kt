@@ -21,16 +21,12 @@ abstract class TransferWorker(context: Context, workerParams: WorkerParameters)
             username = inputData.getString(applicationContext.getString(R.string.username_key))!!,
             local = File(inputData.getString(applicationContext.getString(R.string.local_key))!!),
             remote = inputData.getString(applicationContext.getString(R.string.remote_key))!!,
-            port = {
-                val value = inputData.getInt(
-                    applicationContext
-                        .getString(R.string.port_key), Int.MIN_VALUE
-                )
-                if (value == Int.MIN_VALUE) {
-                    throw RuntimeException()
+            port = inputData.getInt(applicationContext.getString(R.string.port_key), Int.MIN_VALUE)
+                .apply {
+                    if (this == Int.MIN_VALUE) {
+                        throw RuntimeException()
+                    }
                 }
-                value
-            }()
         )
     }
 
