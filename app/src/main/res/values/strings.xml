@@ -44,13 +44,7 @@
     <string name="start_upload">开始上传文件</string>
     <string name="re_link">连接已断开\n正在尝试重连</string>
     <string name="long_click_del">长按可删除文件夹,右上角还有更多功能</string>
-    <string name="port_key">port</string>
-    <string name="host_key">host</string>
-    <string name="username_key">username</string>
-    <string name="password_key">password</string>
-    <string name="remote_key">remote</string>
-    <string name="result_key">result</string>
-    <string name="local_key">local</string>
     <string name="start_upload_text">已经开始上传</string>
     <string name="start_dl_text">已经开始下载</string>
+    <string name="no_select">未选择服务器</string>
 </resources>

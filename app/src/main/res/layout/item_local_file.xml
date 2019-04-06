@@ -11,14 +11,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
         <RelativeLayout
-            android:id="@+id/rl_main"
+            android:workerId="@+workerId/rl_main"
             android:layout_width="match_parent"
             android:layout_height="60dp"
             android:orientation="vertical">
 
             <ImageView
                 load_async="@{file.iconResName}"
-                android:id="@+id/iv_cover"
+                android:workerId="@+workerId/iv_cover"
                 android:layout_width="45dp"
                 android:layout_height="45dp"
                 android:layout_centerVertical="true"
@@ -31,8 +31,8 @@
                 android:layout_centerVertical="true"
                 android:layout_marginLeft="10dp"
                 android:layout_marginTop="2dp"
-                android:layout_toEndOf="@+id/iv_cover"
-                android:layout_toRightOf="@+id/iv_cover"
+                android:layout_toEndOf="@+workerId/iv_cover"
+                android:layout_toRightOf="@+workerId/iv_cover"
                 android:orientation="vertical">
 
                 <TextView
@@ -48,7 +48,7 @@
 
                 <TextView
                     android:text="@{file.size}"
-                    android:id="@+id/tv_size"
+                    android:workerId="@+workerId/tv_size"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_centerVertical="true"
@@ -58,7 +58,7 @@
 
                 <TextView
                     android:text="@{file.time}"
-                    android:id="@+id/tv_time"
+                    android:workerId="@+workerId/tv_time"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_centerVertical="true"

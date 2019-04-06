@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "4cf216e1ff1caabbfb05e5f848201d52",
+    "identityHash": "c854caf7a8ef1d775e61cdcb84c2c27a",
     "entities": [
       {
         "tableName": "configs",
@@ -62,7 +62,7 @@
       },
       {
         "tableName": "workers",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT, `doSize` INTEGER NOT NULL, `type` INTEGER NOT NULL, `size` INTEGER NOT NULL, `configId` INTEGER NOT NULL, `remote` TEXT, `local` TEXT, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT, `doSize` INTEGER NOT NULL, `status` INTEGER NOT NULL, `size` INTEGER NOT NULL, `configId` INTEGER NOT NULL, `remote` TEXT, `local` TEXT, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -83,8 +83,8 @@
             "notNull": true
           },
           {
-            "fieldPath": "type",
-            "columnName": "type",
+            "fieldPath": "status",
+            "columnName": "status",
             "affinity": "INTEGER",
             "notNull": true
           },
@@ -125,7 +125,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, \"4cf216e1ff1caabbfb05e5f848201d52\")"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, \"c854caf7a8ef1d775e61cdcb84c2c27a\")"
     ]
   }
 }

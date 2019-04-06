@@ -21,6 +21,9 @@ public interface TransferDao {
     List<WorkerEntity> loadAll();
 
     @Query("select * from workers where id=:id")
-    WorkerEntity findById(String id);
+    WorkerEntity findById(int id);
+
+    @Query("select * from workers where workerId=:id")
+    WorkerEntity findByWorkerId(String id);
 
 }

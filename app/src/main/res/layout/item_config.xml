@@ -38,7 +38,7 @@
                     <TextView
                         android:singleLine="true"
                         android:layout_weight="1"
-                        android:text='@{configItem.name==null?("未命名服务器-"+configItem.id):configItem.name}'
+                        android:text='@{configItem.name==null?("未命名服务器-"+configItem.workerId):configItem.name}'
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:gravity="left|center"
@@ -49,7 +49,7 @@
                     <androidx.appcompat.widget.AppCompatCheckBox
                         android:theme="@style/TheCheckBox"
                         android:clickable="false"
-                        android:id="@+id/check"
+                        android:workerId="@+workerId/check"
                         android:checked="@{configItem.select}"
                         android:layout_width="30dp"
                         android:layout_height="match_parent"/>

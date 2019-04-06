@@ -22,7 +22,7 @@
             android:layout_height="wrap_content"/>
         <EditText
             android:singleLine="true"
-            android:id="@+id/name"
+            android:workerId="@+workerId/name"
             android:text="@={configItem.name}"
             android:gravity="center|left"
             android:hint="服务器名称"
@@ -41,7 +41,7 @@
             android:layout_height="wrap_content"/>
         <EditText
             android:singleLine="true"
-            android:id="@+id/host"
+            android:workerId="@+workerId/host"
             android:text="@={configItem.host}"
             android:gravity="center|left"
             android:hint="FTP服务器地址"
@@ -60,7 +60,7 @@
             android:layout_height="wrap_content"/>
         <EditText
             android:singleLine="true"
-            android:id="@+id/port"
+            android:workerId="@+workerId/port"
             android:text="@={configItem.port}"
             android:gravity="center|left"
             android:hint="FTP服务器端口"
@@ -79,7 +79,7 @@
             android:layout_height="wrap_content"/>
         <EditText
             android:singleLine="true"
-            android:id="@+id/username"
+            android:workerId="@+workerId/username"
             android:text="@={configItem.username}"
             android:gravity="center|left"
             android:hint="FTP服务器用户"
@@ -98,7 +98,7 @@
             android:layout_height="wrap_content"/>
         <EditText
             android:singleLine="true"
-            android:id="@+id/password"
+            android:workerId="@+workerId/password"
             android:text="@={configItem.password}"
             android:gravity="center|left"
             android:hint="FTP服务器密码"

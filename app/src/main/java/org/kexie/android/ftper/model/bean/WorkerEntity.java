@@ -1,35 +1,39 @@
 package org.kexie.android.ftper.model.bean;
 
-import androidx.annotation.NonNull;
 import androidx.room.Entity;
-import androidx.room.ForeignKey;
 import androidx.room.PrimaryKey;
-
-import java.util.UUID;
+import org.kexie.android.ftper.model.TransferStatus;
 
 @Entity(tableName = "workers")
 public class WorkerEntity {
 
     @PrimaryKey
-    @NonNull
-    private String id = UUID.randomUUID().toString();
+    private int id;
+
+    private String workerId;
 
     private String name;
 
-    private int doSize;
+    private long doSize;
 
-    private int type;
+    @TransferStatus
+    private int status;
 
-    private int size;
+    private long size;
 
-    @ForeignKey(entity = ConfigEntity.class,
-            parentColumns = {"id"},
-            childColumns = "configId")
     private int configId;
 
     private String remote;
 
     private String local;
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public int getId() {
+        return id;
+    }
 
     public void setConfigId(int configId) {
         this.configId = configId;
@@ -39,13 +43,12 @@ public class WorkerEntity {
         return configId;
     }
 
-    public void setId(@NonNull String id) {
-        this.id = id;
+    public void setWorkerId(String workerId) {
+        this.workerId = workerId;
     }
 
-    @NonNull
-    public String getId() {
-        return id;
+    public String getWorkerId() {
+        return workerId;
     }
 
     public String getName() {
@@ -56,27 +59,28 @@ public class WorkerEntity {
         this.name = name;
     }
 
-    public int getDoSize() {
+    public long getDoSize() {
         return doSize;
     }
 
-    public void setDoSize(int doSize) {
+    public void setDoSize(long doSize) {
         this.doSize = doSize;
     }
 
-    public int getType() {
-        return type;
+    public void setStatus(@TransferStatus int status) {
+        this.status = status;
     }
 
-    public void setType(int type) {
-        this.type = type;
+    @TransferStatus
+    public int getStatus() {
+        return status;
     }
 
-    public int getSize() {
+    public long getSize() {
         return size;
     }
 
-    public void setSize(int size) {
+    public void setSize(long size) {
         this.size = size;
     }
 

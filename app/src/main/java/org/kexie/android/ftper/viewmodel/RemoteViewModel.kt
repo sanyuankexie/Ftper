@@ -10,7 +10,10 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.work.*
+import androidx.work.Constraints
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequest
+import androidx.work.WorkManager
 import com.orhanobut.logger.Logger
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -21,8 +24,9 @@ import org.apache.commons.net.ftp.FTPReply
 import org.kexie.android.ftper.R
 import org.kexie.android.ftper.app.AppGlobal
 import org.kexie.android.ftper.model.DownloadWorker
+import org.kexie.android.ftper.model.TransferStatus
 import org.kexie.android.ftper.model.UploadWorker
-import org.kexie.android.ftper.model.bean.ConfigEntity
+import org.kexie.android.ftper.model.bean.WorkerEntity
 import org.kexie.android.ftper.viewmodel.bean.RemoteItem
 import org.kexie.android.ftper.widget.Utils
 import java.io.File
@@ -32,7 +36,9 @@ class RemoteViewModel(application: Application)
 
     private val mDataBase = getApplication<AppGlobal>().appDatabase
 
-    private val mDao = mDataBase.configDao
+    private val mConfigDao = mDataBase.configDao
+
+    private val mWorkerDao = mDataBase.transferDao
 
     /**
      * 使用[WorkManager]执行上传下载任务
@@ -86,8 +92,6 @@ class RemoteViewModel(application: Application)
      */
     private val mOnInfo = PublishSubject.create<String>()
 
-    private var mConfig: ConfigEntity? = null
-
     private val selectValue
         get() = PreferenceManager
             .getDefaultSharedPreferences(getApplication())
@@ -137,6 +141,9 @@ class RemoteViewModel(application: Application)
     fun refresh() {
         if (selectValue == Int.MIN_VALUE) {
             clearAll()
+            mOnError.onNext(
+                getApplication<Application>().getString(R.string.no_select)
+            )
             return
         }
         mIsLoading.value = true
@@ -194,8 +201,8 @@ class RemoteViewModel(application: Application)
     }
 
     fun upload(file: File) {
-        val config = mConfig
-        if (!mClient.isConnected || config == null) {
+        val selectId = selectValue
+        if (!mClient.isConnected || selectId != Int.MIN_VALUE) {
             mOnError.onNext(
                 getApplication<Application>()
                     .getString(R.string.no_select_service)
@@ -208,20 +215,22 @@ class RemoteViewModel(application: Application)
                     .setRequiredNetworkType(NetworkType.CONNECTED)
                     .build()
 
-                val input = Data.Builder()
-                    .putConfig(
-                        file, config,
-                        mClient.printWorkingDirectory()
-                                + File.separator
-                                + file.name
-                    )
-                    .build()
-
                 val request = OneTimeWorkRequest
                     .Builder(UploadWorker::class.java)
                     .setConstraints(constraints)
-                    .setInputData(input)
                     .build()
+
+                val worker = WorkerEntity().apply {
+                    workerId = request.id.toString()
+                    status = TransferStatus.UPLOAD_WAIT_START
+                    local = file.absolutePath
+                    remote = mClient.printWorkingDirectory() +
+                            File.separator +
+                            file.name
+                    configId = selectId
+                }
+
+                mWorkerDao.add(worker)
 
                 mWorkManager.enqueue(request)
 
@@ -233,8 +242,8 @@ class RemoteViewModel(application: Application)
     }
 
     fun download(remoteItem: RemoteItem) {
-        val config = mConfig
-        if (!mClient.isConnected || config == null) {
+        val selectId = selectValue
+        if (!mClient.isConnected || selectId != Int.MIN_VALUE) {
             mOnError.onNext(
                 getApplication<Application>()
                     .getString(R.string.no_select_service)
@@ -242,31 +251,37 @@ class RemoteViewModel(application: Application)
             return
         }
         mHandler.post {
+
             try {
+
                 val constraints = Constraints.Builder()
                     .setRequiredNetworkType(NetworkType.CONNECTED)
                     .build()
 
                 val file = File("")
 
-                val input = Data.Builder()
-                    .putConfig(
-                        file, config,
-                        mClient.printWorkingDirectory()
-                                + File.separator
-                                + remoteItem.name
-                    )
-                    .build()
-
                 val request = OneTimeWorkRequest
                     .Builder(DownloadWorker::class.java)
                     .setConstraints(constraints)
-                    .setInputData(input)
                     .build()
+
+                val worker = WorkerEntity()
+                    .apply {
+                        workerId = request.id.toString()
+                        status = TransferStatus.DOWNLOAD_WAIT_START
+                        local = file.absolutePath
+                        remote = mClient.printWorkingDirectory() +
+                                File.separator +
+                                remoteItem.name
+                        configId = selectId
+                    }
+
+                mWorkerDao.add(worker)
 
                 mWorkManager.enqueue(request)
 
                 mOnSuccess.onNext(getApplication<Application>().getString(R.string.start_dl_text))
+
             } catch (e: Throwable) {
                 e.printStackTrace()
             }
@@ -341,11 +356,12 @@ class RemoteViewModel(application: Application)
         if (Looper.getMainLooper() == Looper.myLooper()) {
             mCurrentDir.value = ""
             mFiles.value = emptyList()
+            mIsLoading.value = false
         } else {
             mCurrentDir.postValue("")
             mFiles.postValue(emptyList())
+            mIsLoading.postValue(false)
         }
-        mConfig = null
     }
 
     @Throws(Exception::class)
@@ -386,37 +402,14 @@ class RemoteViewModel(application: Application)
     }
 
     @Throws(Exception::class)
-    private fun Data.Builder.putConfig(
-        file: File,
-        config: ConfigEntity,
-        remote: String
-    ): Data.Builder {
-        val context = getApplication<Application>()
-        return this.putInt(context.getString(R.string.port_key), config.port)
-            .putString(context.getString(R.string.host_key), config.host)
-            .putString(context.getString(R.string.username_key), config.username)
-            .putString(context.getString(R.string.password_key), config.password)
-            .putString(
-                getApplication<Application>()
-                    .getString(R.string.local_key),
-                file.absolutePath
-            )
-            .putString(
-                context.getString(R.string.remote_key),
-                remote
-            )
-    }
-
-    @Throws(Exception::class)
     @WorkerThread
     private fun connectInternal(id: Int) {
         if (mClient.isConnected) {
             mClient.disconnect()
         }
-        val config = mDao.findById(id)
+        val config = mConfigDao.findById(id)
         mClient.connect(config.host, config.port)
         mClient.login(config.username, config.password)
-        mConfig = config
         if (!FTPReply.isPositiveCompletion(mClient.replyCode)) {
             throw RuntimeException()
         }

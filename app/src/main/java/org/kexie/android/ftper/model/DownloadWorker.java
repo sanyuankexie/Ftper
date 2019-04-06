@@ -3,7 +3,6 @@ package org.kexie.android.ftper.model;
 import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.work.WorkerParameters;
-import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,14 +22,13 @@ public final class DownloadWorker extends TransferWorker {
     @Override
     public Result doWork() {
         try {
-            FTPClient client = connect();
+            prepare();
             client.enterLocalActiveMode();
-            Config config = getConfig();
-            FTPFile[] files = client.listFiles(config.getRemote());
+            FTPFile[] files = client.listFiles(getWorker().getRemote());
             if (files.length == 0) {
                 return Result.failure();
             } else if (files.length == 1) {
-                File local = config.getLocal();
+                File local = new File(getWorker().getLocal());
                 if (!local.exists()) {
                     //noinspection ResultOfMethodCallIgnored
                     local.createNewFile();
@@ -42,7 +40,7 @@ public final class DownloadWorker extends TransferWorker {
                         new FileOutputStream(local, true)
                 );
                 client.setRestartOffset(local.length());
-                InputStream input = client.retrieveFileStream(config.getRemote());
+                InputStream input = client.retrieveFileStream(getWorker().getRemote());
                 byte[] b = new byte[1024];
                 int length;
                 while ((length = input.read(b)) != -1) {
