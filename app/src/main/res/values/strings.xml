@@ -52,4 +52,5 @@
     <string name="result_key">result</string>
     <string name="local_key">local</string>
     <string name="r">r</string>
+    <string name="start_upload_text">已经开始上传</string>
 </resources>

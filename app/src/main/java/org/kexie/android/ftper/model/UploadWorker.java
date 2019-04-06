@@ -1,7 +1,8 @@
 package org.kexie.android.ftper.model;
 
 import android.content.Context;
-
+import androidx.annotation.NonNull;
+import androidx.work.WorkerParameters;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 import org.jetbrains.annotations.NotNull;
@@ -10,10 +11,7 @@ import org.kexie.android.ftper.R;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 
-import androidx.annotation.NonNull;
-import androidx.work.WorkerParameters;
-
-public class UploadWorker extends FTPWorker {
+public final class UploadWorker extends FTPWorker {
 
     public UploadWorker(@NotNull Context context,
                         @NotNull WorkerParameters workerParams) {

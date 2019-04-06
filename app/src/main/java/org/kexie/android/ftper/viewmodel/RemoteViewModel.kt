@@ -183,29 +183,30 @@ class RemoteViewModel(application: Application)
     fun upload(file: File) {
         if (!mClient.isConnected) {
             mOnError.onNext(
-                    getApplication<Application>()
-                            .getString(R.string.no_select_service)
+                getApplication<Application>()
+                    .getString(R.string.no_select_service)
             )
             return
         }
         mHandler.post {
             try {
                 val constraints = Constraints.Builder()
-                        .setRequiresBatteryNotLow(true)
-                        .setRequiredNetworkType(NetworkType.CONNECTED)
-                        .build()
+                    .setRequiredNetworkType(NetworkType.CONNECTED)
+                    .build()
 
                 val input = Data.Builder()
-                        .putConfig(mConfig, file, mClient.printWorkingDirectory())
-                        .build()
+                    .putConfig(file)
+                    .build()
 
                 val request = OneTimeWorkRequest
-                        .Builder(UploadWorker::class.java)
-                        .setConstraints(constraints)
-                        .setInputData(input)
-                        .build()
+                    .Builder(UploadWorker::class.java)
+                    .setConstraints(constraints)
+                    .setInputData(input)
+                    .build()
 
                 mWorkManager.enqueue(request)
+
+                mOnInfo.onNext(getApplication<Application>().getString(R.string.start_upload_text))
 
             } catch (e: Throwable) {
                 e.printStackTrace()
@@ -332,18 +333,22 @@ class RemoteViewModel(application: Application)
                 })
     }
 
-    private fun Data.Builder.putConfig(configEntity: ConfigEntity,
-                                       file: File,
-                                       remote:String): Data.Builder {
+    @Throws(Exception::class)
+    private fun Data.Builder.putConfig(file: File): Data.Builder {
         val context = getApplication<Application>()
-        return this.putInt(context.getString(R.string.port_key), configEntity.port)
-                .putString(context.getString(R.string.host_key), configEntity.host)
-                .putString(context.getString(R.string.username_key), configEntity.username)
-                .putString(context.getString(R.string.password_key), configEntity.password)
-                .putString(getApplication<Application>()
-                        .getString(R.string.local_key),
-                        file.absolutePath)
-                .putString(context.getString(R.string.remote_key),remote)
+        return this.putInt(context.getString(R.string.port_key), mConfig.port)
+            .putString(context.getString(R.string.host_key), mConfig.host)
+            .putString(context.getString(R.string.username_key), mConfig.username)
+            .putString(context.getString(R.string.password_key), mConfig.password)
+            .putString(
+                getApplication<Application>()
+                    .getString(R.string.local_key),
+                file.absolutePath
+            )
+            .putString(
+                context.getString(R.string.remote_key),
+                mClient.printWorkingDirectory() + File.separator + file.name
+            )
     }
 
     @Throws(Exception::class)
