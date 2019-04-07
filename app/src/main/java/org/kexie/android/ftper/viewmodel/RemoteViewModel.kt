@@ -263,6 +263,8 @@ class RemoteViewModel(application: Application)
                     .setConstraints(constraints)
                     .build()
 
+                Logger.d(request.id)
+
                 val worker = WorkerEntity()
                     .apply {
                         name = remoteItem.name
@@ -376,7 +378,7 @@ class RemoteViewModel(application: Application)
                 .getExternalStorageDirectory()
                 .absolutePath +
                 File.separator +
-                getApplication<Application>().getString(R.string.app_name)
+                getApplication<Application>().applicationInfo.name
         )
         if (!dir.exists()) {
             dir.mkdirs()

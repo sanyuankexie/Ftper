@@ -46,6 +46,7 @@ class AppGlobal : Application() {
                     }, 1000)
             }
         }
+
         // 这看似不安全的操作，实际上却是安全的
         // use by lazy(LazyThreadSafetyMode.SYNCHRONIZED){ }
         Thread {

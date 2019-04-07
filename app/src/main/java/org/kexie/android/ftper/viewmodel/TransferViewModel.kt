@@ -69,7 +69,6 @@ class TransferViewModel(application: Application)
                             id = it.id
                     )
                 }
-        mItem.postValue(list)
     }
 
     override fun onCleared() {

@@ -3,7 +3,8 @@ package org.kexie.android.ftper.model;
 import android.content.Context;
 import android.os.SystemClock;
 
-import org.apache.commons.net.ftp.FTPClient;
+import com.orhanobut.logger.Logger;
+
 import org.apache.commons.net.ftp.FTPFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,7 +36,12 @@ public final class UploadWorker extends TransferWorker {
             long localSize = local.length();
             long serverSize = 0;
             String serverName = getWorker().getName();
-            createOrMoveToDir(getClient(), getWorker().getRemote());
+            int lastIndex = getWorker().getRemote().lastIndexOf('/');
+            if (lastIndex != 0) {
+                String workDir = getWorker().getRemote().substring(0, lastIndex);
+                Logger.d(workDir);
+                getClient().changeWorkingDirectory(workDir);
+            }
             FTPFile[] files = getClient().listFiles(getWorker().getRemote());
             if (files.length == 1) {
                 FTPFile ftpFile = files[0];
@@ -73,30 +79,6 @@ public final class UploadWorker extends TransferWorker {
         } catch (Throwable e) {
             e.printStackTrace();
             return Result.failure();
-        }
-    }
-
-    // 创建文件夹
-    private static void createOrMoveToDir(FTPClient client, String path)
-            throws Exception {
-        String directory = path.substring(0, path.lastIndexOf("/") + 1);
-        int start = 0;
-        int end;
-        if (directory.startsWith("/")) {
-            start = 1;
-        }
-        end = directory.indexOf("/", start);
-        while (true) {
-            String subDirectory = directory.substring(start, end);
-            if (!client.changeWorkingDirectory(subDirectory)) {
-                client.makeDirectory(subDirectory);
-                client.changeWorkingDirectory(subDirectory);
-            }
-            start = end + 1;
-            end = directory.indexOf("/", start);
-            if (end == -1) {
-                return;
-            }
         }
     }
 }
