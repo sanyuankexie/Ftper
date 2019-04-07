@@ -3,7 +3,7 @@ package org.kexie.android.ftper.viewmodel
 import android.app.Application
 import android.os.Handler
 import android.os.HandlerThread
-import androidx.annotation.MainThread
+import androidx.annotation.WorkerThread
 import androidx.collection.ArrayMap
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.*
@@ -87,7 +87,7 @@ class TransferViewModel(application: Application)
     private val mWorker = Handler(mWorkerThread.looper)
 
     private val mReloadTask = object : Runnable {
-        @MainThread
+        @WorkerThread
         override fun run() {
             mEntities.postValue(mDao.loadAll()
                 .map { it.id to it }
