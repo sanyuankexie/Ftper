@@ -222,6 +222,7 @@ class RemoteViewModel(application: Application)
                     .build()
 
                 val worker = WorkerEntity().apply {
+                    name = file.name
                     workerId = request.id.toString()
                     type = WorkerType.UPLOAD
                     local = file.absolutePath
@@ -264,6 +265,7 @@ class RemoteViewModel(application: Application)
 
                 val worker = WorkerEntity()
                     .apply {
+                        name = remoteItem.name
                         workerId = request.id.toString()
                         type = WorkerType.DOWNLOAD
                         local = getNewLocalName(remoteItem.name)

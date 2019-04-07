@@ -14,14 +14,11 @@ public interface TransferDao {
     @Insert
     void add(WorkerEntity configEntity);
 
-    @Delete
-    void remove(WorkerEntity configEntity);
+    @Query("delete from workers where id=:id")
+    void removeById(int id);
 
     @Query("select * from workers")
     List<WorkerEntity> loadAll();
-
-    @Query("select * from workers where id=:id")
-    WorkerEntity findById(int id);
 
     @Query("select * from workers where workerId=:id")
     WorkerEntity findByWorkerId(String id);

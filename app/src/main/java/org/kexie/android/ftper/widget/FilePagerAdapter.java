@@ -1,11 +1,8 @@
 package org.kexie.android.ftper.widget;
 
-import android.content.Context;
-import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import androidx.annotation.NonNull;
-import androidx.appcompat.widget.AppCompatTextView;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -54,7 +51,7 @@ public final class FilePagerAdapter extends PagerAdapter {
                     ? (GenericQuickAdapter<FileItem>) holder
                     : createAdapter();
             adapter.setOnItemClickListener(mListener);
-            adapter.setEmptyView(createEmptyView(container.getContext()));
+            adapter.setEmptyView(Utils.createEmptyView(container.getContext()));
             view.setAdapter(adapter);
         }
         container.addView(view);
@@ -80,15 +77,6 @@ public final class FilePagerAdapter extends PagerAdapter {
 
     private static GenericQuickAdapter<FileItem> createAdapter() {
         return new GenericQuickAdapter<>(R.layout.item_local_file, BR.file);
-    }
-
-    private static View createEmptyView(Context context) {
-        AppCompatTextView textView = new AppCompatTextView(context);
-        textView.setTextSize(20);
-        textView.setGravity(Gravity.CENTER);
-        textView.setTextColor(context.getResources().getColor(R.color.colorBlackAlpha26));
-        textView.setText(R.string.this_is_empty);
-        return textView;
     }
 
     @Override

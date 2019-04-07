@@ -9,14 +9,13 @@ import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
-import org.kexie.android.ftper.BR;
 import org.kexie.android.ftper.R;
 import org.kexie.android.ftper.databinding.FragmentTransferBinding;
 import org.kexie.android.ftper.viewmodel.TransferViewModel;
 import org.kexie.android.ftper.viewmodel.bean.TransferItem;
 import org.kexie.android.ftper.widget.GenericQuickAdapter;
-
-import java.util.ArrayList;
+import org.kexie.android.ftper.widget.TransferItemAdapter;
+import org.kexie.android.ftper.widget.Utils;
 
 public class TransferFragment extends Fragment {
 
@@ -29,7 +28,7 @@ public class TransferFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mAdapter = new GenericQuickAdapter<>(R.layout.item_transfer, BR.file);
+        mAdapter = new TransferItemAdapter();
     }
 
     @Nullable
@@ -42,6 +41,7 @@ public class TransferFragment extends Fragment {
                 R.layout.fragment_transfer,
                 container,
                 false);
+        mAdapter.setEmptyView(Utils.createEmptyView(inflater.getContext()));
         return mBinding.getRoot();
     }
 
@@ -49,24 +49,23 @@ public class TransferFragment extends Fragment {
     public void onViewCreated(@NonNull View view,
                               @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        mViewModel = ViewModelProviders.of(requireActivity()).get(TransferViewModel.class);
 
+        mViewModel = ViewModelProviders.of(requireActivity()).get(TransferViewModel.class);
         mBinding.setAdapter(mAdapter);
         mAdapter.setOnItemLongClickListener((adapter, view1, position) -> {
-
 
             return true;
         });
 
-        mAdapter.setNewData(new ArrayList<TransferItem>() {
-            {
-                TransferItem transferItem = new TransferItem("xxx", 100, "ad", 0);
-                add(transferItem);
-                add(transferItem);
-                add(transferItem);
-                add(transferItem);
-            }
-        });
+        mViewModel.getItem().observe(this, mAdapter::setNewData);
+    }
+
+    @Override
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        super.setUserVisibleHint(isVisibleToUser);
+        if (mViewModel != null) {
+            mViewModel.setActive(isVisibleToUser);
+        }
     }
 
     @Override

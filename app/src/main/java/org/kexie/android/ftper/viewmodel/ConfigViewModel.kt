@@ -96,7 +96,7 @@ class ConfigViewModel(application: Application)
                                     Int.MIN_VALUE)
                             .apply()
                 }
-                mDao.remove(configItem.toDatabaseEntity())
+                mDao.removeById(configItem.id)
                 reloadInternal()
                 mOnInfo.onNext(getApplication<Application>()
                         .getString(R.string.yi_del))
