@@ -34,7 +34,7 @@ class TransferViewModel(application: Application)
     private val mItems = MediatorLiveData<Map<Int, TransferItem>>()
         .apply {
             addSource(mEntities) { newItems ->
-                var oldItems = this.value
+                var oldItems = value
                 if (oldItems == null) {
                     oldItems = emptyMap()
                 }
@@ -45,7 +45,8 @@ class TransferViewModel(application: Application)
                 add.forEach { addItemId ->
                     val entity = newItems.getValue(addItemId)
                     val workerId = UUID.fromString(entity.workerId)
-                    val workInfo = mWorkManager.getWorkInfoByIdLiveData(workerId)
+                    val workInfo = mWorkManager
+                        .getWorkInfoByIdLiveData(workerId)
                     val state = Transformations.map(workInfo)
                     { info ->
                         addItemId to info.state
@@ -97,7 +98,7 @@ class TransferViewModel(application: Application)
         }
     }
 
-    private val icons = arrayOf(
+    private val mIcons = arrayOf(
         ContextCompat.getDrawable(getApplication(), R.drawable.up)!!,
         ContextCompat.getDrawable(getApplication(), R.drawable.dl)!!
     )
@@ -117,9 +118,9 @@ class TransferViewModel(application: Application)
 
     private fun WorkerEntity.toReadabilityData(old: TransferItem?): TransferItem {
         val icon = if (this.type == WorkerType.UPLOAD)
-            icons[0]
+            mIcons[0]
         else
-            icons[1]
+            mIcons[1]
 
         return TransferItem(
             id = this.id,
