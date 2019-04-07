@@ -15,9 +15,9 @@ class TransferViewModel(application: Application)
     : AndroidViewModel(application) {
 
     private val mWorkerThread = HandlerThread(toString())
-        .apply {
-            start()
-        }
+            .apply {
+                start()
+            }
 
     private val mHandler = Handler(mWorkerThread.looper)
 
@@ -28,9 +28,11 @@ class TransferViewModel(application: Application)
         }
     }
 
+    private var i = 10;
+
     private val mTransferDao = getApplication<AppGlobal>()
-        .appDatabase
-        .transferDao
+            .appDatabase
+            .transferDao
 
     private val mWorkManager = WorkManager.getInstance()
 
@@ -55,7 +57,19 @@ class TransferViewModel(application: Application)
 
     @WorkerThread
     private fun reloadInternal() {
-
+        val list = mTransferDao
+                .loadAll()
+                .map {
+                    TransferItem(
+                            name = "" + it.name,
+                            percent = (++i),
+                            state = 0,
+                            size = "asd",
+                            type = 0,
+                            id = it.id
+                    )
+                }
+        mItem.postValue(list)
     }
 
     override fun onCleared() {

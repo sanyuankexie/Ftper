@@ -1,8 +1,12 @@
 package org.kexie.android.ftper.widget;
 
-import androidx.databinding.ViewDataBinding;
+import android.view.View;
+
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.BaseViewHolder;
+
+import androidx.databinding.DataBindingUtil;
+import androidx.databinding.ViewDataBinding;
 
 @SuppressWarnings("WeakerAccess")
 public class GenericQuickAdapter<X>
@@ -23,10 +27,9 @@ public class GenericQuickAdapter<X>
 
     public static class GenericViewHolder extends BaseViewHolder {
         private ViewDataBinding mBinding;
-
-        public GenericViewHolder(ViewDataBinding binding) {
-            super(binding.getRoot());
-            mBinding = binding;
+        public GenericViewHolder(View view) {
+            super(view);
+            mBinding = DataBindingUtil.bind(view);
         }
 
         @SuppressWarnings("unchecked")

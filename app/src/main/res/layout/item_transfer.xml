@@ -16,7 +16,7 @@
             android:orientation="horizontal">
 
             <ImageView
-                load_async='@{"file"}'
+                load_async='@{file.isUpload?"up":"dl"}'
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:layout_margin="10dp" />
@@ -50,30 +50,36 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="2"
                         android:hint="@string/app_name"
+                        android:text="@{file.size}"
                         android:textColor="@color/colorBlackAlpha54"
-                        android:textSize="20dp" />
+                        android:textSize="15dp" />
                 </LinearLayout>
 
                 <LinearLayout
+                    android:layout_gravity="center_vertical"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <FrameLayout
+                    <RelativeLayout
+                        android:id="@+id/progress_wrapper"
                         android:layout_width="250dp"
-                        android:layout_height="match_parent">
-                        <ImageView
-                            load_async='@{"progress"}'
+                        android:layout_height="10dp">
+                        <org.kexie.android.ftper.widget.RoundCornerImageView
+                            android:scaleType="centerCrop"
+                            android:id="@+id/progress"
+                            android:src="@drawable/progress"
                             android:layout_width="match_parent"
-                            android:layout_height="10dp"
+                            android:layout_height="match_parent"
                             android:layout_gravity="center" />
-                    </FrameLayout>
+                    </RelativeLayout>
 
                     <TextView
                         android:singleLine="true"
                         android:gravity="center"
                         android:textSize="15dp"
+                        android:text='@{file.percent+"%"}'
                         android:textColor="@color/colorBlackAlpha54"
                         android:hint="@string/app_name"
                         android:layout_width="match_parent"
