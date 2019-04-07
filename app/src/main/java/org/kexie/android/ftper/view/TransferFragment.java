@@ -4,20 +4,15 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-
-import org.kexie.android.ftper.R;
-import org.kexie.android.ftper.databinding.FragmentTransferBinding;
-import org.kexie.android.ftper.viewmodel.TransferViewModel;
-import org.kexie.android.ftper.viewmodel.bean.TransferItem;
-import org.kexie.android.ftper.widget.GenericQuickAdapter;
-import org.kexie.android.ftper.widget.TransferItemAdapter;
-import org.kexie.android.ftper.widget.Utils;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
+import org.kexie.android.ftper.R;
+import org.kexie.android.ftper.databinding.FragmentTransferBinding;
+import org.kexie.android.ftper.viewmodel.TransferViewModel;
+import org.kexie.android.ftper.widget.TransferItemAdapter;
 
 public class TransferFragment extends Fragment {
 
@@ -25,7 +20,7 @@ public class TransferFragment extends Fragment {
 
     private FragmentTransferBinding mBinding;
 
-    private GenericQuickAdapter<TransferItem> mAdapter;
+    private TransferItemAdapter mAdapter;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -43,7 +38,6 @@ public class TransferFragment extends Fragment {
                 R.layout.fragment_transfer,
                 container,
                 false);
-        mAdapter.setEmptyView(Utils.createEmptyView(inflater.getContext()));
         return mBinding.getRoot();
     }
 
@@ -53,12 +47,7 @@ public class TransferFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         mViewModel = ViewModelProviders.of(requireActivity()).get(TransferViewModel.class);
         mBinding.setAdapter(mAdapter);
-        mAdapter.setOnItemLongClickListener((adapter, view1, position) -> {
-
-            return true;
-        });
-
-        mViewModel.getItem().observe(this, mAdapter::setNewData);
+        mViewModel.getItem().observe(this, mAdapter::submitList);
     }
 
     @Override
