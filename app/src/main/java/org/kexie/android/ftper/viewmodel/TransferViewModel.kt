@@ -76,6 +76,7 @@ class TransferViewModel(application: Application)
                         removeSource(it)
                     }
                 }
+                value = post
             }
         }
 
