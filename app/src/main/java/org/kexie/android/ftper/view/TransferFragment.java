@@ -4,11 +4,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.databinding.DataBindingUtil;
-import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProviders;
+
 import org.kexie.android.ftper.R;
 import org.kexie.android.ftper.databinding.FragmentTransferBinding;
 import org.kexie.android.ftper.viewmodel.TransferViewModel;
@@ -16,6 +12,12 @@ import org.kexie.android.ftper.viewmodel.bean.TransferItem;
 import org.kexie.android.ftper.widget.GenericQuickAdapter;
 import org.kexie.android.ftper.widget.TransferItemAdapter;
 import org.kexie.android.ftper.widget.Utils;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.databinding.DataBindingUtil;
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProviders;
 
 public class TransferFragment extends Fragment {
 
@@ -49,7 +51,6 @@ public class TransferFragment extends Fragment {
     public void onViewCreated(@NonNull View view,
                               @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
         mViewModel = ViewModelProviders.of(requireActivity()).get(TransferViewModel.class);
         mBinding.setAdapter(mAdapter);
         mAdapter.setOnItemLongClickListener((adapter, view1, position) -> {

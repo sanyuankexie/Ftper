@@ -2,8 +2,7 @@ package org.kexie.android.ftper.model;
 
 import android.content.Context;
 import android.os.SystemClock;
-import androidx.annotation.NonNull;
-import androidx.work.WorkerParameters;
+
 import org.apache.commons.net.ftp.FTPFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,6 +10,9 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+
+import androidx.annotation.NonNull;
+import androidx.work.WorkerParameters;
 
 public final class DownloadWorker extends TransferWorker {
 
@@ -48,16 +50,16 @@ public final class DownloadWorker extends TransferWorker {
                 //设置断点重传位置开始传输
                 client.setRestartOffset(local.length());
                 InputStream input = client.retrieveFileStream(getWorker().getRemote());
-                long last = SystemClock.uptimeMillis();
                 byte[] b = new byte[1024];
                 int length;
+                long last = SystemClock.uptimeMillis();
                 //读取文件并每秒刷新数据库
                 while ((length = input.read(b)) != -1) {
                     out.write(b, 0, length);
                     long time = SystemClock.uptimeMillis();
-                    if (time - last > 1000) {
-                        last = time;
+                    if (time - last >= 1000) {
                         update(local.length(), remote.getSize());
+                        last = time;
                     }
                 }
                 out.flush();
