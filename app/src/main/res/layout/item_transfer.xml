@@ -50,7 +50,7 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="2"
                             android:hint="@string/app_name"
-                            android:text="@{file.size}"
+                            android:text="@{file.state}"
                             android:textColor="@color/colorBlackAlpha54"
                             android:textSize="15dp" />
                 </LinearLayout>
