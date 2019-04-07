@@ -54,18 +54,22 @@ public class ConfigFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
+        //加载主视图
         mBinding = DataBindingUtil.inflate(inflater,
                 R.layout.fragment_config,
                 container,
                 false);
+        //加载底部视图
         mFooterBinding = DataBindingUtil.inflate(inflater,
                 R.layout.view_footer_config_add,
                 mBinding.configs,
                 false);
+        //加载头部视图
         mHeadBinding = DataBindingUtil.inflate(inflater,
                 R.layout.view_head_config,
                 mBinding.configs,
                 false);
+        //设置他们
         mConfigAdapter.addFooterView(mFooterBinding.getRoot());
         mConfigAdapter.addHeaderView(mHeadBinding.getRoot());
         return mBinding.getRoot();
@@ -78,6 +82,7 @@ public class ConfigFragment extends Fragment {
         mViewModel = ViewModelProviders.of(requireActivity())
                 .get(ConfigViewModel.class);
 
+        //订阅配置数据
         mViewModel.getConfigs().observe(this, mConfigAdapter::setNewData);
 
         mBinding.setAdapter(mConfigAdapter);
@@ -93,8 +98,10 @@ public class ConfigFragment extends Fragment {
                 .owner(this)
                 .inner((adapter, view12, position) ->
                 {
+
                     ConfigItem configItem = (ConfigItem) adapter.getItem(position);
                     if (configItem != null) {
+                        //找到上一次选择的项
                         int last = -1;
                         for (int i = 0; i < adapter.getData().size(); i++) {
                             ConfigItem item = (ConfigItem) adapter.getItem(i);
@@ -102,7 +109,9 @@ public class ConfigFragment extends Fragment {
                                 last = i;
                             }
                         }
+                        //调用选择
                         mViewModel.select(configItem);
+                        //然后更新这两个位置
                         if (last != -1) {
                             adapter.notifyItemChanged(
                                     adapter.getHeaderLayoutCount() + last);
@@ -124,6 +133,7 @@ public class ConfigFragment extends Fragment {
         });
     }
 
+    //Resume时订阅,Pause时释放
     @Override
     public void onResume() {
         super.onResume();
@@ -141,9 +151,11 @@ public class ConfigFragment extends Fragment {
                 QMUITipDialog.Builder.ICON_TYPE_INFO);
     }
 
+    //打开配置对话框
     private void openConfigDialog(ConfigItem configItem) {
         boolean isAdd = configItem == null;
-        //防御性拷贝
+        // 防御性拷贝,防止内容更改影响原本的数据
+        // 若是新建的则new一个
         ConfigItem backup = isAdd ? new ConfigItem() : configItem.clone();
         ConfigDialogBuilder builder = new ConfigDialogBuilder(requireContext());
         builder.addAction("保存", (dialog, index) ->

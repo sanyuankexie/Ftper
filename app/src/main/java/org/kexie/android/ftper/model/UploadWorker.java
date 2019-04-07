@@ -24,6 +24,9 @@ public final class UploadWorker extends TransferWorker {
             prepare();
             getClient().enterLocalPassiveMode();
             File local = new File(getWorker().getLocal());
+            if (!local.isFile()) {
+                throw new RuntimeException();
+            }
             BufferedInputStream buffer = new BufferedInputStream(
                     new FileInputStream(local)
             );

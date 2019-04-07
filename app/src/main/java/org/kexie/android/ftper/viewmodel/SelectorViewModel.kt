@@ -63,7 +63,7 @@ class SelectorViewModel(application: Application)
     }
 
     private fun loadDataInternal(position: Int) {
-        if (position == FileType.TYPE_IMAGE) {
+        if (position == FileType.IMAGE) {
             loadImageData()
         } else {
             loadDocData(position)
@@ -92,11 +92,11 @@ class SelectorViewModel(application: Application)
             val path = cursor.getString(cursor.getColumnIndex(
                     MediaStore.Images.ImageColumns.DATA
             ))
-            val fileItem = loadItem(path, FileType.TYPE_IMAGE)
+            val fileItem = loadItem(path, FileType.IMAGE)
             fileItems.add(fileItem)
         }
         cursor.close()
-        mLiveData[FileType.TYPE_IMAGE].postValue(fileItems)
+        mLiveData[FileType.IMAGE].postValue(fileItems)
     }
 
     private fun loadItem(path: String, type: Int): FileItem {
@@ -106,7 +106,7 @@ class SelectorViewModel(application: Application)
         val size = Utils.sizeToString(file.length())
         val time = Utils.getFileLastModifiedTime(file)
         val iconRes: String
-        if (type == FileType.TYPE_IMAGE) {
+        if (type == FileType.IMAGE) {
             iconRes = rawPath
         } else {
             iconRes = getIconName(type)
@@ -119,13 +119,13 @@ class SelectorViewModel(application: Application)
         val resources = getApplication<Application>().resources
         when (type) {
             //word
-            FileType.TYPE_WORD -> select = resources.getResourceName(R.drawable.word)
+            FileType.WORD -> select = resources.getResourceName(R.drawable.word)
             //xls
-            FileType.TYPE_XLS -> select = resources.getResourceName(R.drawable.xls)
+            FileType.XLS -> select = resources.getResourceName(R.drawable.xls)
             //ppt
-            FileType.TYPE_PPT -> select = resources.getResourceName(R.drawable.ppt)
+            FileType.PPT -> select = resources.getResourceName(R.drawable.ppt)
             //pdf
-            FileType.TYPE_PDF -> select = resources.getResourceName(R.drawable.pdf)
+            FileType.PDF -> select = resources.getResourceName(R.drawable.pdf)
         }
         return select
     }
@@ -161,25 +161,25 @@ class SelectorViewModel(application: Application)
         var select = ""
         when (selectType) {
             //word
-            FileType.TYPE_WORD -> select = ("(" + MediaStore.Files.FileColumns.DATA
+            FileType.WORD -> select = ("(" + MediaStore.Files.FileColumns.DATA
                     + " LIKE '%.doc'"
                     + " or "
                     + MediaStore.Files.FileColumns.DATA
                     + " LIKE '%.docx'" + ")")
             //xls
-            FileType.TYPE_XLS -> select = ("(" + MediaStore.Files.FileColumns.DATA
+            FileType.XLS -> select = ("(" + MediaStore.Files.FileColumns.DATA
                     + " LIKE '%.xls'"
                     + " or "
                     + MediaStore.Files.FileColumns.DATA
                     + " LIKE '%.xlsx'" + ")")
             //ppt
-            FileType.TYPE_PPT -> select = ("(" + MediaStore.Files.FileColumns.DATA
+            FileType.PPT -> select = ("(" + MediaStore.Files.FileColumns.DATA
                     + " LIKE '%.ppt'"
                     + " or "
                     + MediaStore.Files.FileColumns.DATA
                     + " LIKE '%.pptx'" + ")")
             //pdf
-            FileType.TYPE_PDF -> select = ("("
+            FileType.PDF -> select = ("("
                     + MediaStore.Files.FileColumns.DATA
                     + " LIKE '%.pdf'"
                     + ")")

@@ -179,7 +179,7 @@ class RemoteViewModel(application: Application)
 
     fun connect(id: Int) {
         if (id == Int.MIN_VALUE) {
-            mFiles.postValue(emptyList())
+            clearAll()
             return
         }
         mIsLoading.value = true

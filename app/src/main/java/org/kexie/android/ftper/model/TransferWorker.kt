@@ -24,21 +24,26 @@ abstract class TransferWorker(context: Context, workerParams: WorkerParameters)
     @Throws(Throwable::class)
     protected fun prepare() {
         database = (applicationContext as AppGlobal).appDatabase
+        //查找相关信息找不到直接报错
         worker = database.transferDao.findByWorkerId(id.toString())!!
         val server = database.configDao.findById(worker.configId)!!
         client = FTPClient()
                 .apply {
+                    //5秒超时
                     val timeout = 5000
                     controlEncoding = applicationContext.getString(R.string.gbk)
                     connectTimeout = timeout
                     defaultTimeout = timeout
+                    //连接到服务器
                     connect(server.host, server.port)
                     login(server.username, server.password)
                     soTimeout = timeout
+                    //设置传输形式为二进制
                     setFileType(FTP.BINARY_FILE_TYPE)
                 }
     }
 
+    //更新数据库
     @WorkerThread
     protected fun update(doSize: Long, size: Long) {
         Logger.d("$doSize/$size")

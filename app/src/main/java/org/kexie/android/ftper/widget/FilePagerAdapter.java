@@ -4,16 +4,6 @@ import android.content.Context;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
-
-import com.chad.library.adapter.base.BaseQuickAdapter;
-
-import org.kexie.android.ftper.BR;
-import org.kexie.android.ftper.R;
-import org.kexie.android.ftper.model.FileType;
-import org.kexie.android.ftper.viewmodel.bean.FileItem;
-
-import java.util.List;
-
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.AppCompatTextView;
 import androidx.lifecycle.Lifecycle;
@@ -21,6 +11,13 @@ import androidx.lifecycle.LifecycleOwner;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.PagerAdapter;
+import com.chad.library.adapter.base.BaseQuickAdapter;
+import org.kexie.android.ftper.BR;
+import org.kexie.android.ftper.R;
+import org.kexie.android.ftper.model.FileType;
+import org.kexie.android.ftper.viewmodel.bean.FileItem;
+
+import java.util.List;
 
 @SuppressWarnings("WeakerAccess")
 public final class FilePagerAdapter extends PagerAdapter {
@@ -37,7 +34,7 @@ public final class FilePagerAdapter extends PagerAdapter {
 
     private final BaseQuickAdapter.OnItemClickListener mListener;
 
-    private final Object[] mHolders = new Object[FileType.TYPE_PDF + 1];
+    private final Object[] mHolders = new Object[FileType.PDF + 1];
 
     @SuppressWarnings("unchecked")
     @NonNull
@@ -53,7 +50,7 @@ public final class FilePagerAdapter extends PagerAdapter {
             mHolders[position] = view;
             view.setLayoutManager(new LinearLayoutManager(container.getContext()));
             GenericQuickAdapter<FileItem> adapter
-                    = holder instanceof RecyclerView.Adapter
+                    = holder instanceof GenericQuickAdapter
                     ? (GenericQuickAdapter<FileItem>) holder
                     : createAdapter();
             adapter.setOnItemClickListener(mListener);

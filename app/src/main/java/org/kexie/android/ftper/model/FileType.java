@@ -1,22 +1,18 @@
 package org.kexie.android.ftper.model;
 
+import androidx.annotation.IntDef;
+
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
-import androidx.annotation.IntDef;
-
 import static org.kexie.android.ftper.model.FileType.*;
 
-@IntDef({TYPE_IMAGE,
-        TYPE_WORD,
-        TYPE_XLS,
-        TYPE_PPT,
-        TYPE_PDF})
+@IntDef({IMAGE, WORD, XLS, PPT, PDF})
 @Retention(RetentionPolicy.SOURCE)
 public @interface FileType {
-    int TYPE_IMAGE = 0;
-    int TYPE_WORD = 1;
-    int TYPE_XLS = 2;
-    int TYPE_PPT = 3;
-    int TYPE_PDF = 4;
+    int IMAGE = 0;
+    int WORD = 1;
+    int XLS = 2;
+    int PPT = 3;
+    int PDF = 4;
 }

@@ -80,6 +80,7 @@ public class MainFragment extends Fragment {
     public void onViewCreated(@NonNull View view,
                               @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        //初始化ViewModel,都是跟Activity绑定的
         ViewModelProviders.of(requireActivity()).get(TransferViewModel.class);
         ViewModelProviders.of(requireActivity()).get(ConfigViewModel.class);
         ViewModelProviders.of(requireActivity()).get(RemoteViewModel.class)
@@ -134,6 +135,7 @@ public class MainFragment extends Fragment {
                                  @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == R.id.open_select_request_code) {
+            //交个这个Fragment处理
             mRemoteFragment.onActivityResult(requestCode, resultCode, data);
         }
     }

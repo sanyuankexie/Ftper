@@ -49,6 +49,7 @@ public class RemoteFragment extends Fragment {
 
     private GenericQuickAdapter<RemoteItem> mItemAdapter;
 
+    //Loading的Dialog
     private QMUITipDialog dialog = null;
 
     @Override
@@ -66,6 +67,7 @@ public class RemoteFragment extends Fragment {
                 R.layout.fragment_files,
                 container,
                 false);
+        //加载空时布局
         mEmptyView = new QMUIEmptyView(inflater.getContext());
         mEmptyView.setTitleText(getString(R.string.this_is_empty));
         mItemAdapter.setEmptyView(mEmptyView);
@@ -73,6 +75,7 @@ public class RemoteFragment extends Fragment {
         return mBinding.getRoot();
     }
 
+    //加载底部布局
     private static View getFooterView(Context context) {
         AppCompatTextView textView = new AppCompatTextView(context);
         textView.setGravity(Gravity.CENTER);
