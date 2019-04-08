@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "332e9b7bb0d618f7c36ceccec275268e",
+    "identityHash": "de4c2e3dcdc6110930c7ada3fe2eee0e",
     "entities": [
       {
         "tableName": "configs",
@@ -71,7 +71,7 @@
       },
       {
         "tableName": "tasks",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `type` INTEGER NOT NULL, `local` TEXT, `remote` TEXT, `name` TEXT, `configId` INTEGER NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `type` INTEGER NOT NULL, `local` TEXT, `remote` TEXT, `name` TEXT, `configId` INTEGER NOT NULL, `isFinish` INTEGER NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -108,6 +108,12 @@
             "columnName": "configId",
             "affinity": "INTEGER",
             "notNull": true
+          },
+          {
+            "fieldPath": "isFinish",
+            "columnName": "isFinish",
+            "affinity": "INTEGER",
+            "notNull": true
           }
         ],
         "primaryKey": {
@@ -122,7 +128,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, \"332e9b7bb0d618f7c36ceccec275268e\")"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, \"de4c2e3dcdc6110930c7ada3fe2eee0e\")"
     ]
   }
 }

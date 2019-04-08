@@ -20,6 +20,8 @@ import org.kexie.android.ftper.R
 import org.kexie.android.ftper.app.AppGlobal
 import org.kexie.android.ftper.model.WorkerType
 import org.kexie.android.ftper.model.bean.TaskEntity
+import org.kexie.android.ftper.viewmodel.TransferViewModel.ResultType.CANCELLED
+import org.kexie.android.ftper.viewmodel.TransferViewModel.ResultType.ERROR
 import org.kexie.android.ftper.viewmodel.bean.TaskItem
 import org.kexie.android.ftper.viewmodel.bean.TaskState
 import org.kexie.android.ftper.widget.GenericQuickAdapter
@@ -36,8 +38,9 @@ class TransferViewModel(application: Application)
     : AndroidViewModel(application) {
 
     companion object {
-        const val UPDATE = 10001
-        const val FINISH = 10002
+        private const val START = 10000
+        private const val UPDATE = 10001
+        private const val FINISH = 10002
     }
 
     private val mTaskDao = getApplication<AppGlobal>()
@@ -47,6 +50,94 @@ class TransferViewModel(application: Application)
     private val mConfigDao = getApplication<AppGlobal>()
         .appDatabase
         .configDao
+
+    //数据库操作工作的线程
+    private val mDatabaseThread = HandlerThread(toString())
+        .apply {
+            start()
+            Handler(looper).post {
+                mIcons = arrayOf(
+                    ContextCompat.getDrawable(getApplication(), R.drawable.up)!!,
+                    ContextCompat.getDrawable(getApplication(), R.drawable.dl)!!
+                )
+                val items = mTaskDao
+                    .loadAll()
+                    .map {
+                        it.toReadabilityData()
+                    }
+                mMainWorker.post {
+                    mAdapter.setNewData(items)
+                }
+            }
+        }
+
+    private val mOnStart = PublishSubject.create<Int>()
+
+    private val mOnRemove = PublishSubject.create<Int>()
+
+    private val mDisposables = arrayOf(
+        mOnStart.doOnNext { taskId ->
+            mRunningTask[taskId]?.let {
+                if (!it.isCancelled) {
+                    throw RuntimeException()
+                }
+            }
+        }.observeOn(AndroidSchedulers.from(mDatabaseThread.looper))
+            .map { taskId ->
+                return@map mTaskDao.findById(taskId)?.let {
+                    if (it.isFinish) {
+                        throw RuntimeException()
+                    }
+                    return@let it
+                }
+            }.map { task ->
+                val config = mConfigDao.findById(task.configId)
+                if (config == null) {
+                    return@map mMainWorker.obtainMessage(FINISH)
+                        .apply {
+                            obj = Result(task.id, ERROR)
+                        }
+                } else {
+                    val taskConfig = Config(
+                        id = task.id,
+                        local = task.local,
+                        remote = task.remote,
+                        port = config.port,
+                        host = config.host,
+                        username = config.username,
+                        password = config.password
+                    )
+                    val newTask = if (WorkerType.DOWNLOAD == task.type) {
+                        UploadTask(mMainWorker, taskConfig)
+                    } else {
+                        DownloadTask(mMainWorker, taskConfig)
+                    }
+                    mMainWorker.obtainMessage(START)
+                        .apply {
+                            obj = newTask
+                        }
+                }
+            }.subscribe({
+                it.sendToTarget()
+            }, {
+                it.printStackTrace()
+            }),
+        mOnRemove.doOnNext { taskId ->
+            pause(taskId)
+            mRunningTask.remove(taskId)
+        }.observeOn(AndroidSchedulers.from(mDatabaseThread.looper))
+            .doOnNext { taskId ->
+                mTaskDao.removeById(taskId)
+            }.observeOn(AndroidSchedulers.mainThread())
+            .subscribe { taskId ->
+                mAdapter.data
+                    .indexOfFirst { it.id == taskId }
+                    .run {
+                        if (this != -1) {
+                            mAdapter.remove(this)
+                        }
+                    }
+            })
 
     /**
      *出错响应
@@ -63,44 +154,46 @@ class TransferViewModel(application: Application)
 
     private val mTaskExecutor = Executors.newCachedThreadPool()
 
-    //数据库操作工作的线程
-    private val mDatabaseThread = HandlerThread(toString())
-        .apply {
-            start()
-        }
-
     private val mRunningTask = SparseArrayCompat<TransferTask>()
 
     private lateinit var mIcons: Array<Drawable>
-
-    private val mDatabaseWorker = Handler(mDatabaseThread.looper).apply {
-        post {
-            mIcons = arrayOf(
-                ContextCompat.getDrawable(getApplication(), R.drawable.up)!!,
-                ContextCompat.getDrawable(getApplication(), R.drawable.dl)!!
-            )
-            val items = mTaskDao
-                .loadAll()
-                .map {
-                    it.toReadabilityData()
-                }
-            mMainWorker.post {
-                mAdapter.setNewData(items)
-            }
-        }
-    }
 
     private val mMainWorker = Handler(Looper.getMainLooper())
     {
         val what = it.what
         val obj = it.obj
         when {
+            what == START && obj is TransferTask -> {
+                obj.executeOnExecutor(mTaskExecutor)
+                mRunningTask.put(obj.config.id, obj)
+                return@Handler true
+            }
             what == UPDATE && obj is Progress -> {
-
+                val index = mAdapter.data
+                    .indexOfFirst { item -> item.id == obj.id }
+                if (index != -1) {
+                    val newItem = mAdapter.getItem(index)!!.copy(
+                        percent = obj.progress,
+                        size = obj.size
+                    )
+                    mAdapter.setData(index, newItem)
+                }
                 return@Handler true
             }
             what == FINISH && obj is Result -> {
-
+                val index = mAdapter.data
+                    .indexOfFirst { item -> item.id == obj.id }
+                if (index != -1) {
+                    val newItem = mAdapter.getItem(index)!!.copy(
+                        percent = 100,
+                        state = when (obj.type) {
+                            ResultType.CANCELLED -> TaskState.WAIT_START
+                            ResultType.FINISH -> TaskState.FINISH
+                            ResultType.ERROR -> TaskState.FAILED
+                        }
+                    )
+                    mAdapter.setData(index, newItem)
+                }
                 return@Handler true
             }
             else -> {
@@ -126,17 +219,20 @@ class TransferViewModel(application: Application)
         val item = mAdapter.data
             .firstOrNull { taskId == it.id }
         if (item != null) {
-            startInternal(taskId)
+            mOnStart.onNext(taskId)
         } else {
-            mTaskExecutor.submit {
-                mTaskDao.findById(taskId)?.let { task ->
-                    val newItem = task.toReadabilityData()
-                    mMainWorker.post {
-                        mAdapter.addData(newItem)
-                        startInternal(taskId)
-                    }
-                }
-            }
+            Observable.just(taskId)
+                .observeOn(AndroidSchedulers.from(mDatabaseThread.looper))
+                .map {
+                    mTaskDao.findById(taskId)
+                }.map {
+                    it.toReadabilityData()
+                }.observeOn(AndroidSchedulers.mainThread())
+                .doOnNext {
+                    mAdapter.addData(it)
+                }.map {
+                    it.id
+                }.subscribe(mOnStart)
         }
     }
 
@@ -151,60 +247,7 @@ class TransferViewModel(application: Application)
 
     @MainThread
     fun remove(taskId: Int) {
-        pause(taskId)
-        mRunningTask.remove(taskId)
-        mMainWorker.post {
-            mTaskDao.removeById(taskId)
-            mMainWorker.post {
-                mAdapter.data
-                    .indexOfFirst { it.id == taskId }
-                    .run {
-                        if (this != -1) {
-                            mAdapter.remove(this)
-                        }
-                    }
-            }
-        }
-    }
-
-    @MainThread
-    private fun startInternal(taskId: Int) {
-        val runTask = mRunningTask[taskId]
-        if (runTask == null || runTask.isCancelled) {
-            mDatabaseWorker.post {
-                val task = mTaskDao.findById(taskId)
-                if (task == null || task.isFinish) {
-                    return@post
-                }
-                val config = mConfigDao.findById(task.configId)
-                if (config == null) {
-                    mMainWorker.obtainMessage(FINISH)
-                        .apply {
-                            obj = Result(task.id, ResultType.ERROR)
-                            sendToTarget()
-                        }
-                } else {
-                    val taskConfig = Config(
-                        id = task.id,
-                        local = task.local,
-                        remote = task.remote,
-                        port = config.port,
-                        host = config.host,
-                        username = config.username,
-                        password = config.password
-                    )
-                    val newTask = if (WorkerType.DOWNLOAD == task.type) {
-                        UploadTask(mMainWorker, taskConfig)
-                    } else {
-                        DownloadTask(mMainWorker, taskConfig)
-                    }
-                    mMainWorker.post {
-                        newTask.executeOnExecutor(mTaskExecutor)
-                        mRunningTask.put(taskId, newTask)
-                    }
-                }
-            }
-        }
+        mOnRemove.onNext(taskId)
     }
 
     @WorkerThread
@@ -227,6 +270,9 @@ class TransferViewModel(application: Application)
                     it.cancel(false)
                 }
             }
+        }
+        mDisposables.forEach {
+            it.dispose()
         }
         mRunningTask.clear()
         mDatabaseThread.quit()
@@ -261,7 +307,7 @@ class TransferViewModel(application: Application)
 
     private abstract class TransferTask(
         protected val handler: Handler,
-        protected val config: Config
+        val config: Config
     ) : AsyncTask<Unit, Progress, ResultType>() {
 
         private val mNext = AtomicBoolean(false)
@@ -272,7 +318,7 @@ class TransferViewModel(application: Application)
         override fun onCancelled(result: ResultType) {
             handler.obtainMessage(FINISH)
                 .apply {
-                    obj = Result(config.id, ResultType.CANCELLED)
+                    obj = Result(config.id, CANCELLED)
                     sendToTarget()
                 }
         }
@@ -341,7 +387,7 @@ class TransferViewModel(application: Application)
                 when {
                     //云端无文件
                     files.isEmpty() -> {
-                        return ResultType.ERROR
+                        return ERROR
                     }
                     files.size == 1 -> {
                         val remote = files[0]
@@ -351,7 +397,7 @@ class TransferViewModel(application: Application)
                         }
                         //本地文件大于或等于云端文件大小
                         if (local.length() >= remote.size) {
-                            return ResultType.ERROR
+                            return ERROR
                         }
                         //设置断点重传位置开始传输
                         client.restartOffset = local.length();
@@ -361,7 +407,7 @@ class TransferViewModel(application: Application)
                         val buffer = ByteArray(1024)
                         while (true) {
                             if (!next) {
-                                return ResultType.CANCELLED
+                                return CANCELLED
                             }
                             val length = input.read(buffer)
                             if (length == -1) {
@@ -376,7 +422,7 @@ class TransferViewModel(application: Application)
                         return if (client.completePendingCommand())
                             ResultType.FINISH
                         else
-                            ResultType.ERROR
+                            ERROR
                     }
                     else -> {
                         throw RuntimeException()
@@ -385,7 +431,7 @@ class TransferViewModel(application: Application)
             } catch (e: Throwable) {
                 //发生奇怪的问题
                 e.printStackTrace()
-                return ResultType.ERROR
+                return ERROR
             }
         }
     }
@@ -434,7 +480,7 @@ class TransferViewModel(application: Application)
                 val buffer = ByteArray(1024)
                 while (true) {
                     if (!next) {
-                        return ResultType.CANCELLED
+                        return CANCELLED
                     }
                     val length = raf.read(buffer)
                     if (length == -1) {
@@ -450,10 +496,10 @@ class TransferViewModel(application: Application)
                 return if (client.completePendingCommand())
                     ResultType.FINISH
                 else
-                    ResultType.ERROR
+                    ERROR
             } catch (e: Throwable) {
                 e.printStackTrace()
-                return ResultType.ERROR
+                return ERROR
             }
         }
     }
