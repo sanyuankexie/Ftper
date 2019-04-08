@@ -1,11 +1,17 @@
 package org.kexie.android.ftper.model.bean;
 
-import org.kexie.android.ftper.model.WorkerType;
-
 import androidx.room.Entity;
+import androidx.room.Index;
 import androidx.room.PrimaryKey;
+import androidx.room.TypeConverters;
+import org.kexie.android.ftper.model.WorkerType;
+import org.kexie.android.ftper.widget.Utils;
 
-@Entity(tableName = "workers")
+import java.io.File;
+import java.util.UUID;
+
+
+@Entity(tableName = "workers",indices = @Index("workerId"))
 public class WorkerEntity {
 
     @PrimaryKey(autoGenerate = true)
@@ -18,15 +24,17 @@ public class WorkerEntity {
 
     private long size = 0;
 
-    private String workerId;
+    @TypeConverters(Utils.class)
+    private UUID workerId;
+
+    @TypeConverters(Utils.class)
+    private File local;
 
     private String name;
 
     private int configId;
 
     private String remote;
-
-    private String local;
 
     public void setType(@WorkerType int type) {
         this.type = type;
@@ -51,14 +59,6 @@ public class WorkerEntity {
 
     public int getConfigId() {
         return configId;
-    }
-
-    public void setWorkerId(String workerId) {
-        this.workerId = workerId;
-    }
-
-    public String getWorkerId() {
-        return workerId;
     }
 
     public String getName() {
@@ -93,11 +93,24 @@ public class WorkerEntity {
         this.remote = remote;
     }
 
-    public String getLocal() {
+    @TypeConverters(Utils.class)
+    public UUID getWorkerId() {
+        return workerId;
+    }
+
+    @TypeConverters(Utils.class)
+    public void setWorkerId(UUID workerId) {
+        this.workerId = workerId;
+    }
+
+    @TypeConverters(Utils.class)
+    public File getLocal() {
         return local;
     }
 
-    public void setLocal(String local) {
+    @TypeConverters(Utils.class)
+    public void setLocal(File local) {
         this.local = local;
     }
+
 }

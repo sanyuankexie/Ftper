@@ -4,16 +4,14 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.view.Gravity;
-import android.view.View;
 import android.widget.ImageView;
 import android.widget.Toast;
-import androidx.appcompat.widget.AppCompatTextView;
 import androidx.databinding.BindingAdapter;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleOwner;
+import androidx.room.TypeConverter;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.RequestBuilder;
 import com.bumptech.glide.RequestManager;
@@ -30,6 +28,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.UUID;
 
 import static androidx.fragment.app.FragmentTransaction.TRANSIT_FRAGMENT_OPEN;
 import static com.bumptech.glide.Priority.IMMEDIATE;
@@ -194,12 +193,23 @@ public final class Utils {
         return formatter.format(cal.getTime());
     }
 
-    public static View createEmptyView(Context context) {
-        AppCompatTextView textView = new AppCompatTextView(context);
-        textView.setTextSize(20);
-        textView.setGravity(Gravity.CENTER);
-        textView.setTextColor(context.getResources().getColor(R.color.colorBlackAlpha26));
-        textView.setText(R.string.this_is_empty);
-        return textView;
+    @TypeConverter
+    public static File stringToFile(String string) {
+        return string == null ? null : new File(string);
+    }
+
+    @TypeConverter
+    public static String fileToString(File file) {
+        return file == null ? null : file.getAbsolutePath();
+    }
+
+    @TypeConverter
+    public static UUID stringToUuid(String string) {
+        return string == null ? null : UUID.fromString(string);
+    }
+
+    @TypeConverter
+    public static String uuidToString(UUID uuid) {
+        return uuid == null ? null : uuid.toString();
     }
 }

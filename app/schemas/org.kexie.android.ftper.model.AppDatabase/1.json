@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "3a7915d7bbf3e39e91bbaf0ef38daa9b",
+    "identityHash": "d67fec8f7a2a6e6ff7ecb6223ec4b992",
     "entities": [
       {
         "tableName": "configs",
@@ -57,12 +57,21 @@
           ],
           "autoGenerate": true
         },
-        "indices": [],
+        "indices": [
+          {
+            "name": "index_configs_id",
+            "unique": false,
+            "columnNames": [
+              "id"
+            ],
+            "createSql": "CREATE  INDEX `index_configs_id` ON `${TABLE_NAME}` (`id`)"
+          }
+        ],
         "foreignKeys": []
       },
       {
         "tableName": "workers",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `type` INTEGER NOT NULL, `doSize` INTEGER NOT NULL, `size` INTEGER NOT NULL, `workerId` TEXT, `name` TEXT, `configId` INTEGER NOT NULL, `remote` TEXT, `local` TEXT)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `type` INTEGER NOT NULL, `doSize` INTEGER NOT NULL, `size` INTEGER NOT NULL, `workerId` TEXT, `local` TEXT, `name` TEXT, `configId` INTEGER NOT NULL, `remote` TEXT)",
         "fields": [
           {
             "fieldPath": "id",
@@ -95,6 +104,12 @@
             "notNull": false
           },
           {
+            "fieldPath": "local",
+            "columnName": "local",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
             "fieldPath": "name",
             "columnName": "name",
             "affinity": "TEXT",
@@ -111,12 +126,6 @@
             "columnName": "remote",
             "affinity": "TEXT",
             "notNull": false
-          },
-          {
-            "fieldPath": "local",
-            "columnName": "local",
-            "affinity": "TEXT",
-            "notNull": false
           }
         ],
         "primaryKey": {
@@ -125,13 +134,22 @@
           ],
           "autoGenerate": true
         },
-        "indices": [],
+        "indices": [
+          {
+            "name": "index_workers_workerId",
+            "unique": false,
+            "columnNames": [
+              "workerId"
+            ],
+            "createSql": "CREATE  INDEX `index_workers_workerId` ON `${TABLE_NAME}` (`workerId`)"
+          }
+        ],
         "foreignKeys": []
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, \"3a7915d7bbf3e39e91bbaf0ef38daa9b\")"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, \"d67fec8f7a2a6e6ff7ecb6223ec4b992\")"
     ]
   }
 }

@@ -3,19 +3,28 @@ package org.kexie.android.ftper.viewmodel
 import android.app.Application
 import android.os.Handler
 import android.os.HandlerThread
-import androidx.annotation.WorkerThread
+import android.os.Looper
+import androidx.annotation.MainThread
 import androidx.collection.ArrayMap
+import androidx.collection.SparseArrayCompat
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.*
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MediatorLiveData
+import androidx.lifecycle.Transformations
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
+import io.reactivex.Single
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.Disposable
+import io.reactivex.functions.BiFunction
+import io.reactivex.functions.Consumer
 import org.kexie.android.ftper.R
 import org.kexie.android.ftper.app.AppGlobal
 import org.kexie.android.ftper.model.WorkerType
 import org.kexie.android.ftper.model.bean.WorkerEntity
 import org.kexie.android.ftper.viewmodel.bean.TransferItem
 import org.kexie.android.ftper.widget.Utils
-import java.util.*
 
 class TransferViewModel(application: Application)
     : AndroidViewModel(application) {
@@ -26,75 +35,24 @@ class TransferViewModel(application: Application)
 
     private val mWorkManager = WorkManager.getInstance()
 
-    //只会在主线程操作该集合
-    private val mStates = ArrayMap<Int, LiveData<Pair<Int, WorkInfo.State>>>()
+    private val mStates = SparseArrayCompat<LiveData<WorkInfo.State>>()
 
-    private val mEntities = MutableLiveData<Map<Int, WorkerEntity>>()
+    private val mItems = MediatorLiveData<List<TransferItem>>()
 
-    private val mItems = MediatorLiveData<Map<Int, TransferItem>>()
-        .apply {
-            addSource(mEntities) { newItems ->
-                var oldItems = value
-                if (oldItems == null) {
-                    oldItems = emptyMap()
-                }
-                val cross = oldItems.keys.intersect(newItems.keys)
-                val add = newItems.keys.subtract(cross)
-                val remove = oldItems.keys.subtract(cross)
-                val post = ArrayMap<Int, TransferItem>()
-                add.forEach { addItemId ->
-                    val entity = newItems.getValue(addItemId)
-                    val workerId = UUID.fromString(entity.workerId)
-                    val workInfo = mWorkManager
-                        .getWorkInfoByIdLiveData(workerId)
-                    val state = Transformations.map(workInfo)
-                    { info ->
-                        addItemId to info.state
-                    }
-                    addSource(state)
-                    { pair ->
-                        value?.let {
-                            //拷贝一份
-                            val newMap = it.toMutableMap()
-                            newMap[pair.first]?.let { item ->
-                                newMap[pair.first] = item.copy(state = pair.second.name)
-                                //刷新
-                                value = newMap
-                            }
-                        }
-                    }
-                    mStates[addItemId] = state
-                    val item = entity.toReadabilityData(null)
-                    post[addItemId] = item
-                }
-                cross.forEach { updateItemId ->
-                    val entity = newItems.getValue(updateItemId)
-                    val old = oldItems.getValue(updateItemId)
-                    post[updateItemId] = entity.toReadabilityData(old)
-                }
-                remove.forEach { removeItemId ->
-                    mStates.remove(removeItemId)?.let {
-                        removeSource(it)
-                    }
-                }
-                value = post
-            }
-        }
+    private var mUpdate: Disposable? = null
 
     private val mWorkerThread = HandlerThread(toString())
         .apply {
             start()
         }
 
-    private val mWorker = Handler(mWorkerThread.looper)
+    private val mMain = Handler(Looper.getMainLooper())
 
     private val mReloadTask = object : Runnable {
-        @WorkerThread
+        @MainThread
         override fun run() {
-            mEntities.postValue(mDao.loadAll()
-                .map { it.id to it }
-                .toMap())
-            mWorker.postDelayed(this, 1000)
+            reloadInternal()
+            mMain.postDelayed(this, 1000)
         }
     }
 
@@ -104,16 +62,93 @@ class TransferViewModel(application: Application)
     )
 
     val item: LiveData<List<TransferItem>>
-        get() = Transformations.map(mItems) {
-            it.values.toMutableList()
-                .sortedBy { item -> item.id }
-        }
+        get() = mItems
 
     fun setActive(active: Boolean) {
-        mWorker.removeCallbacks(mReloadTask)
+        mMain.removeCallbacks(mReloadTask)
         if (active) {
-            mWorker.post(mReloadTask)
+            mMain.post(mReloadTask)
         }
+    }
+
+    private fun reloadInternal() {
+        val update = mUpdate
+        if (update != null && !update.isDisposed) {
+            update.dispose()
+        }
+        mUpdate = reloadData()
+            .subscribe(Consumer {
+                mItems.value = it
+            })
+    }
+
+    @MainThread
+    private fun reloadData(): Single<List<TransferItem>> {
+        class MergedContext(
+            val add: Set<Int>,
+            val update: Set<Int>,
+            val remove: Set<Int>,
+            val newEntities: Map<Int, WorkerEntity>,
+            val oldItems: Map<Int, TransferItem>
+        )
+        return Single.just(mDao)
+            .observeOn(AndroidSchedulers.from(mWorkerThread.looper))
+            .map {
+                it.loadAll()
+            }.zipWith(Single.just(mItems.value ?: emptyList()),
+                BiFunction<List<WorkerEntity>, List<TransferItem>, MergedContext>
+                { newItems, oldItems ->
+                    val oldItemMap = oldItems.map {
+                        it.id to it
+                    }.toMap()
+                    val newItemMap = newItems.map {
+                        it.id to it
+                    }.toMap()
+                    val cross = oldItemMap.keys.intersect(newItemMap.keys)
+                    val add = newItemMap.keys.subtract(cross)
+                    val remove = oldItemMap.keys.subtract(cross)
+                    return@BiFunction MergedContext(add, cross, remove, newItemMap, oldItemMap)
+                })
+            .observeOn(AndroidSchedulers.mainThread())
+            .map { context ->
+                val result = ArrayMap<Int, TransferItem>()
+                context.add.forEach { addItemId ->
+                    val entity = context.newEntities.getValue(addItemId)
+                    val workerId = entity.workerId
+                    val workInfo = mWorkManager
+                        .getWorkInfoByIdLiveData(workerId)
+                    val state = Transformations.map(workInfo)
+                    { info ->
+                        info.state
+                    }
+                    mItems.addSource(state) { newState ->
+                        mItems.value?.let { items ->
+                            val index = items.indexOfFirst {
+                                it.id == addItemId
+                            }
+                            val newResult = items.toMutableList()
+                            newResult[index] = items[index].copy(state = newState.name)
+                            mItems.value = newResult
+                        }
+                    }
+                    mStates.put(addItemId, state)
+                    result[addItemId] = entity.toReadabilityData(null)
+                }
+                context.update.forEach { updateItemId ->
+                    val entity = context.newEntities.getValue(updateItemId)
+                    val old = context.oldItems.getValue(updateItemId)
+                    result[updateItemId] = entity.toReadabilityData(old)
+                }
+                context.remove.forEach { removeItemId ->
+                    mStates[removeItemId]?.let {
+                        mItems.removeSource(it)
+                        mStates.remove(removeItemId)
+                    }
+                }
+                return@map result.values
+                    .sortedBy { it.id }
+                    .toList()
+            }
     }
 
     private fun WorkerEntity.toReadabilityData(old: TransferItem?): TransferItem {
@@ -135,5 +170,9 @@ class TransferViewModel(application: Application)
 
     override fun onCleared() {
         mWorkerThread.quit()
+        val update = mUpdate
+        if (update != null && !update.isDisposed) {
+            update.dispose()
+        }
     }
 }

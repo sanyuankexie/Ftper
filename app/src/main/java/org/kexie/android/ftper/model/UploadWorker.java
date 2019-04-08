@@ -2,18 +2,15 @@ package org.kexie.android.ftper.model;
 
 import android.content.Context;
 import android.os.SystemClock;
-
+import androidx.annotation.NonNull;
+import androidx.work.WorkerParameters;
 import com.orhanobut.logger.Logger;
-
 import org.apache.commons.net.ftp.FTPFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
-
-import androidx.annotation.NonNull;
-import androidx.work.WorkerParameters;
 
 public final class UploadWorker extends TransferWorker {
 
@@ -28,7 +25,7 @@ public final class UploadWorker extends TransferWorker {
         try {
             prepare();
             getClient().enterLocalPassiveMode();
-            File local = new File(getWorker().getLocal());
+            File local = getWorker().getLocal();
             if (!local.isFile()) {
                 throw new RuntimeException();
             }

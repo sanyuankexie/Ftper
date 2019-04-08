@@ -1,10 +1,11 @@
 package org.kexie.android.ftper.model.bean;
 
 import androidx.room.Entity;
+import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
 
-@Entity(tableName = "configs")
+@Entity(tableName = "configs",indices = @Index({"id"}))
 public class ConfigEntity {
     @PrimaryKey(autoGenerate = true)
     private int id;

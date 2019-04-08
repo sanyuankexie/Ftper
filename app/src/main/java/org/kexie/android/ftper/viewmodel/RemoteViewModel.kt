@@ -223,9 +223,9 @@ class RemoteViewModel(application: Application)
 
                 val worker = WorkerEntity().apply {
                     name = file.name
-                    workerId = request.id.toString()
+                    workerId = request.id
                     type = WorkerType.UPLOAD
-                    local = file.absolutePath
+                    local = file
                     remote = getRemoteName(file.name)
                     configId = selectId
                 }
@@ -268,7 +268,7 @@ class RemoteViewModel(application: Application)
                 val worker = WorkerEntity()
                     .apply {
                         name = remoteItem.name
-                        workerId = request.id.toString()
+                        workerId = request.id
                         type = WorkerType.DOWNLOAD
                         local = getNewLocalName(remoteItem.name)
                         remote = getRemoteName(remoteItem.name)
@@ -373,17 +373,18 @@ class RemoteViewModel(application: Application)
         }
     }
 
-    private fun getNewLocalName(name: String): String {
-        val dir = File(Environment
+    private fun getNewLocalName(name: String): File {
+        val dir = File(
+            Environment
                 .getExternalStorageDirectory()
                 .absolutePath +
-                File.separator +
-                getApplication<Application>().applicationInfo.name
+                    File.separator +
+                    getApplication<Application>().applicationInfo.name
         )
         if (!dir.exists()) {
             dir.mkdirs()
         }
-        return dir.absolutePath + File.separator + name
+        return File(dir, name)
     }
 
     @Throws(Exception::class)

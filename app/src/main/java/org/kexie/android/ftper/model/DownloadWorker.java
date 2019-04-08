@@ -2,7 +2,8 @@ package org.kexie.android.ftper.model;
 
 import android.content.Context;
 import android.os.SystemClock;
-
+import androidx.annotation.NonNull;
+import androidx.work.WorkerParameters;
 import org.apache.commons.net.ftp.FTPFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -10,9 +11,6 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
-
-import androidx.annotation.NonNull;
-import androidx.work.WorkerParameters;
 
 public final class DownloadWorker extends TransferWorker {
 
@@ -34,7 +32,7 @@ public final class DownloadWorker extends TransferWorker {
                 return Result.failure();
             } else if (files.length == 1) {
                 FTPFile remote = files[0];
-                File local = new File(getWorker().getLocal());
+                File local = getWorker().getLocal();
                 if (!local.exists()) {
                     //noinspection ResultOfMethodCallIgnored
                     local.createNewFile();
