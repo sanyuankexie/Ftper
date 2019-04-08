@@ -4,6 +4,7 @@ import android.app.Application
 import android.graphics.drawable.Drawable
 import android.os.AsyncTask
 import android.os.Handler
+import android.os.HandlerThread
 import android.os.Looper
 import androidx.annotation.MainThread
 import androidx.annotation.WorkerThread
@@ -17,6 +18,7 @@ import org.apache.commons.net.ftp.FTP
 import org.apache.commons.net.ftp.FTPClient
 import org.kexie.android.ftper.R
 import org.kexie.android.ftper.app.AppGlobal
+import org.kexie.android.ftper.model.WorkerType
 import org.kexie.android.ftper.model.bean.TaskEntity
 import org.kexie.android.ftper.viewmodel.bean.TaskItem
 import org.kexie.android.ftper.viewmodel.bean.TaskState
@@ -32,6 +34,11 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 class TransferViewModel(application: Application)
     : AndroidViewModel(application) {
+
+    companion object {
+        const val UPDATE = 10001
+        const val FINISH = 10002
+    }
 
     private val mTaskDao = getApplication<AppGlobal>()
         .appDatabase
@@ -54,16 +61,53 @@ class TransferViewModel(application: Application)
      */
     private val mOnInfo = PublishSubject.create<String>()
 
-    private val mExecutor = Executors.newCachedThreadPool()
+    private val mTaskExecutor = Executors.newCachedThreadPool()
 
-    private val mSync = Handler.createAsync(Looper.getMainLooper()) {
+    //数据库操作工作的线程
+    private val mDatabaseThread = HandlerThread(toString())
+        .apply {
+            start()
+        }
 
-        return@createAsync true
-    }
+    private val mRunningTask = SparseArrayCompat<TransferTask>()
 
     private lateinit var mIcons: Array<Drawable>
 
-    private val mRunningTask = SparseArrayCompat<TransferTask>()
+    private val mDatabaseWorker = Handler(mDatabaseThread.looper).apply {
+        post {
+            mIcons = arrayOf(
+                ContextCompat.getDrawable(getApplication(), R.drawable.up)!!,
+                ContextCompat.getDrawable(getApplication(), R.drawable.dl)!!
+            )
+            val items = mTaskDao
+                .loadAll()
+                .map {
+                    it.toReadabilityData()
+                }
+            mMainWorker.post {
+                mAdapter.setNewData(items)
+            }
+        }
+    }
+
+    private val mMainWorker = Handler(Looper.getMainLooper())
+    {
+        val what = it.what
+        val obj = it.obj
+        when {
+            what == UPDATE && obj is Progress -> {
+
+                return@Handler true
+            }
+            what == FINISH && obj is Result -> {
+
+                return@Handler true
+            }
+            else -> {
+                return@Handler false
+            }
+        }
+    }
 
     val onError: Observable<String> = mOnError.observeOn(AndroidSchedulers.mainThread())
 
@@ -77,32 +121,17 @@ class TransferViewModel(application: Application)
     val adapter: GenericQuickAdapter<TaskItem>
         get() = mAdapter
 
-    init {
-        mExecutor.execute {
-            mIcons = arrayOf(
-                ContextCompat.getDrawable(getApplication(), R.drawable.up)!!,
-                ContextCompat.getDrawable(getApplication(), R.drawable.dl)!!
-            )
-            val items = mTaskDao
-                .loadAll()
-                .map {
-                    it.toReadabilityData()
-                }
-            mSync.post {
-                mAdapter.setNewData(items)
-            }
-        }
-    }
-
+    @MainThread
     fun start(taskId: Int) {
-        val item = mAdapter.data.firstOrNull { taskId == it.id }
+        val item = mAdapter.data
+            .firstOrNull { taskId == it.id }
         if (item != null) {
             startInternal(taskId)
         } else {
-            mExecutor.submit {
+            mTaskExecutor.submit {
                 mTaskDao.findById(taskId)?.let { task ->
                     val newItem = task.toReadabilityData()
-                    mSync.post {
+                    mMainWorker.post {
                         mAdapter.addData(newItem)
                         startInternal(taskId)
                     }
@@ -111,19 +140,71 @@ class TransferViewModel(application: Application)
         }
     }
 
+    @MainThread
     fun pause(taskId: Int) {
-
-
+        mRunningTask[taskId]?.let {
+            if (it.isCancelled) {
+                it.cancel(false)
+            }
+        }
     }
 
+    @MainThread
     fun remove(taskId: Int) {
-
-
+        pause(taskId)
+        mRunningTask.remove(taskId)
+        mMainWorker.post {
+            mTaskDao.removeById(taskId)
+            mMainWorker.post {
+                mAdapter.data
+                    .indexOfFirst { it.id == taskId }
+                    .run {
+                        if (this != -1) {
+                            mAdapter.remove(this)
+                        }
+                    }
+            }
+        }
     }
 
+    @MainThread
     private fun startInternal(taskId: Int) {
         val runTask = mRunningTask[taskId]
-
+        if (runTask == null || runTask.isCancelled) {
+            mDatabaseWorker.post {
+                val task = mTaskDao.findById(taskId)
+                if (task == null || task.isFinish) {
+                    return@post
+                }
+                val config = mConfigDao.findById(task.configId)
+                if (config == null) {
+                    mMainWorker.obtainMessage(FINISH)
+                        .apply {
+                            obj = Result(task.id, ResultType.ERROR)
+                            sendToTarget()
+                        }
+                } else {
+                    val taskConfig = Config(
+                        id = task.id,
+                        local = task.local,
+                        remote = task.remote,
+                        port = config.port,
+                        host = config.host,
+                        username = config.username,
+                        password = config.password
+                    )
+                    val newTask = if (WorkerType.DOWNLOAD == task.type) {
+                        UploadTask(mMainWorker, taskConfig)
+                    } else {
+                        DownloadTask(mMainWorker, taskConfig)
+                    }
+                    mMainWorker.post {
+                        newTask.executeOnExecutor(mTaskExecutor)
+                        mRunningTask.put(taskId, newTask)
+                    }
+                }
+            }
+        }
     }
 
     @WorkerThread
@@ -134,12 +215,21 @@ class TransferViewModel(application: Application)
             percent = 0,
             state = TaskState.WAIT_START,
             icon = mIcons[this.type],
-            size = ""
+            size = getApplication<Application>().getString(R.string.loading_text)
         )
     }
 
     override fun onCleared() {
-        mExecutor.shutdown()
+        mTaskExecutor.shutdown()
+        for (i in 0 until mRunningTask.size()) {
+            mRunningTask[i]?.let {
+                if (!it.isCancelled) {
+                    it.cancel(false)
+                }
+            }
+        }
+        mRunningTask.clear()
+        mDatabaseThread.quit()
     }
 
     private class Config(
@@ -174,14 +264,18 @@ class TransferViewModel(application: Application)
         protected val config: Config
     ) : AsyncTask<Unit, Progress, ResultType>() {
 
-        companion object {
-            const val UPDATE = 10001
-            const val FINISH = 10002
-        }
-
         private val mNext = AtomicBoolean(false)
         protected val next
             get() = mNext.get()
+
+        @WorkerThread
+        override fun onCancelled(result: ResultType) {
+            handler.obtainMessage(FINISH)
+                .apply {
+                    obj = Result(config.id, ResultType.CANCELLED)
+                    sendToTarget()
+                }
+        }
 
         @WorkerThread
         protected fun connect(): FTPClient {
@@ -214,10 +308,6 @@ class TransferViewModel(application: Application)
         @MainThread
         override fun onCancelled() {
             mNext.set(false)
-        }
-
-        fun makeResult(type: ResultType): Result {
-            return Result(config.id, type)
         }
 
         override fun onPostExecute(resultType: ResultType) {
