@@ -75,7 +75,8 @@ class TransferViewModel(application: Application)
                 if (index != -1) {
                     val newItem = mAdapter.getItem(index)!!.copy(
                         percent = obj.progress,
-                        size = obj.size
+                        size = obj.size,
+                        state = TaskState.RUNNING
                     )
                     mAdapter.setData(index, newItem)
                 }
@@ -217,10 +218,8 @@ class TransferViewModel(application: Application)
     val adapter: GenericQuickAdapter<TaskItem>
         get() = mAdapter
 
-
     @MainThread
     fun start(taskId: Int) {
-        Logger.d(taskId)
         val item = mAdapter.data
             .firstOrNull { taskId == it.id }
         if (item != null) {
@@ -457,7 +456,7 @@ class TransferViewModel(application: Application)
             try {
                 val client = connect()
                 val local = config.local
-                if (local.isFile) {
+                if (!local.isFile) {
                     throw RuntimeException(local.absolutePath)
                 }
                 val localSize = local.length()

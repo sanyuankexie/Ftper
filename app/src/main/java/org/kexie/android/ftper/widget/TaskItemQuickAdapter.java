@@ -1,5 +1,6 @@
 package org.kexie.android.ftper.widget;
 
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import androidx.core.math.MathUtils;
@@ -19,14 +20,19 @@ public class TaskItemQuickAdapter extends GenericQuickAdapter<TaskItem> {
         super.convert(helper, item);
         ItemTaskBinding binding = helper.getBinding();
         //除以100，得到百分比
-        float percentFloat = MathUtils.clamp(item.getPercent() / 100.0f, 0, 1);
-        int width = binding.progressWrapper.getWidth();
         ImageView imageView = binding.progress;
-        RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams)
-                imageView.getLayoutParams();
-        //获取剩下的长度
-        layoutParams.rightMargin = (int) ((1 - percentFloat) * width);
-        imageView.setLayoutParams(layoutParams);
-        imageView.postInvalidate();
+        if (item.getPercent() != 0) {
+            imageView.setVisibility(View.VISIBLE);
+            float percentFloat = MathUtils.clamp(item.getPercent() / 100.0f, 0, 1);
+            int width = binding.progressWrapper.getWidth();
+            RelativeLayout.LayoutParams layoutParams = (RelativeLayout.LayoutParams)
+                    imageView.getLayoutParams();
+            //获取剩下的长度
+            layoutParams.rightMargin = (int) ((1 - percentFloat) * width);
+            imageView.setLayoutParams(layoutParams);
+            imageView.postInvalidate();
+        } else {
+            imageView.setVisibility(View.INVISIBLE);
+        }
     }
 }
