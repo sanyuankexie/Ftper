@@ -12,7 +12,9 @@ import androidx.lifecycle.ViewModelProviders;
 import org.kexie.android.ftper.R;
 import org.kexie.android.ftper.databinding.FragmentTransferBinding;
 import org.kexie.android.ftper.viewmodel.TransferViewModel;
-import org.kexie.android.ftper.widget.TransferItemAdapter;
+import org.kexie.android.ftper.viewmodel.bean.TaskItem;
+import org.kexie.android.ftper.widget.GenericQuickAdapter;
+import org.kexie.android.ftper.widget.TaskItemQuickAdapter;
 
 public class TransferFragment extends Fragment {
 
@@ -20,12 +22,12 @@ public class TransferFragment extends Fragment {
 
     private FragmentTransferBinding mBinding;
 
-    private TransferItemAdapter mAdapter;
+    private GenericQuickAdapter<TaskItem> mAdapter;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mAdapter = new TransferItemAdapter();
+        mAdapter = new TaskItemQuickAdapter();
     }
 
     @Nullable
@@ -47,15 +49,15 @@ public class TransferFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         mViewModel = ViewModelProviders.of(requireActivity()).get(TransferViewModel.class);
         mBinding.setAdapter(mAdapter);
-        mViewModel.getItem().observe(this, mAdapter::submitList);
+
+
     }
 
     @Override
     public void setUserVisibleHint(boolean isVisibleToUser) {
         super.setUserVisibleHint(isVisibleToUser);
-        if (mViewModel != null) {
-            mViewModel.setActive(isVisibleToUser);
-        }
+
+
     }
 
     @Override

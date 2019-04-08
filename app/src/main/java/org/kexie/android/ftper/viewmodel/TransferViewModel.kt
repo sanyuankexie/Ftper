@@ -1,178 +1,370 @@
 package org.kexie.android.ftper.viewmodel
 
 import android.app.Application
+import android.graphics.drawable.Drawable
+import android.os.AsyncTask
 import android.os.Handler
-import android.os.HandlerThread
 import android.os.Looper
 import androidx.annotation.MainThread
-import androidx.collection.ArrayMap
+import androidx.annotation.WorkerThread
 import androidx.collection.SparseArrayCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MediatorLiveData
-import androidx.lifecycle.Transformations
-import androidx.work.WorkInfo
-import androidx.work.WorkManager
-import io.reactivex.Single
+import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.Disposable
-import io.reactivex.functions.BiFunction
-import io.reactivex.functions.Consumer
+import io.reactivex.subjects.PublishSubject
+import org.apache.commons.net.ftp.FTP
+import org.apache.commons.net.ftp.FTPClient
 import org.kexie.android.ftper.R
 import org.kexie.android.ftper.app.AppGlobal
-import org.kexie.android.ftper.model.WorkerType
-import org.kexie.android.ftper.model.bean.WorkerEntity
-import org.kexie.android.ftper.viewmodel.bean.TransferItem
+import org.kexie.android.ftper.model.bean.TaskEntity
+import org.kexie.android.ftper.viewmodel.bean.TaskItem
+import org.kexie.android.ftper.viewmodel.bean.TaskState
+import org.kexie.android.ftper.widget.GenericQuickAdapter
+import org.kexie.android.ftper.widget.TaskItemQuickAdapter
 import org.kexie.android.ftper.widget.Utils
+import java.io.BufferedOutputStream
+import java.io.File
+import java.io.FileOutputStream
+import java.io.RandomAccessFile
+import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
 
 class TransferViewModel(application: Application)
     : AndroidViewModel(application) {
 
-    private val mDao = getApplication<AppGlobal>()
+    private val mTaskDao = getApplication<AppGlobal>()
         .appDatabase
-        .transferDao
+        .taskDao
 
-    private val mWorkManager = WorkManager.getInstance()
+    private val mConfigDao = getApplication<AppGlobal>()
+        .appDatabase
+        .configDao
 
-    private val mStates = SparseArrayCompat<LiveData<WorkInfo.State>>()
+    /**
+     *出错响应
+     */
+    private val mOnError = PublishSubject.create<String>()
+    /**
+     *成功响应
+     */
+    private val mOnSuccess = PublishSubject.create<String>()
+    /**
+     *信息响应
+     */
+    private val mOnInfo = PublishSubject.create<String>()
 
-    private val mItems = MediatorLiveData<List<TransferItem>>()
+    private val mExecutor = Executors.newCachedThreadPool()
 
-    private var mUpdate: Disposable? = null
+    private val mSync = Handler.createAsync(Looper.getMainLooper()) {
 
-    private val mWorkerThread = HandlerThread(toString())
-        .apply {
-            start()
-        }
-
-    private val mMain = Handler(Looper.getMainLooper())
-
-    private val mReloadTask = object : Runnable {
-        @MainThread
-        override fun run() {
-            reloadInternal()
-            mMain.postDelayed(this, 1000)
-        }
+        return@createAsync true
     }
 
-    private val mIcons = arrayOf(
-        ContextCompat.getDrawable(getApplication(), R.drawable.up)!!,
-        ContextCompat.getDrawable(getApplication(), R.drawable.dl)!!
-    )
+    private lateinit var mIcons: Array<Drawable>
 
-    val item: LiveData<List<TransferItem>>
-        get() = mItems
+    private val mRunningTask = SparseArrayCompat<TransferTask>()
 
-    fun setActive(active: Boolean) {
-        mMain.removeCallbacks(mReloadTask)
-        if (active) {
-            mMain.post(mReloadTask)
-        }
-    }
+    val onError: Observable<String> = mOnError.observeOn(AndroidSchedulers.mainThread())
 
-    private fun reloadInternal() {
-        val update = mUpdate
-        if (update != null && !update.isDisposed) {
-            update.dispose()
-        }
-        mUpdate = reloadData()
-            .subscribe(Consumer {
-                mItems.value = it
-            })
-    }
+    val onSuccess: Observable<String> = mOnSuccess.observeOn(AndroidSchedulers.mainThread())
 
-    @MainThread
-    private fun reloadData(): Single<List<TransferItem>> {
-        class MergedContext(
-            val add: Set<Int>,
-            val update: Set<Int>,
-            val remove: Set<Int>,
-            val newEntities: Map<Int, WorkerEntity>,
-            val oldItems: Map<Int, TransferItem>
-        )
-        return Single.just(mDao)
-            .observeOn(AndroidSchedulers.from(mWorkerThread.looper))
-            .map {
-                it.loadAll()
-            }.zipWith(Single.just(mItems.value ?: emptyList()),
-                BiFunction<List<WorkerEntity>, List<TransferItem>, MergedContext>
-                { newItems, oldItems ->
-                    val oldItemMap = oldItems.map {
-                        it.id to it
-                    }.toMap()
-                    val newItemMap = newItems.map {
-                        it.id to it
-                    }.toMap()
-                    val cross = oldItemMap.keys.intersect(newItemMap.keys)
-                    val add = newItemMap.keys.subtract(cross)
-                    val remove = oldItemMap.keys.subtract(cross)
-                    return@BiFunction MergedContext(add, cross, remove, newItemMap, oldItemMap)
-                })
-            .observeOn(AndroidSchedulers.mainThread())
-            .map { context ->
-                val result = ArrayMap<Int, TransferItem>()
-                context.add.forEach { addItemId ->
-                    val entity = context.newEntities.getValue(addItemId)
-                    val workerId = entity.workerId
-                    val workInfo = mWorkManager
-                        .getWorkInfoByIdLiveData(workerId)
-                    val state = Transformations.map(workInfo)
-                    { info ->
-                        info.state
-                    }
-                    mItems.addSource(state) { newState ->
-                        mItems.value?.let { items ->
-                            val index = items.indexOfFirst {
-                                it.id == addItemId
-                            }
-                            val newResult = items.toMutableList()
-                            newResult[index] = items[index].copy(state = newState.name)
-                            mItems.value = newResult
-                        }
-                    }
-                    mStates.put(addItemId, state)
-                    result[addItemId] = entity.toReadabilityData(null)
+    val onInfo: Observable<String> = mOnInfo.observeOn(AndroidSchedulers.mainThread())
+
+    //妥协
+    private val mAdapter = TaskItemQuickAdapter()
+
+    val adapter: GenericQuickAdapter<TaskItem>
+        get() = mAdapter
+
+    init {
+        mExecutor.execute {
+            mIcons = arrayOf(
+                ContextCompat.getDrawable(getApplication(), R.drawable.up)!!,
+                ContextCompat.getDrawable(getApplication(), R.drawable.dl)!!
+            )
+            val items = mTaskDao
+                .loadAll()
+                .map {
+                    it.toReadabilityData()
                 }
-                context.update.forEach { updateItemId ->
-                    val entity = context.newEntities.getValue(updateItemId)
-                    val old = context.oldItems.getValue(updateItemId)
-                    result[updateItemId] = entity.toReadabilityData(old)
-                }
-                context.remove.forEach { removeItemId ->
-                    mStates[removeItemId]?.let {
-                        mItems.removeSource(it)
-                        mStates.remove(removeItemId)
-                    }
-                }
-                return@map result.values
-                    .sortedBy { it.id }
-                    .toList()
+            mSync.post {
+                mAdapter.setNewData(items)
             }
+        }
     }
 
-    private fun WorkerEntity.toReadabilityData(old: TransferItem?): TransferItem {
-        val icon = if (this.type == WorkerType.UPLOAD)
-            mIcons[0]
-        else
-            mIcons[1]
+    fun start(taskId: Int) {
+        val item = mAdapter.data.firstOrNull { taskId == it.id }
+        if (item != null) {
+            startInternal(taskId)
+        } else {
+            mExecutor.submit {
+                mTaskDao.findById(taskId)?.let { task ->
+                    val newItem = task.toReadabilityData()
+                    mSync.post {
+                        mAdapter.addData(newItem)
+                        startInternal(taskId)
+                    }
+                }
+            }
+        }
+    }
 
-        return TransferItem(
+    fun pause(taskId: Int) {
+
+
+    }
+
+    fun remove(taskId: Int) {
+
+
+    }
+
+    private fun startInternal(taskId: Int) {
+        val runTask = mRunningTask[taskId]
+
+    }
+
+    @WorkerThread
+    private fun TaskEntity.toReadabilityData(): TaskItem {
+        return TaskItem(
             id = this.id,
             name = this.name,
-            size = "${Utils.sizeToString(this.doSize)}/${Utils.sizeToString(this.size)}",
-            state = old?.state ?: getApplication<Application>()
-                .getString(R.string.loading_text),
-            percent = (this.doSize.toFloat() / this.size.toFloat() * 100f).toInt(),
-            icon = icon
+            percent = 0,
+            state = TaskState.WAIT_START,
+            icon = mIcons[this.type],
+            size = ""
         )
     }
 
     override fun onCleared() {
-        mWorkerThread.quit()
-        val update = mUpdate
-        if (update != null && !update.isDisposed) {
-            update.dispose()
+        mExecutor.shutdown()
+    }
+
+    private class Config(
+        val id: Int,
+        val local: File,
+        val remote: String,
+        val host: String,
+        val port: Int,
+        val username: String,
+        val password: String
+    )
+
+    private class Progress(
+        val id: Int,
+        val size: String,
+        val progress: Int
+    )
+
+    private class Result(
+        val id: Int,
+        val type: ResultType
+    )
+
+    private enum class ResultType {
+        CANCELLED,
+        FINISH,
+        ERROR
+    }
+
+    private abstract class TransferTask(
+        protected val handler: Handler,
+        protected val config: Config
+    ) : AsyncTask<Unit, Progress, ResultType>() {
+
+        companion object {
+            const val UPDATE = 10001
+            const val FINISH = 10002
+        }
+
+        private val mNext = AtomicBoolean(false)
+        protected val next
+            get() = mNext.get()
+
+        @WorkerThread
+        protected fun connect(): FTPClient {
+            if (mNext.compareAndSet(true, true)) {
+                throw AssertionError()
+            }
+            return FTPClient()
+                .apply {
+                    //5秒超时
+                    val timeout = 5000
+                    controlEncoding = "gbk"
+                    connectTimeout = timeout
+                    defaultTimeout = timeout
+                    //连接到服务器
+                    connect(config.host, config.port)
+                    login(config.username, config.password)
+                    soTimeout = timeout
+                    //设置传输形式为二进制
+                    setFileType(FTP.BINARY_FILE_TYPE)
+                }
+        }
+
+        @WorkerThread
+        protected fun publishProgress(doSize: Long, size: Long) {
+            val sizeText = "${Utils.sizeToString(doSize)}/${Utils.sizeToString(size)}"
+            val progress = (doSize.toFloat() / size.toFloat() * 100f).toInt()
+            publishProgress(Progress(config.id, sizeText, progress))
+        }
+
+        @MainThread
+        override fun onCancelled() {
+            mNext.set(false)
+        }
+
+        fun makeResult(type: ResultType): Result {
+            return Result(config.id, type)
+        }
+
+        override fun onPostExecute(resultType: ResultType) {
+            handler.obtainMessage(FINISH)
+                .apply {
+                    obj = Result(config.id, resultType)
+                    sendToTarget()
+                }
+        }
+
+        @MainThread
+        override fun onProgressUpdate(vararg values: Progress) {
+            handler.obtainMessage(UPDATE)
+                .apply {
+                    obj = values[0]
+                    sendToTarget()
+                }
+        }
+    }
+
+    private class DownloadTask(
+        handler: Handler,
+        config: Config
+    ) : TransferTask(handler, config) {
+        @WorkerThread
+        override fun doInBackground(vararg params: Unit): ResultType {
+            try {
+                val client = connect()
+                client.enterLocalActiveMode()
+                val files = client.listFiles(config.remote)
+                when {
+                    //云端无文件
+                    files.isEmpty() -> {
+                        return ResultType.ERROR
+                    }
+                    files.size == 1 -> {
+                        val remote = files[0]
+                        val local = config.local
+                        if (!local.exists()) {
+                            local.createNewFile()
+                        }
+                        //本地文件大于或等于云端文件大小
+                        if (local.length() >= remote.size) {
+                            return ResultType.ERROR
+                        }
+                        //设置断点重传位置开始传输
+                        client.restartOffset = local.length();
+                        val input = client.retrieveFileStream(config.remote)
+                        //否则打开问以append的方式
+                        val out = BufferedOutputStream(FileOutputStream(local, true))
+                        val buffer = ByteArray(1024)
+                        while (true) {
+                            if (!next) {
+                                return ResultType.CANCELLED
+                            }
+                            val length = input.read(buffer)
+                            if (length == -1) {
+                                break
+                            }
+                            out.write(buffer, 0, length)
+                            publishProgress(local.length(), remote.size)
+                        }
+                        out.flush()
+                        out.close()
+                        input.close()
+                        return if (client.completePendingCommand())
+                            ResultType.FINISH
+                        else
+                            ResultType.ERROR
+                    }
+                    else -> {
+                        throw RuntimeException()
+                    }
+                }
+            } catch (e: Throwable) {
+                //发生奇怪的问题
+                e.printStackTrace()
+                return ResultType.ERROR
+            }
+        }
+    }
+
+    private class UploadTask(
+        handler: Handler,
+        config: Config
+    ) : TransferTask(handler, config) {
+        override fun doInBackground(vararg params: Unit): ResultType {
+            try {
+                val client = connect()
+                val local = config.local
+                if (local.isFile) {
+                    throw RuntimeException()
+                }
+                val localSize = local.length()
+                var remoteName: String
+                var remoteSize = 0L
+                config.remote.lastIndexOf('/')
+                    .run {
+                        if (this != 0) {
+                            client.changeWorkingDirectory(config.remote.substring(0, this))
+                        }
+                        remoteName = config.remote.let {
+                            it.substring(this + 1, it.length)
+                        }
+                    }
+                val files = client.listFiles(config.remote)
+                when {
+                    files.size == 1 -> {
+                        val file = files[0]
+                        remoteSize = file.size
+                        remoteName = file.name
+                    }
+                    files.size > 1 -> {
+                        throw RuntimeException()
+                    }
+                }
+                if (remoteSize >= localSize) {
+                    return ResultType.FINISH
+                }
+                val raf = RandomAccessFile(local, "r");
+                client.restartOffset = remoteSize
+                raf.seek(remoteSize)
+                val out = client.appendFileStream(remoteName)
+                val buffer = ByteArray(1024)
+                while (true) {
+                    if (!next) {
+                        return ResultType.CANCELLED
+                    }
+                    val length = raf.read(buffer)
+                    if (length == -1) {
+                        break
+                    }
+                    remoteSize += length
+                    out.write(buffer, 0, length)
+                    publishProgress(local.length(), remoteSize)
+                }
+                out.flush()
+                out.close()
+                raf.close()
+                return if (client.completePendingCommand())
+                    ResultType.FINISH
+                else
+                    ResultType.ERROR
+            } catch (e: Throwable) {
+                e.printStackTrace()
+                return ResultType.ERROR
+            }
         }
     }
 }

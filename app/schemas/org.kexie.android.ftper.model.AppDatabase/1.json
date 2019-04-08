@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "d67fec8f7a2a6e6ff7ecb6223ec4b992",
+    "identityHash": "332e9b7bb0d618f7c36ceccec275268e",
     "entities": [
       {
         "tableName": "configs",
@@ -70,8 +70,8 @@
         "foreignKeys": []
       },
       {
-        "tableName": "workers",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `type` INTEGER NOT NULL, `doSize` INTEGER NOT NULL, `size` INTEGER NOT NULL, `workerId` TEXT, `local` TEXT, `name` TEXT, `configId` INTEGER NOT NULL, `remote` TEXT)",
+        "tableName": "tasks",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `type` INTEGER NOT NULL, `local` TEXT, `remote` TEXT, `name` TEXT, `configId` INTEGER NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -86,26 +86,14 @@
             "notNull": true
           },
           {
-            "fieldPath": "doSize",
-            "columnName": "doSize",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "size",
-            "columnName": "size",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "workerId",
-            "columnName": "workerId",
+            "fieldPath": "local",
+            "columnName": "local",
             "affinity": "TEXT",
             "notNull": false
           },
           {
-            "fieldPath": "local",
-            "columnName": "local",
+            "fieldPath": "remote",
+            "columnName": "remote",
             "affinity": "TEXT",
             "notNull": false
           },
@@ -120,12 +108,6 @@
             "columnName": "configId",
             "affinity": "INTEGER",
             "notNull": true
-          },
-          {
-            "fieldPath": "remote",
-            "columnName": "remote",
-            "affinity": "TEXT",
-            "notNull": false
           }
         ],
         "primaryKey": {
@@ -134,22 +116,13 @@
           ],
           "autoGenerate": true
         },
-        "indices": [
-          {
-            "name": "index_workers_workerId",
-            "unique": false,
-            "columnNames": [
-              "workerId"
-            ],
-            "createSql": "CREATE  INDEX `index_workers_workerId` ON `${TABLE_NAME}` (`workerId`)"
-          }
-        ],
+        "indices": [],
         "foreignKeys": []
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, \"d67fec8f7a2a6e6ff7ecb6223ec4b992\")"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, \"332e9b7bb0d618f7c36ceccec275268e\")"
     ]
   }
 }

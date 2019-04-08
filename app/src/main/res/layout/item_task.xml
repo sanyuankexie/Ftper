@@ -3,8 +3,8 @@
 
     <data>
         <variable
-                name="file"
-                type="org.kexie.android.ftper.viewmodel.bean.TransferItem" />
+                name="task"
+                type="org.kexie.android.ftper.viewmodel.bean.TaskItem" />
     </data>
     <LinearLayout
             android:orientation="vertical"
@@ -16,7 +16,7 @@
                 android:orientation="horizontal">
 
             <ImageView
-                    android:src="@{file.icon}"
+                    android:src="@{task.icon}"
                     android:layout_width="40dp"
                     android:layout_height="40dp"
                     android:layout_margin="10dp" />
@@ -38,7 +38,7 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="4"
                             android:hint="@string/app_name"
-                            android:text="@{file.name}"
+                            android:text="@{task.name}"
                             android:textColor="@color/colorBlackAlpha54"
                             android:textSize="20dp" />
 
@@ -50,7 +50,7 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="2"
                             android:hint="@string/app_name"
-                            android:text="@{file.state}"
+                            android:text="@{task.state.text}"
                             android:textColor="@color/colorBlackAlpha54"
                             android:textSize="15dp" />
                 </LinearLayout>
@@ -78,7 +78,7 @@
                             android:singleLine="true"
                             android:gravity="center"
                             android:textSize="15dp"
-                            android:text='@{file.percent+"%"}'
+                            android:text='@{task.percent+"%"}'
                             android:textColor="@color/colorBlackAlpha54"
                             android:hint="@string/app_name"
                             android:layout_width="match_parent"

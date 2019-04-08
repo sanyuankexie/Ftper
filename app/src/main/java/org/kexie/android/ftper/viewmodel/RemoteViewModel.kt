@@ -11,10 +11,6 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.work.Constraints
-import androidx.work.NetworkType
-import androidx.work.OneTimeWorkRequest
-import androidx.work.WorkManager
 import com.orhanobut.logger.Logger
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -24,10 +20,6 @@ import org.apache.commons.net.ftp.FTPClient
 import org.apache.commons.net.ftp.FTPReply
 import org.kexie.android.ftper.R
 import org.kexie.android.ftper.app.AppGlobal
-import org.kexie.android.ftper.model.DownloadWorker
-import org.kexie.android.ftper.model.UploadWorker
-import org.kexie.android.ftper.model.WorkerType
-import org.kexie.android.ftper.model.bean.WorkerEntity
 import org.kexie.android.ftper.viewmodel.bean.RemoteItem
 import org.kexie.android.ftper.widget.Utils
 import java.io.File
@@ -39,12 +31,8 @@ class RemoteViewModel(application: Application)
 
     private val mConfigDao = mDataBase.configDao
 
-    private val mWorkerDao = mDataBase.transferDao
+    private val mWorkerDao = mDataBase.taskDao
 
-    /**
-     * 使用[WorkManager]执行上传下载任务
-     */
-    private val mWorkManager = WorkManager.getInstance()
     /**
      * 轻量级的[HandlerThread]执行简单的删除和加载列表任务
      */
@@ -212,27 +200,27 @@ class RemoteViewModel(application: Application)
         }
         mHandler.post {
             try {
-                val constraints = Constraints.Builder()
-                    .setRequiredNetworkType(NetworkType.CONNECTED)
-                    .build()
+//                val constraints = Constraints.Builder()
+//                    .setRequiredNetworkType(NetworkType.CONNECTED)
+//                    .build()
+//
+//                val request = OneTimeWorkRequest
+//                    .Builder(UploadWorker::class.java)
+//                    .setConstraints(constraints)
+//                    .build()
+//
+//                val worker = WorkerEntity().apply {
+//                    name = file.name
+//                    workerId = request.id
+//                    type = WorkerType.UPLOAD
+//                    local = file
+//                    remote = getRemoteName(file.name)
+//                    configId = selectId
+//                }
 
-                val request = OneTimeWorkRequest
-                    .Builder(UploadWorker::class.java)
-                    .setConstraints(constraints)
-                    .build()
+//                mWorkerDao.add(worker)
 
-                val worker = WorkerEntity().apply {
-                    name = file.name
-                    workerId = request.id
-                    type = WorkerType.UPLOAD
-                    local = file
-                    remote = getRemoteName(file.name)
-                    configId = selectId
-                }
-
-                mWorkerDao.add(worker)
-
-                mWorkManager.enqueue(request)
+//                mWorkManager.enqueue(request)
 
                 mOnSuccess.onNext(getApplication<Application>().getString(R.string.start_upload_text))
             } catch (e: Throwable) {
@@ -254,30 +242,30 @@ class RemoteViewModel(application: Application)
 
             try {
 
-                val constraints = Constraints.Builder()
-                    .setRequiredNetworkType(NetworkType.CONNECTED)
-                    .build()
+//                val constraints = Constraints.Builder()
+//                    .setRequiredNetworkType(NetworkType.CONNECTED)
+//                    .build()
+//
+//                val request = OneTimeWorkRequest
+//                    .Builder(DownloadWorker::class.java)
+//                    .setConstraints(constraints)
+//                    .build()
+//
+//                Logger.d(request.id)
+//
+//                val worker = WorkerEntity()
+//                    .apply {
+//                        name = remoteItem.name
+//                        workerId = request.id
+//                        type = WorkerType.DOWNLOAD
+//                        local = getNewLocalName(remoteItem.name)
+//                        remote = getRemoteName(remoteItem.name)
+//                        configId = selectId
+//                    }
 
-                val request = OneTimeWorkRequest
-                    .Builder(DownloadWorker::class.java)
-                    .setConstraints(constraints)
-                    .build()
-
-                Logger.d(request.id)
-
-                val worker = WorkerEntity()
-                    .apply {
-                        name = remoteItem.name
-                        workerId = request.id
-                        type = WorkerType.DOWNLOAD
-                        local = getNewLocalName(remoteItem.name)
-                        remote = getRemoteName(remoteItem.name)
-                        configId = selectId
-                    }
-
-                mWorkerDao.add(worker)
-
-                mWorkManager.enqueue(request)
+//                mWorkerDao.add(worker)
+//
+//                mWorkManager.enqueue(request)
 
                 mOnSuccess.onNext(getApplication<Application>().getString(R.string.start_dl_text))
 
