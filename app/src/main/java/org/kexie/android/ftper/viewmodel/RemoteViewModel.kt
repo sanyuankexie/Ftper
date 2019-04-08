@@ -20,6 +20,8 @@ import org.apache.commons.net.ftp.FTPClient
 import org.apache.commons.net.ftp.FTPReply
 import org.kexie.android.ftper.R
 import org.kexie.android.ftper.app.AppGlobal
+import org.kexie.android.ftper.model.WorkerType
+import org.kexie.android.ftper.model.bean.TaskEntity
 import org.kexie.android.ftper.viewmodel.bean.RemoteItem
 import org.kexie.android.ftper.widget.Utils
 import java.io.File
@@ -31,7 +33,7 @@ class RemoteViewModel(application: Application)
 
     private val mConfigDao = mDataBase.configDao
 
-    private val mWorkerDao = mDataBase.taskDao
+    private val mTaskDao = mDataBase.taskDao
 
     /**
      * 轻量级的[HandlerThread]执行简单的删除和加载列表任务
@@ -68,6 +70,8 @@ class RemoteViewModel(application: Application)
      *[AndroidViewModel]是否在处理加载任务
      */
     private val mIsLoading = MutableLiveData<Boolean>(false)
+
+    private val mOnNewTask = PublishSubject.create<Int>()
     /**
      *出错响应
      */
@@ -103,6 +107,8 @@ class RemoteViewModel(application: Application)
     val onSuccess: Observable<String> = mOnSuccess.observeOn(AndroidSchedulers.mainThread())
 
     val onInfo: Observable<String> = mOnInfo.observeOn(AndroidSchedulers.mainThread())
+
+    val onNewTask : Observable<Int> = mOnNewTask.observeOn(AndroidSchedulers.mainThread())
 
     fun changeDir(path: String) {
         mIsLoading.value = true
@@ -200,28 +206,16 @@ class RemoteViewModel(application: Application)
         }
         mHandler.post {
             try {
-//                val constraints = Constraints.Builder()
-//                    .setRequiredNetworkType(NetworkType.CONNECTED)
-//                    .build()
-//
-//                val request = OneTimeWorkRequest
-//                    .Builder(UploadWorker::class.java)
-//                    .setConstraints(constraints)
-//                    .build()
-//
-//                val worker = WorkerEntity().apply {
-//                    name = file.name
-//                    workerId = request.id
-//                    type = WorkerType.UPLOAD
-//                    local = file
-//                    remote = getRemoteName(file.name)
-//                    configId = selectId
-//                }
-
-//                mWorkerDao.add(worker)
-
-//                mWorkManager.enqueue(request)
-
+                val task = TaskEntity()
+                    .apply {
+                        name = file.name
+                        type = WorkerType.UPLOAD
+                        local = file
+                        remote = getRemoteName(file.name)
+                        configId = selectId
+                    }
+                val id = mTaskDao.add(task).toInt()
+                mOnNewTask.onNext(id)
                 mOnSuccess.onNext(getApplication<Application>().getString(R.string.start_upload_text))
             } catch (e: Throwable) {
                 e.printStackTrace()
@@ -239,36 +233,18 @@ class RemoteViewModel(application: Application)
             return
         }
         mHandler.post {
-
             try {
-
-//                val constraints = Constraints.Builder()
-//                    .setRequiredNetworkType(NetworkType.CONNECTED)
-//                    .build()
-//
-//                val request = OneTimeWorkRequest
-//                    .Builder(DownloadWorker::class.java)
-//                    .setConstraints(constraints)
-//                    .build()
-//
-//                Logger.d(request.id)
-//
-//                val worker = WorkerEntity()
-//                    .apply {
-//                        name = remoteItem.name
-//                        workerId = request.id
-//                        type = WorkerType.DOWNLOAD
-//                        local = getNewLocalName(remoteItem.name)
-//                        remote = getRemoteName(remoteItem.name)
-//                        configId = selectId
-//                    }
-
-//                mWorkerDao.add(worker)
-//
-//                mWorkManager.enqueue(request)
-
+                val task = TaskEntity()
+                    .apply {
+                        name = remoteItem.name
+                        type = WorkerType.DOWNLOAD
+                        local = getNewLocalName(remoteItem.name)
+                        remote = getRemoteName(remoteItem.name)
+                        configId = selectId
+                    }
+                val id = mTaskDao.add(task).toInt()
+                mOnNewTask.onNext(id)
                 mOnSuccess.onNext(getApplication<Application>().getString(R.string.start_dl_text))
-
             } catch (e: Throwable) {
                 e.printStackTrace()
             }

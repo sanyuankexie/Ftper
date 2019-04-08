@@ -11,24 +11,20 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProviders;
 import org.kexie.android.ftper.R;
 import org.kexie.android.ftper.databinding.FragmentTransferBinding;
+import org.kexie.android.ftper.viewmodel.RemoteViewModel;
 import org.kexie.android.ftper.viewmodel.TransferViewModel;
 import org.kexie.android.ftper.viewmodel.bean.TaskItem;
 import org.kexie.android.ftper.widget.GenericQuickAdapter;
-import org.kexie.android.ftper.widget.TaskItemQuickAdapter;
 
 public class TransferFragment extends Fragment {
 
-    private TransferViewModel mViewModel;
+    private TransferViewModel mTransferViewModel;
+
+    private RemoteViewModel mRemoteViewModel;
 
     private FragmentTransferBinding mBinding;
 
     private GenericQuickAdapter<TaskItem> mAdapter;
-
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        mAdapter = new TaskItemQuickAdapter();
-    }
 
     @Nullable
     @Override
@@ -47,10 +43,11 @@ public class TransferFragment extends Fragment {
     public void onViewCreated(@NonNull View view,
                               @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        mViewModel = ViewModelProviders.of(requireActivity()).get(TransferViewModel.class);
-        mBinding.setAdapter(mAdapter);
-
-
+        mTransferViewModel = ViewModelProviders.of(requireActivity())
+                .get(TransferViewModel.class);
+        mRemoteViewModel = ViewModelProviders.of(requireActivity())
+                .get(RemoteViewModel.class);
+        mBinding.setAdapter(mTransferViewModel.getAdapter());
     }
 
     @Override

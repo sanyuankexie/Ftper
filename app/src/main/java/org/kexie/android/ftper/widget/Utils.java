@@ -28,7 +28,6 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.UUID;
 
 import static androidx.fragment.app.FragmentTransaction.TRANSIT_FRAGMENT_OPEN;
 import static com.bumptech.glide.Priority.IMMEDIATE;
@@ -203,13 +202,4 @@ public final class Utils {
         return file == null ? null : file.getAbsolutePath();
     }
 
-    @TypeConverter
-    public static UUID stringToUuid(String string) {
-        return string == null ? null : UUID.fromString(string);
-    }
-
-    @TypeConverter
-    public static String uuidToString(UUID uuid) {
-        return uuid == null ? null : uuid.toString();
-    }
 }

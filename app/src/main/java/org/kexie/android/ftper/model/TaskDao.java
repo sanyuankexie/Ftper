@@ -14,7 +14,7 @@ public interface TaskDao {
     void update(TaskEntity taskEntity);
 
     @Insert
-    void add(TaskEntity taskEntity);
+    long add(TaskEntity taskEntity);
 
     @Query("delete from tasks where id=:id")
     void removeById(int id);

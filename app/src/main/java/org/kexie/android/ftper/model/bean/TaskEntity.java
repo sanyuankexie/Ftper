@@ -25,7 +25,7 @@ public class TaskEntity {
 
     private int configId;
 
-    private boolean isFinish;
+    private boolean isFinish = false;
 
     public void setFinish(boolean finish) {
         isFinish = finish;

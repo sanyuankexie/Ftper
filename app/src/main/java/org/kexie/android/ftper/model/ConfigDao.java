@@ -16,7 +16,7 @@ public interface ConfigDao {
     void update(ConfigEntity configEntity);
 
     @Insert
-    void add(ConfigEntity configEntity);
+    long add(ConfigEntity configEntity);
 
     @Query("delete from configs where id=:id")
     void removeById(int id);

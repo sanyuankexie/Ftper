@@ -32,6 +32,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.RandomAccessFile
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
 class TransferViewModel(application: Application)
@@ -50,6 +51,52 @@ class TransferViewModel(application: Application)
     private val mConfigDao = getApplication<AppGlobal>()
         .appDatabase
         .configDao
+
+    private lateinit var mIcons: Array<Drawable>
+
+    private val mMainWorker = Handler(Looper.getMainLooper())
+    {
+        val what = it.what
+        val obj = it.obj
+        when {
+            what == START && obj is TransferTask -> {
+                obj.executeOnExecutor(mTaskExecutor)
+                mRunningTask.put(obj.config.id, obj)
+                return@Handler true
+            }
+            what == UPDATE && obj is Progress -> {
+                val index = mAdapter.data
+                    .indexOfFirst { item -> item.id == obj.id }
+                if (index != -1) {
+                    val newItem = mAdapter.getItem(index)!!.copy(
+                        percent = obj.progress,
+                        size = obj.size
+                    )
+                    mAdapter.setData(index, newItem)
+                }
+                return@Handler true
+            }
+            what == FINISH && obj is Result -> {
+                val index = mAdapter.data
+                    .indexOfFirst { item -> item.id == obj.id }
+                if (index != -1) {
+                    val newItem = mAdapter.getItem(index)!!.copy(
+                        percent = 100,
+                        state = when (obj.type) {
+                            ResultType.CANCELLED -> TaskState.WAIT_START
+                            ResultType.FINISH -> TaskState.FINISH
+                            ResultType.ERROR -> TaskState.FAILED
+                        }
+                    )
+                    mAdapter.setData(index, newItem)
+                }
+                return@Handler true
+            }
+            else -> {
+                return@Handler false
+            }
+        }
+    }
 
     //数据库操作工作的线程
     private val mDatabaseThread = HandlerThread(toString())
@@ -156,52 +203,6 @@ class TransferViewModel(application: Application)
 
     private val mRunningTask = SparseArrayCompat<TransferTask>()
 
-    private lateinit var mIcons: Array<Drawable>
-
-    private val mMainWorker = Handler(Looper.getMainLooper())
-    {
-        val what = it.what
-        val obj = it.obj
-        when {
-            what == START && obj is TransferTask -> {
-                obj.executeOnExecutor(mTaskExecutor)
-                mRunningTask.put(obj.config.id, obj)
-                return@Handler true
-            }
-            what == UPDATE && obj is Progress -> {
-                val index = mAdapter.data
-                    .indexOfFirst { item -> item.id == obj.id }
-                if (index != -1) {
-                    val newItem = mAdapter.getItem(index)!!.copy(
-                        percent = obj.progress,
-                        size = obj.size
-                    )
-                    mAdapter.setData(index, newItem)
-                }
-                return@Handler true
-            }
-            what == FINISH && obj is Result -> {
-                val index = mAdapter.data
-                    .indexOfFirst { item -> item.id == obj.id }
-                if (index != -1) {
-                    val newItem = mAdapter.getItem(index)!!.copy(
-                        percent = 100,
-                        state = when (obj.type) {
-                            ResultType.CANCELLED -> TaskState.WAIT_START
-                            ResultType.FINISH -> TaskState.FINISH
-                            ResultType.ERROR -> TaskState.FAILED
-                        }
-                    )
-                    mAdapter.setData(index, newItem)
-                }
-                return@Handler true
-            }
-            else -> {
-                return@Handler false
-            }
-        }
-    }
-
     val onError: Observable<String> = mOnError.observeOn(AndroidSchedulers.mainThread())
 
     val onSuccess: Observable<String> = mOnSuccess.observeOn(AndroidSchedulers.mainThread())
@@ -271,11 +272,12 @@ class TransferViewModel(application: Application)
                 }
             }
         }
+        mRunningTask.clear()
         mDisposables.forEach {
             it.dispose()
         }
-        mRunningTask.clear()
         mDatabaseThread.quit()
+        mMainWorker.removeCallbacksAndMessages(null)
     }
 
     private class Config(
@@ -310,12 +312,29 @@ class TransferViewModel(application: Application)
         val config: Config
     ) : AsyncTask<Unit, Progress, ResultType>() {
 
+        private val mOnUpdate = PublishSubject.create<Pair<Long, Long>>()
+        private val mDisposable = mOnUpdate
+            .throttleFirst(500, TimeUnit.MILLISECONDS)
+            .map {
+                val sizeText = "${Utils.sizeToString(it.first)}/${Utils.sizeToString(it.second)}"
+                val progress = (it.first.toFloat() / it.second.toFloat() * 100f).toInt()
+                Progress(config.id, sizeText, progress)
+            }.subscribe {
+                handler.obtainMessage(UPDATE)
+                    .apply {
+                        obj = it
+                        sendToTarget()
+                    }
+            }
+
         private val mNext = AtomicBoolean(false)
         protected val next
             get() = mNext.get()
 
+
         @WorkerThread
         override fun onCancelled(result: ResultType) {
+            mDisposable.dispose()
             handler.obtainMessage(FINISH)
                 .apply {
                     obj = Result(config.id, CANCELLED)
@@ -345,10 +364,8 @@ class TransferViewModel(application: Application)
         }
 
         @WorkerThread
-        protected fun publishProgress(doSize: Long, size: Long) {
-            val sizeText = "${Utils.sizeToString(doSize)}/${Utils.sizeToString(size)}"
-            val progress = (doSize.toFloat() / size.toFloat() * 100f).toInt()
-            publishProgress(Progress(config.id, sizeText, progress))
+        protected fun update(doSize: Long, size: Long) {
+            mOnUpdate.onNext(doSize to size)
         }
 
         @MainThread
@@ -357,18 +374,10 @@ class TransferViewModel(application: Application)
         }
 
         override fun onPostExecute(resultType: ResultType) {
+            mDisposable.dispose()
             handler.obtainMessage(FINISH)
                 .apply {
                     obj = Result(config.id, resultType)
-                    sendToTarget()
-                }
-        }
-
-        @MainThread
-        override fun onProgressUpdate(vararg values: Progress) {
-            handler.obtainMessage(UPDATE)
-                .apply {
-                    obj = values[0]
                     sendToTarget()
                 }
         }
@@ -414,7 +423,7 @@ class TransferViewModel(application: Application)
                                 break
                             }
                             out.write(buffer, 0, length)
-                            publishProgress(local.length(), remote.size)
+                            update(local.length(), remote.size)
                         }
                         out.flush()
                         out.close()
@@ -488,7 +497,7 @@ class TransferViewModel(application: Application)
                     }
                     remoteSize += length
                     out.write(buffer, 0, length)
-                    publishProgress(local.length(), remoteSize)
+                    update(local.length(), remoteSize)
                 }
                 out.flush()
                 out.close()
