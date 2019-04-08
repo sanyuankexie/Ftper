@@ -8,6 +8,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ViewModelProviders;
 import org.kexie.android.ftper.R;
 import org.kexie.android.ftper.databinding.FragmentTransferBinding;
@@ -15,6 +16,7 @@ import org.kexie.android.ftper.viewmodel.RemoteViewModel;
 import org.kexie.android.ftper.viewmodel.TransferViewModel;
 import org.kexie.android.ftper.viewmodel.bean.TaskItem;
 import org.kexie.android.ftper.widget.GenericQuickAdapter;
+import org.kexie.android.ftper.widget.Utils;
 
 public class TransferFragment extends Fragment {
 
@@ -48,6 +50,10 @@ public class TransferFragment extends Fragment {
         mRemoteViewModel = ViewModelProviders.of(requireActivity())
                 .get(RemoteViewModel.class);
         mBinding.setAdapter(mTransferViewModel.getAdapter());
+        Utils.subscribe(this,
+                mRemoteViewModel.getOnNewTask(),
+                Lifecycle.Event.ON_DESTROY,
+                mTransferViewModel::start);
     }
 
     @Override

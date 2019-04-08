@@ -2,16 +2,15 @@ package org.kexie.android.ftper.viewmodel
 
 import android.app.Application
 import android.graphics.drawable.Drawable
-import android.os.AsyncTask
-import android.os.Handler
-import android.os.HandlerThread
-import android.os.Looper
+import android.os.*
 import androidx.annotation.MainThread
 import androidx.annotation.WorkerThread
 import androidx.collection.SparseArrayCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
+import com.orhanobut.logger.Logger
 import io.reactivex.Observable
+import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.subjects.PublishSubject
 import org.apache.commons.net.ftp.FTP
@@ -52,14 +51,20 @@ class TransferViewModel(application: Application)
         .appDatabase
         .configDao
 
+    private val mTaskExecutor = Executors.newCachedThreadPool()
+
+    private val mRunningTask = SparseArrayCompat<TransferTask>()
+
     private lateinit var mIcons: Array<Drawable>
 
     private val mMainWorker = Handler(Looper.getMainLooper())
     {
         val what = it.what
         val obj = it.obj
+        Logger.d(obj)
         when {
             what == START && obj is TransferTask -> {
+
                 obj.executeOnExecutor(mTaskExecutor)
                 mRunningTask.put(obj.config.id, obj)
                 return@Handler true
@@ -104,8 +109,8 @@ class TransferViewModel(application: Application)
             start()
             Handler(looper).post {
                 mIcons = arrayOf(
-                    ContextCompat.getDrawable(getApplication(), R.drawable.up)!!,
-                    ContextCompat.getDrawable(getApplication(), R.drawable.dl)!!
+                    ContextCompat.getDrawable(getApplication(), R.drawable.dl)!!,
+                    ContextCompat.getDrawable(getApplication(), R.drawable.up)!!
                 )
                 val items = mTaskDao
                     .loadAll()
@@ -154,18 +159,19 @@ class TransferViewModel(application: Application)
                         username = config.username,
                         password = config.password
                     )
-                    val newTask = if (WorkerType.DOWNLOAD == task.type) {
+                    val newTask = if (WorkerType.UPLOAD == task.type) {
                         UploadTask(mMainWorker, taskConfig)
                     } else {
                         DownloadTask(mMainWorker, taskConfig)
                     }
-                    mMainWorker.obtainMessage(START)
+                    return@map Message.obtain()
                         .apply {
+                            what = START
                             obj = newTask
                         }
                 }
             }.subscribe({
-                it.sendToTarget()
+                mMainWorker.sendMessage(it)
             }, {
                 it.printStackTrace()
             }),
@@ -199,10 +205,6 @@ class TransferViewModel(application: Application)
      */
     private val mOnInfo = PublishSubject.create<String>()
 
-    private val mTaskExecutor = Executors.newCachedThreadPool()
-
-    private val mRunningTask = SparseArrayCompat<TransferTask>()
-
     val onError: Observable<String> = mOnError.observeOn(AndroidSchedulers.mainThread())
 
     val onSuccess: Observable<String> = mOnSuccess.observeOn(AndroidSchedulers.mainThread())
@@ -215,25 +217,28 @@ class TransferViewModel(application: Application)
     val adapter: GenericQuickAdapter<TaskItem>
         get() = mAdapter
 
+
     @MainThread
     fun start(taskId: Int) {
+        Logger.d(taskId)
         val item = mAdapter.data
             .firstOrNull { taskId == it.id }
         if (item != null) {
             mOnStart.onNext(taskId)
         } else {
-            Observable.just(taskId)
+            @Suppress("CheckResult")
+            Single.just(taskId)
                 .observeOn(AndroidSchedulers.from(mDatabaseThread.looper))
                 .map {
                     mTaskDao.findById(taskId)
                 }.map {
                     it.toReadabilityData()
                 }.observeOn(AndroidSchedulers.mainThread())
-                .doOnNext {
+                .doOnSuccess {
                     mAdapter.addData(it)
                 }.map {
                     it.id
-                }.subscribe(mOnStart)
+                }.subscribe(mOnStart::onNext)
         }
     }
 
@@ -280,7 +285,7 @@ class TransferViewModel(application: Application)
         mMainWorker.removeCallbacksAndMessages(null)
     }
 
-    private class Config(
+    private data class Config(
         val id: Int,
         val local: File,
         val remote: String,
@@ -290,13 +295,13 @@ class TransferViewModel(application: Application)
         val password: String
     )
 
-    private class Progress(
+    private data class Progress(
         val id: Int,
         val size: String,
         val progress: Int
     )
 
-    private class Result(
+    private data class Result(
         val id: Int,
         val type: ResultType
     )
@@ -311,7 +316,6 @@ class TransferViewModel(application: Application)
         protected val handler: Handler,
         val config: Config
     ) : AsyncTask<Unit, Progress, ResultType>() {
-
         private val mOnUpdate = PublishSubject.create<Pair<Long, Long>>()
         private val mDisposable = mOnUpdate
             .throttleFirst(500, TimeUnit.MILLISECONDS)
@@ -415,7 +419,7 @@ class TransferViewModel(application: Application)
                         val out = BufferedOutputStream(FileOutputStream(local, true))
                         val buffer = ByteArray(1024)
                         while (true) {
-                            if (!next) {
+                            if (next) {
                                 return CANCELLED
                             }
                             val length = input.read(buffer)
@@ -454,7 +458,7 @@ class TransferViewModel(application: Application)
                 val client = connect()
                 val local = config.local
                 if (local.isFile) {
-                    throw RuntimeException()
+                    throw RuntimeException(local.absolutePath)
                 }
                 val localSize = local.length()
                 var remoteName: String
@@ -488,7 +492,7 @@ class TransferViewModel(application: Application)
                 val out = client.appendFileStream(remoteName)
                 val buffer = ByteArray(1024)
                 while (true) {
-                    if (!next) {
+                    if (next) {
                         return CANCELLED
                     }
                     val length = raf.read(buffer)
