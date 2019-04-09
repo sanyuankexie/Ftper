@@ -36,6 +36,7 @@ public class TaskItemAdapter extends GenericQuickAdapter<TaskItem> {
             case PAUSE: {
                 imageView.setVisibility(View.INVISIBLE);
                 binding.state.setTextColor(resources.getColor(R.color.colorBlackAlpha54));
+                binding.setState("暂停中");
                 binding.setPercent("--");
             }
             break;
