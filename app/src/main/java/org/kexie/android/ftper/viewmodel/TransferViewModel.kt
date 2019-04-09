@@ -455,7 +455,8 @@ class TransferViewModel(application: Application)
                         }
                         //本地文件大于或等于云端文件大小
                         if (local.length() >= remote.size) {
-                            return ERROR
+                            markFinish()
+                            return ResultType.FINISH
                         }
                         //设置断点重传位置开始传输
                         client.restartOffset = local.length();
@@ -530,6 +531,7 @@ class TransferViewModel(application: Application)
                     }
                 }
                 if (remoteSize >= localSize) {
+                    markFinish()
                     return ResultType.FINISH
                 }
                 val raf = RandomAccessFile(local, "r");
