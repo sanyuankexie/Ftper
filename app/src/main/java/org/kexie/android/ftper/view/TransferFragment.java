@@ -52,6 +52,7 @@ public class TransferFragment extends Fragment {
         mRemoteViewModel = ViewModelProviders.of(requireActivity())
                 .get(RemoteViewModel.class);
         mAdapter = mTransferViewModel.getAdapter();
+        mAdapter.setEmptyView(Utils.createEmptyView(requireContext()));
         mAdapter.setOnItemLongClickListener((adapter, view1, position) -> {
             TaskItem item = (TaskItem) adapter.getItem(position);
             if (item != null) {

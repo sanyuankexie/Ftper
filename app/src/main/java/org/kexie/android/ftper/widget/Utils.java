@@ -4,8 +4,11 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.view.Gravity;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.Toast;
+import androidx.appcompat.widget.AppCompatTextView;
 import androidx.databinding.BindingAdapter;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
@@ -202,4 +205,12 @@ public final class Utils {
         return file == null ? null : file.getAbsolutePath();
     }
 
+    public static View createEmptyView(Context context) {
+        AppCompatTextView textView = new AppCompatTextView(context);
+        textView.setTextSize(20);
+        textView.setGravity(Gravity.CENTER);
+        textView.setTextColor(context.getResources().getColor(R.color.colorBlackAlpha26));
+        textView.setText(R.string.this_is_empty);
+        return textView;
+    }
 }
