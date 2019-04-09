@@ -36,13 +36,14 @@
                             android:singleLine="true"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_weight="4"
+                            android:layout_weight="8"
                             android:hint="@string/app_name"
                             android:text="@{task.name}"
                             android:textColor="@color/colorBlackAlpha54"
                             android:textSize="20dp" />
 
                     <TextView
+                            android:id="@+id/state"
                             android:layout_marginRight="10dp"
                             android:gravity="center|right"
                             android:singleLine="true"
@@ -64,7 +65,7 @@
                     <RelativeLayout
                             android:id="@+id/progress_wrapper"
                             android:layout_width="250dp"
-                            android:layout_height="10dp">
+                            android:layout_height="8dp">
                         <org.kexie.android.ftper.widget.RoundCornerImageView
                                 android:scaleType="centerCrop"
                                 android:id="@+id/progress"

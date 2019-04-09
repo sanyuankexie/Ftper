@@ -1,18 +1,12 @@
 package org.kexie.android.ftper.model;
 
-import androidx.room.Dao;
-import androidx.room.Insert;
-import androidx.room.Query;
-import androidx.room.Update;
+import androidx.room.*;
 import org.kexie.android.ftper.model.bean.TaskEntity;
 
 import java.util.List;
 
 @Dao
 public interface TaskDao {
-    @Update
-    void update(TaskEntity taskEntity);
-
     @Insert
     long add(TaskEntity taskEntity);
 
@@ -24,4 +18,7 @@ public interface TaskDao {
 
     @Query("select * from tasks where id=:id")
     TaskEntity findById(int id);
+
+    @Query("update tasks set isFinish=1 where id=:id")
+    void markFinish(int id);
 }

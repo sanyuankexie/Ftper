@@ -1,5 +1,6 @@
 package org.kexie.android.ftper.widget;
 
+import android.content.res.Resources;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
@@ -8,6 +9,9 @@ import org.kexie.android.ftper.BR;
 import org.kexie.android.ftper.R;
 import org.kexie.android.ftper.databinding.ItemTaskBinding;
 import org.kexie.android.ftper.viewmodel.bean.TaskItem;
+import org.kexie.android.ftper.viewmodel.bean.TaskState;
+
+import java.util.Objects;
 
 public class TaskItemAdapter extends GenericQuickAdapter<TaskItem> {
 
@@ -34,5 +38,12 @@ public class TaskItemAdapter extends GenericQuickAdapter<TaskItem> {
         } else {
             imageView.setVisibility(View.INVISIBLE);
         }
+        Resources resources = helper.itemView.getResources();
+        if (Objects.equals(TaskState.FAILED, item.getState())) {
+            binding.state.setTextColor(resources.getColor(R.color.app_color_theme_1));
+        } else {
+            binding.state.setTextColor(resources.getColor(R.color.colorBlackAlpha54));
+        }
+        binding.executePendingBindings();
     }
 }

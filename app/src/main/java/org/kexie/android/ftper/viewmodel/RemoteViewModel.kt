@@ -108,7 +108,7 @@ class RemoteViewModel(application: Application)
 
     val onInfo: Observable<String> = mOnInfo.observeOn(AndroidSchedulers.mainThread())
 
-    val onNewTask : Observable<Int> = mOnNewTask.observeOn(AndroidSchedulers.mainThread())
+    val onNewTask: Observable<Int> = mOnNewTask.observeOn(AndroidSchedulers.mainThread())
 
     fun changeDir(path: String) {
         mIsLoading.value = true
@@ -293,16 +293,23 @@ class RemoteViewModel(application: Application)
         mIsLoading.value = true
         mHandler.post {
             try {
+                val action = {
+                    mOnSuccess.onNext(
+                        getApplication<Application>()
+                            .getString(R.string.del_success)
+                    )
+                    refreshInternal()
+                }
                 if (remoteItem.isDirectory) {
-
+                    if (!mClient.removeDirectory(remoteItem.name)) {
+                        mOnInfo.onNext(getApplication<Application>().getString(R.string.dir_is_no_empty))
+                    } else {
+                        action()
+                    }
                 } else if (remoteItem.isFile) {
                     mClient.deleteFile(remoteItem.name)
+                    action()
                 }
-                refreshInternal()
-                mOnSuccess.onNext(
-                    getApplication<Application>()
-                        .getString(R.string.del_success)
-                )
             } catch (e: Exception) {
                 e.printStackTrace()
                 mOnError.onNext(
@@ -328,7 +335,7 @@ class RemoteViewModel(application: Application)
 
     @WorkerThread
     @Throws(Exception::class)
-    private fun getRemoteName(name:String):String {
+    private fun getRemoteName(name: String): String {
         val workingDir = mClient.printWorkingDirectory().trim()
         return if (workingDir == "/") {
             workingDir + name

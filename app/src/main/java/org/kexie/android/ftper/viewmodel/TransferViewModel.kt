@@ -45,30 +45,29 @@ class TransferViewModel(application: Application)
         private const val FINISH = 10002
     }
 
-    private val mTaskDao = getApplication<AppGlobal>()
-        .appDatabase
-        .taskDao
+    private val mDataBase = getApplication<AppGlobal>().appDatabase
 
-    private val mConfigDao = getApplication<AppGlobal>()
-        .appDatabase
-        .configDao
+    private val mTaskDao = mDataBase.taskDao
+
+    private val mConfigDao = mDataBase.configDao
 
     private val mTaskExecutor = Executors
         .newFixedThreadPool(MathUtils.clamp(Runtime.getRuntime().availableProcessors(), 1, 4))
 
+    //运行中的任务,只会在主线程操作该集合
     private val mRunningTask = SparseArrayCompat<TransferTask>()
 
     private lateinit var mIcons: Array<Drawable>
 
-    private val mMainWorker = Handler(Looper.getMainLooper())
+    private val mMainThreadHandler = Handler(Looper.getMainLooper())
     {
         val what = it.what
         val obj = it.obj
         when {
             what == START && obj is TransferTask -> {
                 obj.executeOnExecutor(mTaskExecutor)
-                mRunningTask.put(obj.config.id, obj)
-                findByIdRun(obj.config.id) { index ->
+                mRunningTask.put(obj.taskContext.id, obj)
+                findByIdRun(obj.taskContext.id) { index ->
                     val newItem = mAdapter.getItem(index)!!.copy(
                         state = TaskState.PENDING
                     )
@@ -76,7 +75,7 @@ class TransferViewModel(application: Application)
                 }
                 return@Handler true
             }
-            what == UPDATE && obj is Progress -> {
+            what == UPDATE && obj is TaskProgress -> {
                 findByIdRun(obj.id) { index ->
                     val newItem = mAdapter.getItem(index)!!.copy(
                         percent = obj.progress,
@@ -87,7 +86,7 @@ class TransferViewModel(application: Application)
                 }
                 return@Handler true
             }
-            what == FINISH && obj is Result -> {
+            what == FINISH && obj is TaskResult -> {
                 findByIdRun(obj.id) { index ->
                     val newItem = mAdapter.getItem(index)!!.copy(
                         percent = 100,
@@ -115,7 +114,7 @@ class TransferViewModel(application: Application)
     }
 
     //数据库操作工作的线程
-    private val mDatabaseThread = HandlerThread(toString())
+    private val mWorkerThread = HandlerThread(toString())
         .apply {
             start()
             Observable.just(mTaskDao)
@@ -147,7 +146,7 @@ class TransferViewModel(application: Application)
                     throw RuntimeException()
                 }
             }
-        }.observeOn(AndroidSchedulers.from(mDatabaseThread.looper))
+        }.observeOn(AndroidSchedulers.from(mWorkerThread.looper))
             .map { taskId ->
                 return@map mTaskDao.findById(taskId)?.let {
                     if (it.isFinish) {
@@ -158,13 +157,12 @@ class TransferViewModel(application: Application)
             }.map { task ->
                 val config = mConfigDao.findById(task.configId)
                 if (config == null) {
-                    return@map Message.obtain()
+                    return@map mMainThreadHandler.obtainMessage(FINISH)
                         .apply {
-                            what = FINISH
-                            obj = Result(task.id, ERROR)
+                            obj = TaskResult(task.id, ERROR)
                         }
                 } else {
-                    val taskConfig = Config(
+                    val taskConfig = TaskContext(
                         id = task.id,
                         local = task.local,
                         remote = task.remote,
@@ -173,28 +171,27 @@ class TransferViewModel(application: Application)
                         username = config.username,
                         password = config.password,
                         dao = mTaskDao,
-                        handler = mMainWorker
+                        handler = mMainThreadHandler
                     )
                     val newTask = if (WorkerType.UPLOAD == task.type) {
                         UploadTask(taskConfig)
                     } else {
                         DownloadTask(taskConfig)
                     }
-                    return@map Message.obtain()
+                    return@map mMainThreadHandler.obtainMessage(START)
                         .apply {
-                            what = START
                             obj = newTask
                         }
                 }
             }.subscribe({
-                mMainWorker.sendMessage(it)
+                it.sendToTarget()
             }, {
                 it.printStackTrace()
             }),
         mOnRemove.doOnNext { taskId ->
             pauseInternal(taskId)
             mRunningTask.remove(taskId)
-        }.observeOn(AndroidSchedulers.from(mDatabaseThread.looper))
+        }.observeOn(AndroidSchedulers.from(mWorkerThread.looper))
             .doOnNext { taskId ->
                 mTaskDao.removeById(taskId)
             }.observeOn(AndroidSchedulers.mainThread())
@@ -242,7 +239,7 @@ class TransferViewModel(application: Application)
             mOnStart.onNext(taskId)
         } else {
             Single.just(taskId)
-                .observeOn(AndroidSchedulers.from(mDatabaseThread.looper))
+                .observeOn(AndroidSchedulers.from(mWorkerThread.looper))
                 .map {
                     mTaskDao.findById(taskId)
                 }.map {
@@ -303,7 +300,11 @@ class TransferViewModel(application: Application)
             id = this.id,
             name = this.name,
             percent = 0,
-            state = TaskState.WAIT_START,
+            state = if (this.isFinish) {
+                TaskState.FINISH
+            } else {
+                TaskState.WAIT_START
+            },
             icon = mIcons[this.type],
             size = getApplication<Application>().getString(R.string.loading_text)
         )
@@ -311,7 +312,7 @@ class TransferViewModel(application: Application)
 
     override fun onCleared() {
         mTaskExecutor.shutdown()
-        mDatabaseThread.quit()
+        mWorkerThread.quit()
         for (i in 0 until mRunningTask.size()) {
             mRunningTask[i]?.let {
                 if (!it.isCancelled) {
@@ -323,10 +324,10 @@ class TransferViewModel(application: Application)
         mDisposables.forEach {
             it.dispose()
         }
-        mMainWorker.removeCallbacksAndMessages(null)
+        mMainThreadHandler.removeCallbacksAndMessages(null)
     }
 
-    private class Config(
+    private class TaskContext(
         val id: Int,
         val local: File,
         val remote: String,
@@ -338,13 +339,13 @@ class TransferViewModel(application: Application)
         val dao: TaskDao
     )
 
-    private class Progress(
+    private class TaskProgress(
         val id: Int,
         val size: String,
         val progress: Int
     )
 
-    private class Result(
+    private class TaskResult(
         val id: Int,
         val type: ResultType
     )
@@ -356,13 +357,12 @@ class TransferViewModel(application: Application)
     }
 
     private abstract class TransferTask(
-        val config: Config
+        val taskContext: TaskContext
     ) : AsyncTask<Unit, Unit, ResultType>() {
         private var mLastUpdate = 0L
         private val mNext = AtomicBoolean(false)
         protected val next
             get() = mNext.get()
-
 
         @WorkerThread
         override fun onCancelled(result: ResultType) {
@@ -383,8 +383,8 @@ class TransferViewModel(application: Application)
                     connectTimeout = timeout
                     defaultTimeout = timeout
                     //连接到服务器
-                    connect(config.host, config.port)
-                    login(config.username, config.password)
+                    connect(taskContext.host, taskContext.port)
+                    login(taskContext.username, taskContext.password)
                     soTimeout = timeout
                     //设置传输形式为二进制
                     setFileType(FTP.BINARY_FILE_TYPE)
@@ -400,9 +400,9 @@ class TransferViewModel(application: Application)
             mLastUpdate = now
             val sizeText = "${Utils.sizeToString(doSize)}/${Utils.sizeToString(size)}"
             val progress = (doSize.toFloat() / size.toFloat() * 100f).toInt()
-            config.handler.obtainMessage(UPDATE)
+            taskContext.handler.obtainMessage(UPDATE)
                 .apply {
-                    obj = Progress(config.id, sizeText, progress)
+                    obj = TaskProgress(taskContext.id, sizeText, progress)
                     sendToTarget()
                 }
         }
@@ -414,16 +414,13 @@ class TransferViewModel(application: Application)
 
         @WorkerThread
         protected fun markFinish() {
-            config.dao.findById(config.id).run {
-                isFinish = true
-                config.dao.update(this)
-            }
+            taskContext.dao.markFinish(taskContext.id)
         }
 
         private fun sendResult(resultType: ResultType) {
-            config.handler.obtainMessage(FINISH)
+            taskContext.handler.obtainMessage(FINISH)
                 .apply {
-                    obj = Result(config.id, resultType)
+                    obj = TaskResult(taskContext.id, resultType)
                     sendToTarget()
                 }
         }
@@ -434,14 +431,14 @@ class TransferViewModel(application: Application)
     }
 
     private class DownloadTask(
-        config: Config
-    ) : TransferTask(config) {
+        taskContext: TaskContext
+    ) : TransferTask(taskContext) {
         @WorkerThread
         override fun doInBackground(vararg params: Unit): ResultType {
             try {
                 val client = connect()
                 client.enterLocalActiveMode()
-                val files = client.listFiles(config.remote)
+                val files = client.listFiles(taskContext.remote)
                 when {
                     //云端无文件
                     files.isEmpty() -> {
@@ -449,7 +446,7 @@ class TransferViewModel(application: Application)
                     }
                     files.size == 1 -> {
                         val remote = files[0]
-                        val local = config.local
+                        val local = taskContext.local
                         if (!local.exists()) {
                             local.createNewFile()
                         }
@@ -460,7 +457,7 @@ class TransferViewModel(application: Application)
                         }
                         //设置断点重传位置开始传输
                         client.restartOffset = local.length();
-                        val input = client.retrieveFileStream(config.remote)
+                        val input = client.retrieveFileStream(taskContext.remote)
                         //否则打开问以append的方式
                         val out = BufferedOutputStream(FileOutputStream(local, true))
                         val buffer = ByteArray(1024)
@@ -498,28 +495,28 @@ class TransferViewModel(application: Application)
     }
 
     private class UploadTask(
-        config: Config
-    ) : TransferTask(config) {
+        taskContext: TaskContext
+    ) : TransferTask(taskContext) {
         override fun doInBackground(vararg params: Unit): ResultType {
             try {
                 val client = connect()
-                val local = config.local
+                val local = taskContext.local
                 if (!local.isFile) {
                     throw RuntimeException(local.absolutePath)
                 }
                 val localSize = local.length()
                 var remoteName: String
                 var remoteSize = 0L
-                config.remote.lastIndexOf('/')
+                taskContext.remote.lastIndexOf('/')
                     .run {
                         if (this != 0) {
-                            client.changeWorkingDirectory(config.remote.substring(0, this))
+                            client.changeWorkingDirectory(taskContext.remote.substring(0, this))
                         }
-                        remoteName = config.remote.let {
+                        remoteName = taskContext.remote.let {
                             it.substring(this + 1, it.length)
                         }
                     }
-                val files = client.listFiles(config.remote)
+                val files = client.listFiles(taskContext.remote)
                 when {
                     files.size == 1 -> {
                         val file = files[0]

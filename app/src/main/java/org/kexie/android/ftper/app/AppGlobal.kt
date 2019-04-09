@@ -35,10 +35,7 @@ class AppGlobal : Application() {
         AutoPermissions.addCallback {
             if (!it.isEmpty()) {
                 jumpToSystemSetting()
-                Toasty.error(
-                    this,
-                    "请授予权限"
-                )
+                Toasty.error(this, "请授予权限")
                     .show()
                 Handler(Looper.getMainLooper())
                     .postDelayed({

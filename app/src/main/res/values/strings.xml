@@ -15,7 +15,7 @@
     <string name="download">下载</string>
     <string name="tip">提示</string>
     <string name="submit_delete">确定要删除吗？</string>
-    <string name="config">配置</string>
+    <string name="taskContext">配置</string>
     <string name="files">文件</string>
     <string name="gbk">gbk</string>
     <string name="check_network">切换目录失败请检查网络连接</string>
@@ -51,7 +51,9 @@
     <string name="start">开始</string>
     <string name="pause">暂停</string>
     <string name="a_pasue">已暂停</string>
+    <string name="config">配置</string>
     <string name="del_failed">删除失败</string>
     <string name="task_finish">任务已完成</string>
     <string name="task_err">任务出错</string>
+    <string name="dir_is_no_empty">文件夹非空不可删除</string>
 </resources>
