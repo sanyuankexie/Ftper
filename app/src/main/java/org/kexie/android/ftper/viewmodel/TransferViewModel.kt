@@ -7,6 +7,7 @@ import androidx.annotation.MainThread
 import androidx.annotation.WorkerThread
 import androidx.collection.SparseArrayCompat
 import androidx.core.content.ContextCompat
+import androidx.core.math.MathUtils
 import androidx.lifecycle.AndroidViewModel
 import io.reactivex.Observable
 import io.reactivex.Single
@@ -18,6 +19,7 @@ import org.apache.commons.net.ftp.FTP
 import org.apache.commons.net.ftp.FTPClient
 import org.kexie.android.ftper.R
 import org.kexie.android.ftper.app.AppGlobal
+import org.kexie.android.ftper.model.TaskDao
 import org.kexie.android.ftper.model.WorkerType
 import org.kexie.android.ftper.model.bean.TaskEntity
 import org.kexie.android.ftper.viewmodel.TransferViewModel.ResultType.CANCELLED
@@ -51,7 +53,8 @@ class TransferViewModel(application: Application)
         .appDatabase
         .configDao
 
-    private val mTaskExecutor = Executors.newCachedThreadPool()
+    private val mTaskExecutor = Executors
+        .newFixedThreadPool(MathUtils.clamp(Runtime.getRuntime().availableProcessors(), 1, 4))
 
     private val mRunningTask = SparseArrayCompat<TransferTask>()
 
@@ -65,12 +68,16 @@ class TransferViewModel(application: Application)
             what == START && obj is TransferTask -> {
                 obj.executeOnExecutor(mTaskExecutor)
                 mRunningTask.put(obj.config.id, obj)
+                findByIdRun(obj.config.id) { index ->
+                    val newItem = mAdapter.getItem(index)!!.copy(
+                        state = TaskState.PENDING
+                    )
+                    mAdapter.setData(index, newItem)
+                }
                 return@Handler true
             }
             what == UPDATE && obj is Progress -> {
-                val index = mAdapter.data
-                    .indexOfFirst { item -> item.id == obj.id }
-                if (index != -1) {
+                findByIdRun(obj.id) { index ->
                     val newItem = mAdapter.getItem(index)!!.copy(
                         percent = obj.progress,
                         size = obj.size,
@@ -81,15 +88,19 @@ class TransferViewModel(application: Application)
                 return@Handler true
             }
             what == FINISH && obj is Result -> {
-                val index = mAdapter.data
-                    .indexOfFirst { item -> item.id == obj.id }
-                if (index != -1) {
+                findByIdRun(obj.id) { index ->
                     val newItem = mAdapter.getItem(index)!!.copy(
                         percent = 100,
                         state = when (obj.type) {
                             ResultType.CANCELLED -> TaskState.WAIT_START
-                            ResultType.FINISH -> TaskState.FINISH
-                            ResultType.ERROR -> TaskState.FAILED
+                            ResultType.FINISH -> {
+                                mOnSuccess.onNext(getApplication<Application>().getString(R.string.task_finish))
+                                TaskState.FINISH
+                            }
+                            ResultType.ERROR -> {
+                                mOnError.onNext(getApplication<Application>().getString(R.string.task_err))
+                                TaskState.FAILED
+                            }
                         }
                     )
                     mAdapter.setData(index, newItem)
@@ -160,12 +171,14 @@ class TransferViewModel(application: Application)
                         port = config.port,
                         host = config.host,
                         username = config.username,
-                        password = config.password
+                        password = config.password,
+                        dao = mTaskDao,
+                        handler = mMainWorker
                     )
                     val newTask = if (WorkerType.UPLOAD == task.type) {
-                        UploadTask(mMainWorker, taskConfig)
+                        UploadTask(taskConfig)
                     } else {
-                        DownloadTask(mMainWorker, taskConfig)
+                        DownloadTask(taskConfig)
                     }
                     return@map Message.obtain()
                         .apply {
@@ -179,21 +192,22 @@ class TransferViewModel(application: Application)
                 it.printStackTrace()
             }),
         mOnRemove.doOnNext { taskId ->
-            pause(taskId)
+            pauseInternal(taskId)
             mRunningTask.remove(taskId)
         }.observeOn(AndroidSchedulers.from(mDatabaseThread.looper))
             .doOnNext { taskId ->
                 mTaskDao.removeById(taskId)
             }.observeOn(AndroidSchedulers.mainThread())
-            .subscribe { taskId ->
-                mAdapter.data
-                    .indexOfFirst { it.id == taskId }
-                    .run {
-                        if (this != -1) {
-                            mAdapter.remove(this)
-                        }
-                    }
+            .subscribe({ taskId ->
+                findByIdRun(taskId) { index ->
+                    mAdapter.remove(index)
+                    mOnSuccess.onNext(getApplication<Application>().getString(R.string.del_success))
+                }
+            }, {
+                it.printStackTrace()
+                mOnError.onNext(getApplication<Application>().getString(R.string.del_failed))
             })
+    )
 
     /**
      *出错响应
@@ -256,6 +270,17 @@ class TransferViewModel(application: Application)
 
     @MainThread
     fun pause(taskId: Int) {
+        pauseInternal(taskId)
+        mOnInfo.onNext(getApplication<Application>().getString(R.string.a_pasue))
+    }
+
+    @MainThread
+    fun remove(taskId: Int) {
+        mOnRemove.onNext(taskId)
+    }
+
+    @MainThread
+    private fun pauseInternal(taskId: Int) {
         mRunningTask[taskId]?.let {
             if (it.isCancelled) {
                 it.cancel(false)
@@ -264,8 +289,12 @@ class TransferViewModel(application: Application)
     }
 
     @MainThread
-    fun remove(taskId: Int) {
-        mOnRemove.onNext(taskId)
+    private inline fun findByIdRun(id: Int, run: (Int) -> Unit) {
+        val index = mAdapter.data
+            .indexOfFirst { item -> item.id == id }
+        if (index != -1) {
+            run(index)
+        }
     }
 
     @WorkerThread
@@ -297,23 +326,25 @@ class TransferViewModel(application: Application)
         mMainWorker.removeCallbacksAndMessages(null)
     }
 
-    private data class Config(
+    private class Config(
         val id: Int,
         val local: File,
         val remote: String,
         val host: String,
         val port: Int,
         val username: String,
-        val password: String
+        val password: String,
+        val handler: Handler,
+        val dao: TaskDao
     )
 
-    private data class Progress(
+    private class Progress(
         val id: Int,
         val size: String,
         val progress: Int
     )
 
-    private data class Result(
+    private class Result(
         val id: Int,
         val type: ResultType
     )
@@ -325,7 +356,6 @@ class TransferViewModel(application: Application)
     }
 
     private abstract class TransferTask(
-        protected val handler: Handler,
         val config: Config
     ) : AsyncTask<Unit, Unit, ResultType>() {
         private var mLastUpdate = 0L
@@ -336,7 +366,7 @@ class TransferViewModel(application: Application)
 
         @WorkerThread
         override fun onCancelled(result: ResultType) {
-            finish(CANCELLED)
+            sendResult(CANCELLED)
         }
 
         @WorkerThread
@@ -362,7 +392,7 @@ class TransferViewModel(application: Application)
         }
 
         @WorkerThread
-        protected fun update(doSize: Long, size: Long) {
+        protected fun updateProgress(doSize: Long, size: Long) {
             val now = SystemClock.uptimeMillis()
             if (now - mLastUpdate < 500) {
                 return
@@ -370,7 +400,7 @@ class TransferViewModel(application: Application)
             mLastUpdate = now
             val sizeText = "${Utils.sizeToString(doSize)}/${Utils.sizeToString(size)}"
             val progress = (doSize.toFloat() / size.toFloat() * 100f).toInt()
-            handler.obtainMessage(UPDATE)
+            config.handler.obtainMessage(UPDATE)
                 .apply {
                     obj = Progress(config.id, sizeText, progress)
                     sendToTarget()
@@ -382,8 +412,16 @@ class TransferViewModel(application: Application)
             mNext.set(false)
         }
 
-        private fun finish(resultType: ResultType) {
-            handler.obtainMessage(FINISH)
+        @WorkerThread
+        protected fun markFinish() {
+            config.dao.findById(config.id).run {
+                isFinish = true
+                config.dao.update(this)
+            }
+        }
+
+        private fun sendResult(resultType: ResultType) {
+            config.handler.obtainMessage(FINISH)
                 .apply {
                     obj = Result(config.id, resultType)
                     sendToTarget()
@@ -391,14 +429,13 @@ class TransferViewModel(application: Application)
         }
 
         override fun onPostExecute(resultType: ResultType) {
-            finish(resultType)
+            sendResult(resultType)
         }
     }
 
     private class DownloadTask(
-        handler: Handler,
         config: Config
-    ) : TransferTask(handler, config) {
+    ) : TransferTask(config) {
         @WorkerThread
         override fun doInBackground(vararg params: Unit): ResultType {
             try {
@@ -435,15 +472,17 @@ class TransferViewModel(application: Application)
                                 break
                             }
                             out.write(buffer, 0, length)
-                            update(local.length(), remote.size)
+                            updateProgress(local.length(), remote.size)
                         }
                         out.flush()
                         out.close()
                         input.close()
-                        return if (client.completePendingCommand())
+                        return if (client.completePendingCommand()) {
+                            markFinish()
                             ResultType.FINISH
-                        else
+                        } else {
                             ERROR
+                        }
                     }
                     else -> {
                         throw RuntimeException()
@@ -458,9 +497,8 @@ class TransferViewModel(application: Application)
     }
 
     private class UploadTask(
-        handler: Handler,
         config: Config
-    ) : TransferTask(handler, config) {
+    ) : TransferTask(config) {
         override fun doInBackground(vararg params: Unit): ResultType {
             try {
                 val client = connect()
@@ -509,15 +547,17 @@ class TransferViewModel(application: Application)
                     }
                     remoteSize += length
                     out.write(buffer, 0, length)
-                    update(local.length(), remoteSize)
+                    updateProgress(local.length(), remoteSize)
                 }
                 out.flush()
                 out.close()
                 raf.close()
-                return if (client.completePendingCommand())
+                return if (client.completePendingCommand()) {
+                    markFinish()
                     ResultType.FINISH
-                else
+                } else {
                     ERROR
+                }
             } catch (e: Throwable) {
                 e.printStackTrace()
                 return ERROR

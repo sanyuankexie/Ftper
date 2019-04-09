@@ -53,25 +53,44 @@ public class TransferFragment extends Fragment {
                 .get(RemoteViewModel.class);
         mAdapter = mTransferViewModel.getAdapter();
         mAdapter.setOnItemLongClickListener((adapter, view1, position) -> {
-            new QMUIBottomSheet.BottomGridSheetBuilder(requireContext())
-                    .addItem(R.drawable.delete,
-                            getString(R.string.delete),
-                            R.drawable.delete,
-                            QMUIBottomSheet.BottomGridSheetBuilder.FIRST_LINE)
-                    .addItem(R.drawable.delete,
-                            getString(R.string.delete),
-                            R.drawable.delete,
-                            QMUIBottomSheet.BottomGridSheetBuilder.FIRST_LINE)
-                    .addItem(R.drawable.delete,
-                            getString(R.string.delete),
-                            R.drawable.delete,
-                            QMUIBottomSheet.BottomGridSheetBuilder.FIRST_LINE)
-                    .setOnSheetItemClickListener((dialog, itemView) -> {
-
-                    })
-                    .build()
-                    .show();
-            return true;
+            TaskItem item = (TaskItem) adapter.getItem(position);
+            if (item != null) {
+                int id = item.getId();
+                new QMUIBottomSheet.BottomGridSheetBuilder(requireContext())
+                        .addItem(R.drawable.start,
+                                getString(R.string.start),
+                                R.drawable.start,
+                                QMUIBottomSheet.BottomGridSheetBuilder.FIRST_LINE)
+                        .addItem(R.drawable.pause,
+                                getString(R.string.pause),
+                                R.drawable.pause,
+                                QMUIBottomSheet.BottomGridSheetBuilder.FIRST_LINE)
+                        .addItem(R.drawable.delete,
+                                getString(R.string.delete),
+                                R.drawable.delete,
+                                QMUIBottomSheet.BottomGridSheetBuilder.FIRST_LINE)
+                        .setOnSheetItemClickListener((dialog, itemView) -> {
+                            dialog.dismiss();
+                            switch ((int) itemView.getTag()) {
+                                case R.drawable.start: {
+                                    mTransferViewModel.start(id);
+                                }
+                                break;
+                                case R.drawable.pause: {
+                                    mTransferViewModel.pause(id);
+                                }
+                                break;
+                                case R.drawable.delete: {
+                                    mTransferViewModel.remove(id);
+                                }
+                                break;
+                            }
+                        })
+                        .build()
+                        .show();
+                return true;
+            }
+            return false;
         });
         mBinding.setAdapter(mAdapter);
         Utils.subscribe(this,

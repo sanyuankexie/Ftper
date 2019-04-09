@@ -48,4 +48,10 @@
     <string name="start_dl_text">已经开始下载</string>
     <string name="no_select">未选择服务器</string>
     <string name="loading_text">加载中</string>
+    <string name="start">开始</string>
+    <string name="pause">暂停</string>
+    <string name="a_pasue">已暂停</string>
+    <string name="del_failed">删除失败</string>
+    <string name="task_finish">任务已完成</string>
+    <string name="task_err">任务出错</string>
 </resources>
