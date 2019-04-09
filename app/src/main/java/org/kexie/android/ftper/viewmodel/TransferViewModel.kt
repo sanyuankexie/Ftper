@@ -279,7 +279,7 @@ class TransferViewModel(application: Application)
     @MainThread
     private fun pauseInternal(taskId: Int) {
         mRunningTask[taskId]?.let {
-            if (it.isCancelled) {
+            if (!it.isCancelled) {
                 it.cancel(false)
             }
         }
