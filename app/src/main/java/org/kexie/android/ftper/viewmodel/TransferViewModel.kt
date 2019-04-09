@@ -8,10 +8,11 @@ import androidx.annotation.WorkerThread
 import androidx.collection.SparseArrayCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
-import com.orhanobut.logger.Logger
 import io.reactivex.Observable
 import io.reactivex.Single
+import io.reactivex.SingleObserver
 import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.Disposable
 import io.reactivex.subjects.PublishSubject
 import org.apache.commons.net.ftp.FTP
 import org.apache.commons.net.ftp.FTPClient
@@ -24,7 +25,7 @@ import org.kexie.android.ftper.viewmodel.TransferViewModel.ResultType.ERROR
 import org.kexie.android.ftper.viewmodel.bean.TaskItem
 import org.kexie.android.ftper.viewmodel.bean.TaskState
 import org.kexie.android.ftper.widget.GenericQuickAdapter
-import org.kexie.android.ftper.widget.TaskItemQuickAdapter
+import org.kexie.android.ftper.widget.TaskItemAdapter
 import org.kexie.android.ftper.widget.Utils
 import java.io.BufferedOutputStream
 import java.io.File
@@ -61,10 +62,8 @@ class TransferViewModel(application: Application)
     {
         val what = it.what
         val obj = it.obj
-        Logger.d(obj)
         when {
             what == START && obj is TransferTask -> {
-
                 obj.executeOnExecutor(mTaskExecutor)
                 mRunningTask.put(obj.config.id, obj)
                 return@Handler true
@@ -96,6 +95,7 @@ class TransferViewModel(application: Application)
                     )
                     mAdapter.setData(index, newItem)
                 }
+                mRunningTask.remove(obj.id)
                 return@Handler true
             }
             else -> {
@@ -108,20 +108,22 @@ class TransferViewModel(application: Application)
     private val mDatabaseThread = HandlerThread(toString())
         .apply {
             start()
-            Handler(looper).post {
-                mIcons = arrayOf(
-                    ContextCompat.getDrawable(getApplication(), R.drawable.dl)!!,
-                    ContextCompat.getDrawable(getApplication(), R.drawable.up)!!
-                )
-                val items = mTaskDao
-                    .loadAll()
-                    .map {
-                        it.toReadabilityData()
-                    }
-                mMainWorker.post {
-                    mAdapter.setNewData(items)
+            Observable.just(mTaskDao)
+                .observeOn(AndroidSchedulers.from(looper))
+                .doOnNext {
+                    mIcons = arrayOf(
+                        ContextCompat.getDrawable(getApplication(), R.drawable.dl)!!,
+                        ContextCompat.getDrawable(getApplication(), R.drawable.up)!!
+                    )
+                }.map {
+                    mTaskDao.loadAll()
+                        .map {
+                            it.toReadabilityData()
+                        }
+                }.observeOn(AndroidSchedulers.mainThread())
+                .subscribe {
+                    mAdapter.setNewData(it)
                 }
-            }
         }
 
     private val mOnStart = PublishSubject.create<Int>()
@@ -146,8 +148,9 @@ class TransferViewModel(application: Application)
             }.map { task ->
                 val config = mConfigDao.findById(task.configId)
                 if (config == null) {
-                    return@map mMainWorker.obtainMessage(FINISH)
+                    return@map Message.obtain()
                         .apply {
+                            what = FINISH
                             obj = Result(task.id, ERROR)
                         }
                 } else {
@@ -213,7 +216,7 @@ class TransferViewModel(application: Application)
     val onInfo: Observable<String> = mOnInfo.observeOn(AndroidSchedulers.mainThread())
 
     //妥协
-    private val mAdapter = TaskItemQuickAdapter()
+    private val mAdapter = TaskItemAdapter()
 
     val adapter: GenericQuickAdapter<TaskItem>
         get() = mAdapter
@@ -225,7 +228,6 @@ class TransferViewModel(application: Application)
         if (item != null) {
             mOnStart.onNext(taskId)
         } else {
-            @Suppress("CheckResult")
             Single.just(taskId)
                 .observeOn(AndroidSchedulers.from(mDatabaseThread.looper))
                 .map {
@@ -237,7 +239,19 @@ class TransferViewModel(application: Application)
                     mAdapter.addData(it)
                 }.map {
                     it.id
-                }.subscribe(mOnStart::onNext)
+                }.subscribe(object : SingleObserver<Int> {
+                    override fun onSuccess(t: Int) {
+                        mOnStart.onNext(t)
+                    }
+
+                    override fun onSubscribe(d: Disposable) {
+                        mOnStart.onSubscribe(d)
+                    }
+
+                    override fun onError(e: Throwable) {
+                        mOnStart.onError(e)
+                    }
+                })
         }
     }
 
@@ -316,19 +330,26 @@ class TransferViewModel(application: Application)
         val config: Config
     ) : AsyncTask<Unit, Progress, ResultType>() {
         private val mOnUpdate = PublishSubject.create<Pair<Long, Long>>()
-        private val mDisposable = mOnUpdate
-            .throttleFirst(500, TimeUnit.MILLISECONDS)
-            .map {
-                val sizeText = "${Utils.sizeToString(it.first)}/${Utils.sizeToString(it.second)}"
-                val progress = (it.first.toFloat() / it.second.toFloat() * 100f).toInt()
-                Progress(config.id, sizeText, progress)
-            }.subscribe {
-                handler.obtainMessage(UPDATE)
-                    .apply {
-                        obj = it
-                        sendToTarget()
-                    }
-            }
+        private val mOnMessage = PublishSubject.create<Message>()
+
+        init {
+            @Suppress
+            mOnMessage.mergeWith(mOnUpdate
+                .map {
+                    val sizeText = "${Utils.sizeToString(it.first)}/${Utils.sizeToString(it.second)}"
+                    val progress = (it.first.toFloat() / it.second.toFloat() * 100f).toInt()
+                    return@map Progress(config.id, sizeText, progress)
+                }.map {
+                    Message.obtain()
+                        .apply {
+                            what = UPDATE
+                            obj = it
+                        }
+                }).throttleLast(500, TimeUnit.MILLISECONDS)
+                .subscribe {
+                    handler.sendMessage(it)
+                }
+        }
 
         private val mNext = AtomicBoolean(false)
         protected val next
@@ -337,12 +358,7 @@ class TransferViewModel(application: Application)
 
         @WorkerThread
         override fun onCancelled(result: ResultType) {
-            mDisposable.dispose()
-            handler.obtainMessage(FINISH)
-                .apply {
-                    obj = Result(config.id, CANCELLED)
-                    sendToTarget()
-                }
+            finish(CANCELLED)
         }
 
         @WorkerThread
@@ -376,13 +392,19 @@ class TransferViewModel(application: Application)
             mNext.set(false)
         }
 
-        override fun onPostExecute(resultType: ResultType) {
-            mDisposable.dispose()
-            handler.obtainMessage(FINISH)
+        private fun finish(resultType: ResultType) {
+            val message = Message.obtain()
                 .apply {
+                    what = FINISH
                     obj = Result(config.id, resultType)
-                    sendToTarget()
                 }
+            mOnMessage.onNext(message)
+            mOnMessage.onComplete()
+            mOnUpdate.onComplete()
+        }
+
+        override fun onPostExecute(resultType: ResultType) {
+            finish(resultType)
         }
     }
 

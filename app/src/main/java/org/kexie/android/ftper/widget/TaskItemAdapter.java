@@ -9,9 +9,9 @@ import org.kexie.android.ftper.R;
 import org.kexie.android.ftper.databinding.ItemTaskBinding;
 import org.kexie.android.ftper.viewmodel.bean.TaskItem;
 
-public class TaskItemQuickAdapter extends GenericQuickAdapter<TaskItem> {
+public class TaskItemAdapter extends GenericQuickAdapter<TaskItem> {
 
-    public TaskItemQuickAdapter() {
+    public TaskItemAdapter() {
         super(R.layout.item_task, BR.task);
     }
 
