@@ -32,7 +32,6 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.RandomAccessFile
 import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
 class TransferViewModel(application: Application)
@@ -329,28 +328,7 @@ class TransferViewModel(application: Application)
         protected val handler: Handler,
         val config: Config
     ) : AsyncTask<Unit, Progress, ResultType>() {
-        private val mOnUpdate = PublishSubject.create<Pair<Long, Long>>()
-        private val mOnMessage = PublishSubject.create<Message>()
-
-        init {
-            @Suppress
-            mOnMessage.mergeWith(mOnUpdate
-                .map {
-                    val sizeText = "${Utils.sizeToString(it.first)}/${Utils.sizeToString(it.second)}"
-                    val progress = (it.first.toFloat() / it.second.toFloat() * 100f).toInt()
-                    return@map Progress(config.id, sizeText, progress)
-                }.map {
-                    Message.obtain()
-                        .apply {
-                            what = UPDATE
-                            obj = it
-                        }
-                }).throttleLast(500, TimeUnit.MILLISECONDS)
-                .subscribe {
-                    handler.sendMessage(it)
-                }
-        }
-
+        private var mLastUpdate = 0L
         private val mNext = AtomicBoolean(false)
         protected val next
             get() = mNext.get()
@@ -366,6 +344,7 @@ class TransferViewModel(application: Application)
             if (mNext.compareAndSet(true, true)) {
                 throw AssertionError()
             }
+            mLastUpdate = SystemClock.uptimeMillis()
             return FTPClient()
                 .apply {
                     //5秒超时
@@ -384,7 +363,18 @@ class TransferViewModel(application: Application)
 
         @WorkerThread
         protected fun update(doSize: Long, size: Long) {
-            mOnUpdate.onNext(doSize to size)
+            val now = SystemClock.uptimeMillis()
+            if (now - mLastUpdate < 500) {
+                return
+            }
+            mLastUpdate = now
+            val sizeText = "${Utils.sizeToString(doSize)}/${Utils.sizeToString(size)}"
+            val progress = (doSize.toFloat() / size.toFloat() * 100f).toInt()
+            handler.obtainMessage(UPDATE)
+                .apply {
+                    obj = Progress(config.id, sizeText, progress)
+                    sendToTarget()
+                }
         }
 
         @MainThread
@@ -393,14 +383,11 @@ class TransferViewModel(application: Application)
         }
 
         private fun finish(resultType: ResultType) {
-            val message = Message.obtain()
+            handler.obtainMessage(FINISH)
                 .apply {
-                    what = FINISH
                     obj = Result(config.id, resultType)
+                    sendToTarget()
                 }
-            mOnMessage.onNext(message)
-            mOnMessage.onComplete()
-            mOnUpdate.onComplete()
         }
 
         override fun onPostExecute(resultType: ResultType) {
