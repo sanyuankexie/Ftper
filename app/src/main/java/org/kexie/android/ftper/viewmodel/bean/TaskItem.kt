@@ -9,7 +9,6 @@ data class TaskItem(
     val percent: Int,
     val size: String,
     val state:TaskState,
-    val icon: Drawable,
-    val finish:Boolean
+    val icon: Drawable
 )
 

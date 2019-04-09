@@ -9,7 +9,6 @@ import androidx.collection.SparseArrayCompat
 import androidx.core.content.ContextCompat
 import androidx.core.math.MathUtils
 import androidx.lifecycle.AndroidViewModel
-import com.orhanobut.logger.Logger
 import io.reactivex.Observable
 import io.reactivex.Single
 import io.reactivex.SingleObserver
@@ -87,7 +86,6 @@ class TransferViewModel(application: Application)
                 return@Handler true
             }
             what == FINISH && obj is TaskResult -> {
-                Logger.d(obj.type)
                 findByIdRun(obj.id) { index ->
                     val newItem = mAdapter.getItem(index)!!.copy(
                         percent = 100,
@@ -310,8 +308,7 @@ class TransferViewModel(application: Application)
                     TaskState.PAUSE
                 },
                 icon = mIcons[this.type],
-                size = getApplication<Application>().getString(R.string.loading_text),
-                finish = this.isFinish
+                size = getApplication<Application>().getString(R.string.loading_text)
         )
     }
 
@@ -364,6 +361,11 @@ class TransferViewModel(application: Application)
     private abstract class TransferTask(
         val taskContext: TaskContext
     ) : AsyncTask<Unit, Unit, ResultType>() {
+
+        companion object {
+            const val TIME_SPAN = 500
+        }
+
         private var mLastUpdate = 0L
 
         @WorkerThread
@@ -388,7 +390,7 @@ class TransferViewModel(application: Application)
         @WorkerThread
         protected fun updateProgress(doSize: Long, size: Long) {
             val now = SystemClock.uptimeMillis()
-            if (now - mLastUpdate < 500) {
+            if (now - mLastUpdate < TIME_SPAN) {
                 return
             }
             mLastUpdate = now
@@ -535,7 +537,7 @@ class TransferViewModel(application: Application)
                     }
                     remoteSize += length
                     out.write(buffer, 0, length)
-                    updateProgress(local.length(), remoteSize)
+                    updateProgress(remoteSize, local.length())
                 }
                 out.flush()
                 out.close()

@@ -9,6 +9,9 @@
         <variable
             name="percent"
             type="String"/>
+        <variable
+            name="state"
+            type="String"/>
     </data>
 
     <LinearLayout
@@ -40,7 +43,7 @@
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_weight="8"
+                        android:layout_weight="1"
                         android:gravity="left|center"
                         android:hint="@string/app_name"
                         android:singleLine="true"
@@ -50,14 +53,13 @@
 
                     <TextView
                         android:id="@+id/state"
-                        android:layout_width="0dp"
+                        android:text="@{state}"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginRight="10dp"
-                        android:layout_weight="2"
                         android:gravity="center|right"
                         android:hint="@string/app_name"
                         android:singleLine="true"
-                        android:text="@{task.state.text}"
                         android:textColor="@color/colorBlackAlpha54"
                         android:textSize="15dp" />
                 </LinearLayout>
