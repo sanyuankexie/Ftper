@@ -9,6 +9,7 @@ import androidx.collection.SparseArrayCompat
 import androidx.core.content.ContextCompat
 import androidx.core.math.MathUtils
 import androidx.lifecycle.AndroidViewModel
+import com.orhanobut.logger.Logger
 import io.reactivex.Observable
 import io.reactivex.Single
 import io.reactivex.SingleObserver
@@ -34,7 +35,6 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.RandomAccessFile
 import java.util.concurrent.Executors
-import java.util.concurrent.atomic.AtomicBoolean
 
 class TransferViewModel(application: Application)
     : AndroidViewModel(application) {
@@ -87,11 +87,15 @@ class TransferViewModel(application: Application)
                 return@Handler true
             }
             what == FINISH && obj is TaskResult -> {
+                Logger.d(obj.type)
                 findByIdRun(obj.id) { index ->
                     val newItem = mAdapter.getItem(index)!!.copy(
                         percent = 100,
                         state = when (obj.type) {
-                            ResultType.CANCELLED -> TaskState.WAIT_START
+                            ResultType.CANCELLED -> {
+
+                                TaskState.PAUSE
+                            }
                             ResultType.FINISH -> {
                                 mOnSuccess.onNext(getApplication<Application>().getString(R.string.task_finish))
                                 TaskState.FINISH
@@ -297,16 +301,17 @@ class TransferViewModel(application: Application)
     @WorkerThread
     private fun TaskEntity.toReadabilityData(): TaskItem {
         return TaskItem(
-            id = this.id,
-            name = this.name,
-            percent = 0,
-            state = if (this.isFinish) {
-                TaskState.FINISH
-            } else {
-                TaskState.WAIT_START
-            },
-            icon = mIcons[this.type],
-            size = getApplication<Application>().getString(R.string.loading_text)
+                id = this.id,
+                name = this.name,
+                percent = 0,
+                state = if (this.isFinish) {
+                    TaskState.FINISH
+                } else {
+                    TaskState.PAUSE
+                },
+                icon = mIcons[this.type],
+                size = getApplication<Application>().getString(R.string.loading_text),
+                finish = this.isFinish
         )
     }
 
@@ -360,20 +365,9 @@ class TransferViewModel(application: Application)
         val taskContext: TaskContext
     ) : AsyncTask<Unit, Unit, ResultType>() {
         private var mLastUpdate = 0L
-        private val mNext = AtomicBoolean(false)
-        protected val next
-            get() = mNext.get()
-
-        @WorkerThread
-        override fun onCancelled(result: ResultType) {
-            sendResult(CANCELLED)
-        }
 
         @WorkerThread
         protected fun connect(): FTPClient {
-            if (mNext.compareAndSet(true, true)) {
-                throw AssertionError()
-            }
             mLastUpdate = SystemClock.uptimeMillis()
             return FTPClient()
                 .apply {
@@ -407,26 +401,21 @@ class TransferViewModel(application: Application)
                 }
         }
 
-        @MainThread
-        override fun onCancelled() {
-            mNext.set(false)
-        }
-
         @WorkerThread
         protected fun markFinish() {
             taskContext.dao.markFinish(taskContext.id)
         }
 
-        private fun sendResult(resultType: ResultType) {
+        override fun onCancelled(result: ResultType) {
+            onPostExecute(result)
+        }
+
+        override fun onPostExecute(resultType: ResultType) {
             taskContext.handler.obtainMessage(FINISH)
                 .apply {
                     obj = TaskResult(taskContext.id, resultType)
                     sendToTarget()
                 }
-        }
-
-        override fun onPostExecute(resultType: ResultType) {
-            sendResult(resultType)
         }
     }
 
@@ -462,7 +451,7 @@ class TransferViewModel(application: Application)
                         val out = BufferedOutputStream(FileOutputStream(local, true))
                         val buffer = ByteArray(1024)
                         while (true) {
-                            if (next) {
+                            if (isCancelled) {
                                 return CANCELLED
                             }
                             val length = input.read(buffer)
@@ -537,7 +526,7 @@ class TransferViewModel(application: Application)
                 val out = client.appendFileStream(remoteName)
                 val buffer = ByteArray(1024)
                 while (true) {
-                    if (next) {
+                    if (isCancelled) {
                         return CANCELLED
                     }
                     val length = raf.read(buffer)
