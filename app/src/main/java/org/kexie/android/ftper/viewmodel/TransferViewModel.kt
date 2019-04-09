@@ -282,6 +282,7 @@ class TransferViewModel(application: Application)
 
     override fun onCleared() {
         mTaskExecutor.shutdown()
+        mDatabaseThread.quit()
         for (i in 0 until mRunningTask.size()) {
             mRunningTask[i]?.let {
                 if (!it.isCancelled) {
@@ -293,7 +294,6 @@ class TransferViewModel(application: Application)
         mDisposables.forEach {
             it.dispose()
         }
-        mDatabaseThread.quit()
         mMainWorker.removeCallbacksAndMessages(null)
     }
 

@@ -10,6 +10,8 @@ import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ViewModelProviders;
+import com.qmuiteam.qmui.widget.dialog.QMUIBottomSheet;
+import es.dmoral.toasty.Toasty;
 import org.kexie.android.ftper.R;
 import org.kexie.android.ftper.databinding.FragmentTransferBinding;
 import org.kexie.android.ftper.viewmodel.RemoteViewModel;
@@ -49,7 +51,29 @@ public class TransferFragment extends Fragment {
                 .get(TransferViewModel.class);
         mRemoteViewModel = ViewModelProviders.of(requireActivity())
                 .get(RemoteViewModel.class);
-        mBinding.setAdapter(mTransferViewModel.getAdapter());
+        mAdapter = mTransferViewModel.getAdapter();
+        mAdapter.setOnItemLongClickListener((adapter, view1, position) -> {
+            new QMUIBottomSheet.BottomGridSheetBuilder(requireContext())
+                    .addItem(R.drawable.delete,
+                            getString(R.string.delete),
+                            R.drawable.delete,
+                            QMUIBottomSheet.BottomGridSheetBuilder.FIRST_LINE)
+                    .addItem(R.drawable.delete,
+                            getString(R.string.delete),
+                            R.drawable.delete,
+                            QMUIBottomSheet.BottomGridSheetBuilder.FIRST_LINE)
+                    .addItem(R.drawable.delete,
+                            getString(R.string.delete),
+                            R.drawable.delete,
+                            QMUIBottomSheet.BottomGridSheetBuilder.FIRST_LINE)
+                    .setOnSheetItemClickListener((dialog, itemView) -> {
+
+                    })
+                    .build()
+                    .show();
+            return true;
+        });
+        mBinding.setAdapter(mAdapter);
         Utils.subscribe(this,
                 mRemoteViewModel.getOnNewTask(),
                 Lifecycle.Event.ON_DESTROY,
@@ -57,10 +81,17 @@ public class TransferFragment extends Fragment {
     }
 
     @Override
-    public void setUserVisibleHint(boolean isVisibleToUser) {
-        super.setUserVisibleHint(isVisibleToUser);
-
-
+    public void onResume() {
+        super.onResume();
+        Utils.subscribeToast(this,
+                mTransferViewModel.getOnError(),
+                Toasty::error);
+        Utils.subscribeToast(this,
+                mTransferViewModel.getOnInfo(),
+                Toasty::info);
+        Utils.subscribeToast(this,
+                mTransferViewModel.getOnSuccess(),
+                Toasty::success);
     }
 
     @Override
