@@ -327,7 +327,7 @@ class TransferViewModel(application: Application)
     private abstract class TransferTask(
         protected val handler: Handler,
         val config: Config
-    ) : AsyncTask<Unit, Progress, ResultType>() {
+    ) : AsyncTask<Unit, Unit, ResultType>() {
         private var mLastUpdate = 0L
         private val mNext = AtomicBoolean(false)
         protected val next
