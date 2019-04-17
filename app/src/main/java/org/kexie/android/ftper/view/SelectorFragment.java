@@ -78,8 +78,6 @@ public class SelectorFragment extends Fragment {
         mViewModel = ViewModelProviders.of(requireActivity())
                 .get(SelectorViewModel.class);
 
-
-
         mBinding.tabs.setTabData(new String[]{
                 getString(R.string.image),
                 getString(R.string.word),

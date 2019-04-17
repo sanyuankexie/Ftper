@@ -22,8 +22,6 @@ import org.kexie.android.ftper.app.AppGlobal
 import org.kexie.android.ftper.model.TaskDao
 import org.kexie.android.ftper.model.WorkerType
 import org.kexie.android.ftper.model.bean.TaskEntity
-import org.kexie.android.ftper.viewmodel.TransferViewModel.ResultType.CANCELLED
-import org.kexie.android.ftper.viewmodel.TransferViewModel.ResultType.ERROR
 import org.kexie.android.ftper.viewmodel.bean.TaskItem
 import org.kexie.android.ftper.viewmodel.bean.TaskState
 import org.kexie.android.ftper.widget.GenericQuickAdapter
@@ -90,15 +88,15 @@ class TransferViewModel(application: Application)
                     val newItem = mAdapter.getItem(index)!!.copy(
                         percent = 100,
                         state = when (obj.type) {
-                            ResultType.CANCELLED -> {
+                            TaskResult.Type.CANCELLED -> {
 
                                 TaskState.PAUSE
                             }
-                            ResultType.FINISH -> {
+                            TaskResult.Type.FINISH -> {
                                 mOnSuccess.onNext(getApplication<Application>().getString(R.string.task_finish))
                                 TaskState.FINISH
                             }
-                            ResultType.ERROR -> {
+                            TaskResult.Type.ERROR -> {
                                 mOnError.onNext(getApplication<Application>().getString(R.string.task_err))
                                 TaskState.FAILED
                             }
@@ -161,7 +159,7 @@ class TransferViewModel(application: Application)
                 if (config == null) {
                     return@map mMainThreadHandler.obtainMessage(FINISH)
                         .apply {
-                            obj = TaskResult(task.id, ERROR)
+                            obj = TaskResult(task.id, TaskResult.Type.ERROR)
                         }
                 } else {
                     val taskConfig = TaskContext(
@@ -299,16 +297,16 @@ class TransferViewModel(application: Application)
     @WorkerThread
     private fun TaskEntity.toReadabilityData(): TaskItem {
         return TaskItem(
-                id = this.id,
-                name = this.name,
-                percent = 0,
-                state = if (this.isFinish) {
-                    TaskState.FINISH
-                } else {
-                    TaskState.PAUSE
-                },
-                icon = mIcons[this.type],
-                size = getApplication<Application>().getString(R.string.loading_text)
+            id = this.id,
+            name = this.name,
+            percent = 0,
+            state = if (this.isFinish) {
+                TaskState.FINISH
+            } else {
+                TaskState.PAUSE
+            },
+            icon = mIcons[this.type],
+            size = getApplication<Application>().getString(R.string.loading_text)
         )
     }
 
@@ -349,29 +347,27 @@ class TransferViewModel(application: Application)
 
     private class TaskResult(
         val id: Int,
-        val type: ResultType
-    )
-
-    private enum class ResultType {
-        CANCELLED,
-        FINISH,
-        ERROR
+        val type: Type
+    ) {
+        enum class Type {
+            CANCELLED,
+            FINISH,
+            ERROR
+        }
     }
 
     private abstract class TransferTask(
         val taskContext: TaskContext
-    ) : AsyncTask<Unit, Unit, ResultType>() {
+    ) : AsyncTask<Unit, Unit, TaskResult>() {
 
         companion object {
             const val TIME_SPAN = 500
         }
 
-        private var mLastUpdate = 0L
+        private var mLastUpdate = SystemClock.uptimeMillis()
 
-        @WorkerThread
-        protected fun connect(): FTPClient {
-            mLastUpdate = SystemClock.uptimeMillis()
-            return FTPClient()
+        protected val client by lazy {
+            FTPClient()
                 .apply {
                     //5秒超时
                     val timeout = 5000
@@ -404,18 +400,26 @@ class TransferViewModel(application: Application)
         }
 
         @WorkerThread
-        protected fun markFinish() {
-            taskContext.dao.markFinish(taskContext.id)
+        protected fun makeResult(type: TaskResult.Type): TaskResult {
+            if (type == TaskResult.Type.FINISH) {
+                taskContext.dao.markFinish(taskContext.id)
+            }
+            try {
+                client.abort()
+            } catch (e: Throwable) {
+                e.printStackTrace()
+            }
+            return TaskResult(taskContext.id, type)
         }
 
-        override fun onCancelled(result: ResultType) {
+        override fun onCancelled(result: TaskResult) {
             onPostExecute(result)
         }
 
-        override fun onPostExecute(resultType: ResultType) {
+        override fun onPostExecute(result: TaskResult) {
             taskContext.handler.obtainMessage(FINISH)
                 .apply {
-                    obj = TaskResult(taskContext.id, resultType)
+                    obj = result
                     sendToTarget()
                 }
         }
@@ -425,15 +429,14 @@ class TransferViewModel(application: Application)
         taskContext: TaskContext
     ) : TransferTask(taskContext) {
         @WorkerThread
-        override fun doInBackground(vararg params: Unit): ResultType {
+        override fun doInBackground(vararg params: Unit): TaskResult {
             try {
-                val client = connect()
                 client.enterLocalActiveMode()
                 val files = client.listFiles(taskContext.remote)
                 when {
                     //云端无文件
                     files.isEmpty() -> {
-                        return ERROR
+                        return makeResult(TaskResult.Type.ERROR)
                     }
                     files.size == 1 -> {
                         val remote = files[0]
@@ -443,18 +446,17 @@ class TransferViewModel(application: Application)
                         }
                         //本地文件大于或等于云端文件大小
                         if (local.length() >= remote.size) {
-                            markFinish()
-                            return ResultType.FINISH
+                            return makeResult(TaskResult.Type.FINISH)
                         }
                         //设置断点重传位置开始传输
-                        client.restartOffset = local.length();
+                        client.restartOffset = local.length()
                         val input = client.retrieveFileStream(taskContext.remote)
                         //否则打开问以append的方式
                         val out = BufferedOutputStream(FileOutputStream(local, true))
                         val buffer = ByteArray(1024)
                         while (true) {
                             if (isCancelled) {
-                                return CANCELLED
+                                return makeResult(TaskResult.Type.CANCELLED)
                             }
                             val length = input.read(buffer)
                             if (length == -1) {
@@ -467,10 +469,9 @@ class TransferViewModel(application: Application)
                         out.close()
                         input.close()
                         return if (client.completePendingCommand()) {
-                            markFinish()
-                            ResultType.FINISH
+                            makeResult(TaskResult.Type.FINISH)
                         } else {
-                            ERROR
+                            makeResult(TaskResult.Type.ERROR)
                         }
                     }
                     else -> {
@@ -480,7 +481,7 @@ class TransferViewModel(application: Application)
             } catch (e: Throwable) {
                 //发生奇怪的问题
                 e.printStackTrace()
-                return ERROR
+                return makeResult(TaskResult.Type.ERROR)
             }
         }
     }
@@ -488,9 +489,8 @@ class TransferViewModel(application: Application)
     private class UploadTask(
         taskContext: TaskContext
     ) : TransferTask(taskContext) {
-        override fun doInBackground(vararg params: Unit): ResultType {
+        override fun doInBackground(vararg params: Unit): TaskResult {
             try {
-                val client = connect()
                 val local = taskContext.local
                 if (!local.isFile) {
                     throw RuntimeException(local.absolutePath)
@@ -519,17 +519,16 @@ class TransferViewModel(application: Application)
                     }
                 }
                 if (remoteSize >= localSize) {
-                    markFinish()
-                    return ResultType.FINISH
+                    return makeResult(TaskResult.Type.FINISH)
                 }
-                val raf = RandomAccessFile(local, "r");
+                val raf = RandomAccessFile(local, "r")
                 client.restartOffset = remoteSize
                 raf.seek(remoteSize)
                 val out = client.appendFileStream(remoteName)
                 val buffer = ByteArray(1024)
                 while (true) {
                     if (isCancelled) {
-                        return CANCELLED
+                        return makeResult(TaskResult.Type.CANCELLED)
                     }
                     val length = raf.read(buffer)
                     if (length == -1) {
@@ -543,14 +542,13 @@ class TransferViewModel(application: Application)
                 out.close()
                 raf.close()
                 return if (client.completePendingCommand()) {
-                    markFinish()
-                    ResultType.FINISH
+                    makeResult(TaskResult.Type.FINISH)
                 } else {
-                    ERROR
+                    makeResult(TaskResult.Type.ERROR)
                 }
             } catch (e: Throwable) {
                 e.printStackTrace()
-                return ERROR
+                return makeResult(TaskResult.Type.ERROR)
             }
         }
     }
